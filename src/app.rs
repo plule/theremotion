@@ -1,14 +1,16 @@
+use std::sync::{Arc, Mutex};
+
 use faust_state::StateHandle;
 
 pub struct Leapotron {
-    dsp: StateHandle,
+    dsp: Arc<Mutex<StateHandle>>,
     volume: f32,
     freq: f32,
 }
 
 impl Leapotron {
     /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>, dsp: StateHandle) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>, dsp: Arc<Mutex<StateHandle>>) -> Self {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
         Self {
             dsp,
@@ -24,8 +26,11 @@ impl eframe::App for Leapotron {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let Self { dsp, volume, freq } = self;
 
-        *volume = *dsp.get_by_path("volume").expect("Failed to read volume");
-        *freq = *dsp.get_by_path("freq").expect("Failed to read volume");
+        {
+            let dsp = dsp.lock().expect("DSP thread poisened");
+            *volume = *dsp.get_by_path("volume").expect("Failed to read volume");
+            *freq = *dsp.get_by_path("freq").expect("Failed to read volume");
+        }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
@@ -45,14 +50,19 @@ impl eframe::App for Leapotron {
             ui.add(
                 egui::Slider::new(freq, 27.50..=12543.85)
                     .logarithmic(true)
-                    .text("Volume"),
+                    .text("Frequency"),
             );
             egui::warn_if_debug_build(ui);
         });
 
-        dsp.set_by_path("volume", *volume)
-            .expect("Failed to set volume.");
-        dsp.set_by_path("freq", *freq).expect("Failed to set freq.");
-        dsp.send();
+        {
+            let mut dsp = dsp.lock().expect("DSP thread poisened");
+            dsp.set_by_path("volume", *volume)
+                .expect("Failed to set volume.");
+            dsp.set_by_path("freq", *freq).expect("Failed to set freq.");
+            dsp.send();
+        }
+
+        ctx.request_repaint();
     }
 }
