@@ -20,7 +20,7 @@ fn main() {
     tracing_subscriber::fmt::init();
 
     // Init DSP
-    let (dsp, state) = DspHandle::<faust::Dumbosc>::new();
+    let (dsp, state) = DspHandle::<faust::Instrument>::new();
     let dsp = Box::new(dsp);
     let state = Arc::new(Mutex::new(state));
 
