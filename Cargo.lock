@@ -876,6 +876,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
+name = "leap-sys"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23603c7542c3b4b3b6fd83c7fe267a744f33573ec242ef150f4388e12ae52562"
+
+[[package]]
 name = "leapotron"
 version = "0.1.0"
 dependencies = [
@@ -885,7 +891,20 @@ dependencies = [
  "faust-build",
  "faust-state",
  "faust-types",
+ "leaprs",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "leaprs"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3a9cf24f34aeb2289176af848401083d5d99c48e8b5af5aab10b8d4d8e74887"
+dependencies = [
+ "bitflags",
+ "leap-sys",
+ "num_enum",
+ "thiserror",
 ]
 
 [[package]]

@@ -3,6 +3,7 @@
 
 mod app;
 mod dsp;
+mod leap;
 
 #[allow(clippy::all)]
 mod faust {
@@ -20,10 +21,14 @@ fn main() {
     let (dsp, state) = DspHandle::<faust::Dumbosc>::new();
     let dsp = Box::new(dsp);
 
+    // Init sound output
     let stream = dsp::run_dsp(dsp);
-
     stream.play().expect("Failed to play silence");
 
+    // Init leap thread
+    let _leap_worker = leap::start_leap_worker();
+
+    // Start UI
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
         "eframe template",
