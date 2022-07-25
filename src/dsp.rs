@@ -2,8 +2,45 @@ use std::slice;
 
 use cpal::traits::{DeviceTrait, HostTrait};
 use cpal::{SampleFormat, StreamConfig};
-use faust_state::DspHandle;
+use faust_state::{DspHandle, StateHandle};
 use faust_types::FaustDsp;
+
+const NOTE: &str = "note";
+const VOLUME: &str = "volume";
+const CUTOFF_NOTE: &str = "cutoff_note";
+const RESONANCE: &str = "res";
+
+/// DSP controls
+#[derive(Default)]
+pub struct Controls {
+    /// Midi note, 0-127
+    pub note: f32,
+    /// Volume, -96-0
+    pub volume: f32,
+    /// Filter cutoff, -20-20
+    pub cutoff_note: f32,
+    /// Filter resonnance, 1-30
+    pub resonance: f32,
+}
+
+impl Controls {
+    /// Read the current control states from the DSP
+    pub fn read(&mut self, state: &mut StateHandle) {
+        state.update();
+        self.note = *state.get_by_path(NOTE).unwrap();
+        self.volume = *state.get_by_path(VOLUME).unwrap();
+        self.cutoff_note = *state.get_by_path(CUTOFF_NOTE).unwrap();
+        self.resonance = *state.get_by_path(RESONANCE).unwrap();
+    }
+
+    pub fn write(&self, state: &mut StateHandle) {
+        state.set_by_path(NOTE, self.note).unwrap();
+        state.set_by_path(VOLUME, self.volume).unwrap();
+        state.set_by_path(CUTOFF_NOTE, self.cutoff_note).unwrap();
+        state.set_by_path(RESONANCE, self.resonance).unwrap();
+        state.send();
+    }
+}
 
 pub fn run_dsp<T>(mut dsp: Box<DspHandle<T>>) -> cpal::Stream
 where
