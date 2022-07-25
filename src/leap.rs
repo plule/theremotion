@@ -1,4 +1,5 @@
 use std::{
+    ops::RangeInclusive,
     sync::{Arc, Mutex},
     thread,
 };
@@ -6,11 +7,24 @@ use std::{
 use faust_state::StateHandle;
 use leaprs::*;
 
-fn convert_range(value: f32, in_min: f32, in_max: f32, out_min: f32, out_max: f32) -> f32 {
-    ((((value - in_min) * (out_max - out_min)) / (in_max - in_min)) + out_min)
-        .clamp(out_min, out_max)
+use crate::dsp;
+
+fn convert_range(
+    value: f32,
+    input_range: RangeInclusive<f32>,
+    output_range: RangeInclusive<f32>,
+) -> f32 {
+    {
+        let in_min = *input_range.start();
+        let in_max = *input_range.end();
+        let out_min = *output_range.start();
+        let out_max = *output_range.end();
+        ((((value - in_min) * (out_max - out_min)) / (in_max - in_min)) + out_min)
+            .clamp(out_min, out_max)
+    }
 }
 
+/// Start the leap motion thread
 pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         let mut connection =
@@ -30,19 +44,43 @@ pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()>
                             HandType::Left => {
                                 let position = hand.palm().position();
 
-                                controls.note =
-                                    convert_range(position.y(), 100.0, 600.0, 34.0, 72.0);
+                                controls.detune = convert_range(
+                                    position.x(),
+                                    -100.0..=100.0,
+                                    dsp::Controls::detune_range(),
+                                );
+
+                                controls.note = convert_range(
+                                    position.y(),
+                                    100.0..=600.0,
+                                    dsp::Controls::note_range(),
+                                );
+
+                                controls.supersaw = convert_range(
+                                    position.z(),
+                                    100.0..=-100.0,
+                                    dsp::Controls::supersaw_range(),
+                                );
                             }
                             HandType::Right => {
                                 let position = hand.palm().position();
 
-                                controls.cutoff_note =
-                                    convert_range(position.x(), -100.0, 100.0, -20.0, 20.0);
+                                controls.cutoff_note = convert_range(
+                                    position.x(),
+                                    -100.0..=100.0,
+                                    dsp::Controls::cutoff_range(),
+                                );
 
-                                controls.volume =
-                                    convert_range(position.y(), 200.0, 300.0, -96.0, 0.0);
-                                controls.resonance =
-                                    convert_range(position.z(), 100.0, -100.0, 1.0, 30.0);
+                                controls.volume = convert_range(
+                                    position.y(),
+                                    200.0..=300.0,
+                                    dsp::Controls::volume_range(),
+                                );
+                                controls.resonance = convert_range(
+                                    position.z(),
+                                    100.0..=-100.0,
+                                    dsp::Controls::resonance_range(),
+                                );
                             }
                         }
                     }

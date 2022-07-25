@@ -49,16 +49,32 @@ impl eframe::App for Leapotron {
             ui.add(crate::ui_keyboard::Keyboard::new(controls.note));
 
             ui.horizontal_top(|ui| {
-                egui::plot::Plot::new("filter_plot")
-                    //.include_x(-20.0)
+                egui::plot::Plot::new("lh_hond")
                     .allow_boxed_zoom(false)
                     .allow_drag(false)
                     .allow_scroll(false)
                     .allow_zoom(false)
-                    .include_x(21.0)
-                    .include_x(-21.0)
-                    .include_y(0.0)
-                    .include_y(31.0)
+                    .include_x(*dsp::Controls::detune_range().start())
+                    .include_x(*dsp::Controls::detune_range().end())
+                    .include_y(*dsp::Controls::supersaw_range().start())
+                    .include_y(*dsp::Controls::supersaw_range().end())
+                    .legend(Legend::default())
+                    .show_axes([false, false])
+                    .width(200.0)
+                    .height(200.0)
+                    .show(ui, |plot_ui| {
+                        plot_ui.vline(VLine::new(controls.detune).name("Detune"));
+                        plot_ui.hline(HLine::new(controls.supersaw).name("Supersaw"));
+                    });
+                egui::plot::Plot::new("rh_plot")
+                    .allow_boxed_zoom(false)
+                    .allow_drag(false)
+                    .allow_scroll(false)
+                    .allow_zoom(false)
+                    .include_x(*dsp::Controls::cutoff_range().start())
+                    .include_x(*dsp::Controls::cutoff_range().end())
+                    .include_y(*dsp::Controls::resonance_range().start())
+                    .include_y(*dsp::Controls::resonance_range().end())
                     .legend(Legend::default())
                     .show_axes([false, false])
                     .width(200.0)
@@ -69,7 +85,7 @@ impl eframe::App for Leapotron {
                         //plot_ui.line(cutoff_line.into());
                     });
                 ui.add(
-                    egui::Slider::new(&mut controls.volume, -96.0..=0.)
+                    egui::Slider::new(&mut controls.volume, dsp::Controls::volume_range())
                         .show_value(false)
                         .text("Volume")
                         .vertical(),
