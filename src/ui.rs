@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use egui::plot::{HLine, Legend, VLine};
 use faust_state::StateHandle;
 
 pub struct Leapotron {
@@ -50,7 +51,25 @@ impl eframe::App for Leapotron {
             ui.add(egui::Slider::new(&mut volume, -96.0..=0.).text("Volume"));
             ui.add(egui::Slider::new(&mut note, 0.0..=127.0).text("Note"));
             ui.add(egui::Slider::new(&mut cutoff_note, -20.0..=20.0).text("Cutoff"));
-            ui.add(egui::Slider::new(&mut res, 1.0..=20.0).text("Resonance"));
+            ui.add(egui::Slider::new(&mut res, 1.0..=30.0).text("Resonance"));
+
+            egui::plot::Plot::new("filter_plot")
+                //.include_x(-20.0)
+                .allow_boxed_zoom(false)
+                .allow_drag(false)
+                .allow_scroll(false)
+                .allow_zoom(false)
+                .include_x(21.0)
+                .include_x(-21.0)
+                .include_y(0.0)
+                .include_y(31.0)
+                .legend(Legend::default())
+                .show_axes([false, false])
+                .show(ui, |plot_ui| {
+                    plot_ui.vline(VLine::new(cutoff_note).name("Cutoff"));
+                    plot_ui.hline(HLine::new(res).name("Resonance"));
+                    //plot_ui.line(cutoff_line.into());
+                });
             egui::warn_if_debug_build(ui);
         });
 
