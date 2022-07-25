@@ -1,3 +1,4 @@
+use std::ops::RangeInclusive;
 use std::slice;
 
 use cpal::traits::{DeviceTrait, HostTrait};
@@ -9,9 +10,11 @@ const NOTE: &str = "note";
 const VOLUME: &str = "volume";
 const CUTOFF_NOTE: &str = "cutoff_note";
 const RESONANCE: &str = "res";
+const SUPERSAW: &str = "supersaw";
+const DETUNE: &str = "detune";
 
 /// DSP controls
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Controls {
     /// Midi note, 0-127
     pub note: f32,
@@ -21,6 +24,10 @@ pub struct Controls {
     pub cutoff_note: f32,
     /// Filter resonnance, 1-30
     pub resonance: f32,
+    /// Supersaw volume
+    pub supersaw: f32,
+    /// Supersaw detune
+    pub detune: f32,
 }
 
 impl Controls {
@@ -31,6 +38,8 @@ impl Controls {
         self.volume = *state.get_by_path(VOLUME).unwrap();
         self.cutoff_note = *state.get_by_path(CUTOFF_NOTE).unwrap();
         self.resonance = *state.get_by_path(RESONANCE).unwrap();
+        self.supersaw = *state.get_by_path(SUPERSAW).unwrap();
+        self.detune = *state.get_by_path(DETUNE).unwrap();
     }
 
     pub fn write(&self, state: &mut StateHandle) {
@@ -38,7 +47,33 @@ impl Controls {
         state.set_by_path(VOLUME, self.volume).unwrap();
         state.set_by_path(CUTOFF_NOTE, self.cutoff_note).unwrap();
         state.set_by_path(RESONANCE, self.resonance).unwrap();
+        state.set_by_path(SUPERSAW, self.supersaw).unwrap();
+        state.set_by_path(DETUNE, self.detune).unwrap();
         state.send();
+    }
+
+    pub fn note_range() -> RangeInclusive<f32> {
+        34.0..=72.0
+    }
+
+    pub fn volume_range() -> RangeInclusive<f32> {
+        -96.0..=0.0
+    }
+
+    pub fn cutoff_range() -> RangeInclusive<f32> {
+        -20.0..=60.0
+    }
+
+    pub fn resonance_range() -> RangeInclusive<f32> {
+        1.0..=30.0
+    }
+
+    pub fn supersaw_range() -> RangeInclusive<f32> {
+        0.0..=1.0
+    }
+
+    pub fn detune_range() -> RangeInclusive<f32> {
+        0.0..=0.1
     }
 }
 
