@@ -32,7 +32,7 @@ fn main() {
 
     // Init sound output
     let stream = dsp::run_dsp(dsp);
-    stream.play().expect("Failed to play silence");
+    stream.play().expect("Failed to play stream");
 
     // Init leap thread
     let _leap_worker = leap::start_leap_worker(state.clone());
