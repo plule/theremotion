@@ -45,30 +45,40 @@ impl eframe::App for Leapotron {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
+            ui.horizontal_top(|ui| {
+                ui.add(
+                    egui::Slider::new(&mut controls.note, 0.0..=127.0)
+                        .show_value(false)
+                        .text("Note")
+                        .vertical(),
+                );
+                egui::plot::Plot::new("filter_plot")
+                    //.include_x(-20.0)
+                    .allow_boxed_zoom(false)
+                    .allow_drag(false)
+                    .allow_scroll(false)
+                    .allow_zoom(false)
+                    .include_x(21.0)
+                    .include_x(-21.0)
+                    .include_y(0.0)
+                    .include_y(31.0)
+                    .legend(Legend::default())
+                    .show_axes([false, false])
+                    .width(200.0)
+                    .height(200.0)
+                    .show(ui, |plot_ui| {
+                        plot_ui.vline(VLine::new(controls.cutoff_note).name("Cutoff"));
+                        plot_ui.hline(HLine::new(controls.resonance).name("Resonance"));
+                        //plot_ui.line(cutoff_line.into());
+                    });
+                ui.add(
+                    egui::Slider::new(&mut controls.volume, -96.0..=0.)
+                        .show_value(false)
+                        .text("Volume")
+                        .vertical(),
+                );
+            });
 
-            ui.add(egui::Slider::new(&mut controls.volume, -96.0..=0.).text("Volume"));
-            ui.add(egui::Slider::new(&mut controls.note, 0.0..=127.0).text("Note"));
-            ui.add(egui::Slider::new(&mut controls.cutoff_note, -20.0..=20.0).text("Cutoff"));
-            ui.add(egui::Slider::new(&mut controls.resonance, 1.0..=30.0).text("Resonance"));
-
-            egui::plot::Plot::new("filter_plot")
-                //.include_x(-20.0)
-                .allow_boxed_zoom(false)
-                .allow_drag(false)
-                .allow_scroll(false)
-                .allow_zoom(false)
-                .include_x(21.0)
-                .include_x(-21.0)
-                .include_y(0.0)
-                .include_y(31.0)
-                .legend(Legend::default())
-                .show_axes([false, false])
-                .show(ui, |plot_ui| {
-                    plot_ui.vline(VLine::new(controls.cutoff_note).name("Cutoff"));
-                    plot_ui.hline(HLine::new(controls.resonance).name("Resonance"));
-                    //plot_ui.line(cutoff_line.into());
-                });
             egui::warn_if_debug_build(ui);
         });
 
