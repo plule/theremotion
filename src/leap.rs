@@ -11,10 +11,6 @@ fn convert_range(value: f32, in_min: f32, in_max: f32, out_min: f32, out_max: f3
         .clamp(out_min, out_max)
 }
 
-fn midi_to_freq(midi: f32) -> f32 {
-    440.0 * 2.0_f32.powf((midi - 69.0) / 12.0)
-}
-
 pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         let mut connection =
@@ -42,18 +38,13 @@ pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()>
                             HandType::Left => {
                                 let position = hand.palm().position();
 
-                                note = convert_range(position.y(), 100.0, 800.0, 22.0, 60.0);
+                                note = convert_range(position.y(), 100.0, 600.0, 34.0, 72.0);
                             }
                             HandType::Right => {
                                 let position = hand.palm().position();
 
-                                cutoff_note = convert_range(
-                                    hand.grab_angle(),
-                                    std::f32::consts::PI,
-                                    0.0,
-                                    -20.0,
-                                    20.0,
-                                );
+                                cutoff_note =
+                                    convert_range(position.x(), -100.0, 100.0, -20.0, 20.0);
 
                                 volume = convert_range(position.y(), 200.0, 300.0, -96.0, 0.0);
                                 res = convert_range(position.z(), 100.0, -100.0, 1.0, 30.0);
