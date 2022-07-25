@@ -24,14 +24,16 @@ pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()>
             if let Ok(message) = connection.poll(1000) {
                 if let Event::Tracking(e) = message.event() {
                     let mut volume;
-                    let mut freq;
-                    let mut cutoff;
+                    let mut note;
+                    let mut cutoff_note;
                     let mut res;
                     {
                         let dsp = dsp.lock().expect("DSP thread poisened");
                         volume = *dsp.get_by_path("volume").expect("Failed to read volume");
-                        freq = *dsp.get_by_path("freq").expect("Failed to read freq");
-                        cutoff = *dsp.get_by_path("cutoff").expect("Failed to read cutoff");
+                        note = *dsp.get_by_path("note").expect("Failed to read freq");
+                        cutoff_note = *dsp
+                            .get_by_path("cutoff_note")
+                            .expect("Failed to read cutoff");
                         res = *dsp.get_by_path("res").expect("Failed to read res");
                     }
 
@@ -40,21 +42,18 @@ pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()>
                             HandType::Left => {
                                 let position = hand.palm().position();
 
-                                let midi_note =
-                                    convert_range(position.y(), 100.0, 500.0, 48.0, 72.0);
-                                freq = midi_to_freq(midi_note);
+                                note = convert_range(position.y(), 100.0, 800.0, 22.0, 60.0);
                             }
                             HandType::Right => {
                                 let position = hand.palm().position();
 
-                                let cutoff_note = convert_range(
+                                cutoff_note = convert_range(
                                     hand.grab_angle(),
                                     std::f32::consts::PI,
                                     0.0,
-                                    36.0,
-                                    72.0,
+                                    -20.0,
+                                    20.0,
                                 );
-                                cutoff = midi_to_freq(cutoff_note);
 
                                 volume = convert_range(position.y(), 200.0, 300.0, -96.0, 0.0);
                                 res = convert_range(position.z(), 100.0, -100.0, 1.0, 30.0);
@@ -66,8 +65,8 @@ pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()>
                         let mut dsp = dsp.lock().expect("DSP thread poisened");
                         dsp.set_by_path("volume", volume)
                             .expect("Failed to set volume.");
-                        dsp.set_by_path("freq", freq).expect("Failed to set freq.");
-                        dsp.set_by_path("cutoff", cutoff)
+                        dsp.set_by_path("note", note).expect("Failed to set freq.");
+                        dsp.set_by_path("cutoff_note", cutoff_note)
                             .expect("Failed to set cutoff");
                         dsp.set_by_path("res", res)
                             .expect("Failed to set resonnance");
