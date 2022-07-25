@@ -21,7 +21,7 @@ supersaw_volume = supersaw / 3;
 saw_volume = 1 - supersaw_volume * 2;
 
 saw1 = os.sawtooth(freq);
-saw2 = os.sawtooth(freq * (1 + detune * 2)) * supersaw;
-saw3 = os.sawtooth(freq * (1 + detune * 2)) * supersaw;
+saw2 = os.sawtooth(freq * (1 + detune)) * supersaw;
+saw3 = os.sawtooth(freq * (1 - detune)) * supersaw;
 
 process = saw1, saw2, saw3 :> fi.resonlp(cutoff, q, 1) * vol;

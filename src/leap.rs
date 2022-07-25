@@ -46,7 +46,7 @@ pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()>
 
                                 controls.detune = convert_range(
                                     position.x(),
-                                    -100.0..=100.0,
+                                    -200.0..=0.0,
                                     dsp::Controls::detune_range(),
                                 );
 
@@ -67,7 +67,7 @@ pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()>
 
                                 controls.cutoff_note = convert_range(
                                     position.x(),
-                                    -100.0..=100.0,
+                                    0.0..=200.0,
                                     dsp::Controls::cutoff_range(),
                                 );
 
