@@ -1,9 +1,9 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-mod app;
 mod dsp;
 mod leap;
+mod ui;
 
 #[allow(clippy::all)]
 mod faust {
@@ -41,6 +41,6 @@ fn main() {
     eframe::run_native(
         "eframe template",
         native_options,
-        Box::new(move |cc| Box::new(app::Leapotron::new(cc, state))),
+        Box::new(move |cc| Box::new(ui::Leapotron::new(cc, state))),
     );
 }
