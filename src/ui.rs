@@ -45,13 +45,10 @@ impl eframe::App for Leapotron {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
+            ui.style_mut().spacing.slider_width = 200.0;
+            ui.add(crate::ui_keyboard::Keyboard::new(controls.note));
+
             ui.horizontal_top(|ui| {
-                ui.add(
-                    egui::Slider::new(&mut controls.note, 0.0..=127.0)
-                        .show_value(false)
-                        .text("Note")
-                        .vertical(),
-                );
                 egui::plot::Plot::new("filter_plot")
                     //.include_x(-20.0)
                     .allow_boxed_zoom(false)
