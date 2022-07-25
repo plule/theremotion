@@ -49,6 +49,12 @@ impl eframe::App for Leapotron {
             ui.add(crate::ui_keyboard::Keyboard::new(controls.note));
 
             ui.horizontal_top(|ui| {
+                ui.add(
+                    egui::Slider::new(&mut controls.note, dsp::Controls::note_range())
+                        .show_value(false)
+                        .text("Pitch")
+                        .vertical(),
+                );
                 egui::plot::Plot::new("lh_hond")
                     .allow_boxed_zoom(false)
                     .allow_drag(false)
@@ -82,7 +88,6 @@ impl eframe::App for Leapotron {
                     .show(ui, |plot_ui| {
                         plot_ui.vline(VLine::new(controls.cutoff_note).name("Cutoff"));
                         plot_ui.hline(HLine::new(controls.resonance).name("Resonance"));
-                        //plot_ui.line(cutoff_line.into());
                     });
                 ui.add(
                     egui::Slider::new(&mut controls.volume, dsp::Controls::volume_range())
@@ -94,12 +99,6 @@ impl eframe::App for Leapotron {
 
             egui::warn_if_debug_build(ui);
         });
-
-        // Send any changes to the DSP
-        {
-            let mut dsp = dsp.lock().expect("DSP thread poisened");
-            controls.write(&mut dsp);
-        }
 
         ctx.request_repaint();
     }

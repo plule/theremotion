@@ -40,7 +40,7 @@ fn main() {
     // Start UI
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
-        "eframe template",
+        "Leapotron",
         native_options,
         Box::new(move |cc| Box::new(ui::Leapotron::new(cc, state))),
     );
