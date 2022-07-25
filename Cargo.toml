@@ -13,6 +13,7 @@ cpal = "0.13.5"
 faust-types = { git = "https://github.com/Frando/rust-faust" }
 faust-state = { git = "https://github.com/Frando/rust-faust" }
 leaprs = "0.0.3"
+music-note = "0.3.0"
 
 [build-dependencies]
 faust-build = { git = "https://github.com/Frando/rust-faust" }

@@ -892,6 +892,7 @@ dependencies = [
  "faust-state",
  "faust-types",
  "leaprs",
+ "music-note",
  "tracing-subscriber",
 ]
 
@@ -1033,6 +1034,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9f1c5b025cda876f66ef43a113f91ebc9f4ccef34843000e0adf6ebbab84e21"
 dependencies = [
  "winapi",
+]
+
+[[package]]
+name = "music-note"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1cb69e31b7694eb9ecd221aa4afeda49ae82bffb6a135753e51d90d713ae1f5f"
+dependencies = [
+ "num-traits",
 ]
 
 [[package]]

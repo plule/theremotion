@@ -4,6 +4,7 @@
 mod dsp;
 mod leap;
 mod ui;
+mod ui_keyboard;
 
 #[allow(clippy::all)]
 mod faust {
