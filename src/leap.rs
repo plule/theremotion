@@ -24,6 +24,25 @@ fn convert_range(
     }
 }
 
+/// Smooth step function loosely "sticking" the value to 0 or 1
+/// Assumes that value is between 0 and 1
+/// https://en.wikipedia.org/wiki/Smoothstep
+fn smoothstep(x: f32) -> f32 {
+    x * x * (3.0 - 2.0 * x)
+}
+
+/// Smooth stairs function loosely "sticking" the value to integer values
+pub fn smoothstairs(value: f32, amount: usize) -> f32 {
+    let value_int = value.floor();
+    let mut value_f = value - value_int;
+
+    for _ in 0..amount {
+        value_f = smoothstep(value_f)
+    }
+
+    value_int + value_f
+}
+
 /// Start the leap motion thread
 pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()> {
     thread::spawn(move || {
@@ -55,6 +74,7 @@ pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()>
                                     100.0..=600.0,
                                     dsp::Controls::note_range(),
                                 );
+                                controls.note = smoothstairs(controls.note, 2);
 
                                 controls.supersaw = convert_range(
                                     position.z(),

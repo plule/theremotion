@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use egui::plot::{HLine, Legend, VLine};
+use egui::plot::{HLine, Legend, Line, VLine, Value, Values};
 use faust_state::StateHandle;
 
 use crate::dsp;
@@ -96,6 +96,29 @@ impl eframe::App for Leapotron {
                         .vertical(),
                 );
             });
+
+            let smooths = (0..1000).map(|i| {
+                let x = i as f32 * 0.1;
+                Value::new(x, crate::leap::smoothstairs(x, 2))
+            });
+            let line = Line::new(Values::from_values_iter(smooths));
+
+            egui::plot::Plot::new("rh_plot")
+                .allow_boxed_zoom(false)
+                .allow_drag(false)
+                .allow_scroll(false)
+                .allow_zoom(false)
+                .include_x(*dsp::Controls::note_range().start())
+                .include_x(*dsp::Controls::note_range().end())
+                .include_y(*dsp::Controls::note_range().start())
+                .include_y(*dsp::Controls::note_range().end())
+                .legend(Legend::default())
+                .show_axes([false, false])
+                .width(400.0)
+                .height(400.0)
+                .show(ui, |plot_ui| {
+                    plot_ui.line(line);
+                });
 
             egui::warn_if_debug_build(ui);
         });
