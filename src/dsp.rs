@@ -32,7 +32,7 @@ pub struct Controls {
 
 impl Controls {
     /// Read the current control states from the DSP
-    pub fn read(&mut self, state: &mut StateHandle) {
+    pub fn receive(&mut self, state: &mut StateHandle) {
         state.update();
         self.note = *state.get_by_path(NOTE).unwrap();
         self.volume = *state.get_by_path(VOLUME).unwrap();
@@ -42,7 +42,7 @@ impl Controls {
         self.detune = *state.get_by_path(DETUNE).unwrap();
     }
 
-    pub fn write(&self, state: &mut StateHandle) {
+    pub fn send(&self, state: &mut StateHandle) {
         state.set_by_path(NOTE, self.note).unwrap();
         state.set_by_path(VOLUME, self.volume).unwrap();
         state.set_by_path(CUTOFF_NOTE, self.cutoff_note).unwrap();
@@ -77,6 +77,7 @@ impl Controls {
     }
 }
 
+/// Run the DSP thread
 pub fn run_dsp<T>(mut dsp: Box<DspHandle<T>>) -> cpal::Stream
 where
     T: FaustDsp<T = f32> + 'static + Send,

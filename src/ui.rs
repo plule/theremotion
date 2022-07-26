@@ -1,22 +1,30 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{mpsc::Sender, Arc, Mutex};
 
 use egui::plot::{HLine, Legend, Line, VLine, Value, Values};
 use faust_state::StateHandle;
 
-use crate::dsp;
+use crate::{dsp, settings::Settings};
 
 pub struct Leapotron {
     dsp: Arc<Mutex<StateHandle>>,
     controls: dsp::Controls,
+    settings: Settings,
+    settings_tx: Sender<Settings>,
 }
 
 impl Leapotron {
     /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>, dsp: Arc<Mutex<StateHandle>>) -> Self {
+    pub fn new(
+        cc: &eframe::CreationContext<'_>,
+        dsp: Arc<Mutex<StateHandle>>,
+        settings_tx: Sender<Settings>,
+    ) -> Self {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
         Self {
             dsp,
+            settings_tx,
             controls: dsp::Controls::default(),
+            settings: Settings::default(),
         }
     }
 }
@@ -25,16 +33,20 @@ impl eframe::App for Leapotron {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        let Self { dsp, controls } = self;
+        let Self {
+            dsp,
+            controls,
+            settings,
+            settings_tx,
+        } = self;
 
         // Update the current control state from the DSP
         {
             let mut dsp = dsp.lock().expect("DSP thread poisened");
-            controls.read(&mut dsp);
+            controls.receive(&mut dsp);
         }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("Quit").clicked() {
@@ -97,13 +109,21 @@ impl eframe::App for Leapotron {
                 );
             });
 
-            let smooths = (0..1000).map(|i| {
-                let x = i as f32 * 0.1;
-                Value::new(x, crate::leap::smoothstairs(x, 2))
-            });
+            ui.add(
+                egui::Slider::new(&mut settings.autotune_strength, 0..=5)
+                    .integer()
+                    .text("Autotune Strength"),
+            );
+
+            let smooths = (*dsp::Controls::note_range().start() as usize * 10
+                ..*dsp::Controls::note_range().end() as usize * 10)
+                .map(|i| {
+                    let x = i as f32 * 0.1;
+                    Value::new(x, crate::leap::smoothstairs(x, settings.autotune_strength))
+                });
             let line = Line::new(Values::from_values_iter(smooths));
 
-            egui::plot::Plot::new("rh_plot")
+            egui::plot::Plot::new("autotune_plot")
                 .allow_boxed_zoom(false)
                 .allow_drag(false)
                 .allow_scroll(false)
@@ -122,7 +142,7 @@ impl eframe::App for Leapotron {
 
             egui::warn_if_debug_build(ui);
         });
-
+        settings_tx.send(settings.clone()).unwrap();
         ctx.request_repaint();
     }
 }
