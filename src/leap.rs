@@ -1,13 +1,13 @@
 use std::{
     ops::RangeInclusive,
-    sync::{Arc, Mutex},
+    sync::{mpsc::Receiver, Arc, Mutex},
     thread,
 };
 
 use faust_state::StateHandle;
 use leaprs::*;
 
-use crate::dsp;
+use crate::{dsp, settings::Settings};
 
 fn convert_range(
     value: f32,
@@ -44,18 +44,26 @@ pub fn smoothstairs(value: f32, amount: usize) -> f32 {
 }
 
 /// Start the leap motion thread
-pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()> {
+pub fn start_leap_worker(
+    dsp: Arc<Mutex<StateHandle>>,
+    settings_rx: Receiver<Settings>,
+) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         let mut connection =
             Connection::create(ConnectionConfig::default()).expect("Failed to connect");
         connection.open().expect("Failed to open the connection");
         let mut controls = crate::dsp::Controls::default();
+        let mut settings = Settings::default();
         loop {
             if let Ok(message) = connection.poll(1000) {
                 if let Event::Tracking(e) = message.event() {
                     {
                         let mut dsp = dsp.lock().expect("DSP thread poisened");
-                        controls.read(&mut dsp);
+                        controls.receive(&mut dsp);
+                    }
+
+                    if let Some(new_settings) = settings_rx.try_iter().last() {
+                        settings = new_settings;
                     }
 
                     for hand in e.hands() {
@@ -74,7 +82,8 @@ pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()>
                                     100.0..=600.0,
                                     dsp::Controls::note_range(),
                                 );
-                                controls.note = smoothstairs(controls.note, 2);
+                                controls.note =
+                                    smoothstairs(controls.note, settings.autotune_strength);
 
                                 controls.supersaw = convert_range(
                                     position.z(),
@@ -107,7 +116,7 @@ pub fn start_leap_worker(dsp: Arc<Mutex<StateHandle>>) -> thread::JoinHandle<()>
 
                     {
                         let mut dsp = dsp.lock().expect("DSP thread poisened");
-                        controls.write(&mut dsp);
+                        controls.send(&mut dsp);
                     }
                 }
             }

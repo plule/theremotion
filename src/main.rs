@@ -3,6 +3,7 @@
 
 mod dsp;
 mod leap;
+mod settings;
 mod ui;
 mod ui_keyboard;
 
@@ -11,7 +12,7 @@ mod faust {
     include!(concat!(env!("OUT_DIR"), "/dsp.rs"));
 }
 
-use std::sync::{Arc, Mutex};
+use std::sync::{mpsc, Arc, Mutex};
 
 use cpal::traits::StreamTrait;
 use faust_state::DspHandle;
@@ -28,6 +29,7 @@ fn main() {
         println!("{}", p.0);
     });
 
+    let (settings_tx, settings_rx) = mpsc::channel();
     let state = Arc::new(Mutex::new(state));
 
     // Init sound output
@@ -35,13 +37,13 @@ fn main() {
     stream.play().expect("Failed to play stream");
 
     // Init leap thread
-    let _leap_worker = leap::start_leap_worker(state.clone());
+    let _leap_worker = leap::start_leap_worker(state.clone(), settings_rx);
 
     // Start UI
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
         "Leapotron",
         native_options,
-        Box::new(move |cc| Box::new(ui::Leapotron::new(cc, state))),
+        Box::new(move |cc| Box::new(ui::Leapotron::new(cc, state, settings_tx))),
     );
 }
