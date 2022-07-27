@@ -5,11 +5,14 @@ use music_note::{midi::MidiNote, Pitch};
 pub struct Keyboard {
     /// Currently played midi note
     pub note: f32,
+
+    /// Current scale
+    pub scale: Vec<MidiNote>,
 }
 
 impl Keyboard {
-    pub fn new(note: f32) -> Self {
-        Self { note }
+    pub fn new(note: f32, scale: Vec<MidiNote>) -> Self {
+        Self { note, scale }
     }
 
     fn draw_key(&self, ui: &mut egui::Ui, key_dimension: &egui::Vec2, note: &MidiNote) {
@@ -18,7 +21,10 @@ impl Keyboard {
         let note_float = note_byte as f32;
         let note_distance = (note_float - self.note).abs().clamp(0.0, 1.0);
 
-        let color = Color32::from_gray(((1.0 - note_distance) * 255.0) as u8);
+        let red = ((1.0 - note_distance) * 255.0) as u8;
+        let blue = if self.scale.contains(note) { 255 } else { 0 };
+
+        let color = Color32::from_rgb(red, 0, blue);
         let (rect, mut response) = ui.allocate_exact_size(*key_dimension, egui::Sense::click());
         if response.clicked() {
             response.mark_changed();
