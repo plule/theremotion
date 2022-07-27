@@ -6,6 +6,7 @@ use std::{
 
 use faust_state::StateHandle;
 use leaprs::*;
+use music_note::midi::MidiNote;
 
 use crate::{dsp, settings::Settings};
 
@@ -27,20 +28,27 @@ fn convert_range(
 /// Smooth step function loosely "sticking" the value to 0 or 1
 /// Assumes that value is between 0 and 1
 /// https://en.wikipedia.org/wiki/Smoothstep
-fn smoothstep(x: f32) -> f32 {
+fn smoothstep(interval: &RangeInclusive<f32>, x: f32) -> f32 {
+    let x = (x - interval.start()) / (interval.end() - interval.start());
     x * x * (3.0 - 2.0 * x)
 }
 
-/// Smooth stairs function loosely "sticking" the value to integer values
-pub fn smoothstairs(value: f32, amount: usize) -> f32 {
-    let value_int = value.floor();
-    let mut value_f = value - value_int;
+pub fn smoothstairs(value: f32, amount: usize, scale: Vec<MidiNote>) -> f32 {
+    let scale: Vec<_> = scale
+        .windows(2)
+        .map(|w| (w[0].into_byte() as f32)..=(w[1].into_byte() as f32))
+        .collect();
 
-    for _ in 0..amount {
-        value_f = smoothstep(value_f)
+    if let Some(interval) = scale.iter().find(|interval| interval.contains(&value)) {
+        let mut value = value;
+
+        for _ in 0..amount {
+            let smooth = smoothstep(interval, value);
+            value = interval.start() + smooth * (interval.end() - interval.start());
+        }
+        return value;
     }
-
-    value_int + value_f
+    value
 }
 
 /// Start the leap motion thread
@@ -77,13 +85,16 @@ pub fn start_leap_worker(
                                     dsp::Controls::detune_range(),
                                 );
 
-                                controls.note = convert_range(
+                                let raw_note = convert_range(
                                     position.y(),
                                     100.0..=600.0,
                                     dsp::Controls::note_range(),
                                 );
-                                controls.note =
-                                    smoothstairs(controls.note, settings.autotune_strength);
+                                controls.note = smoothstairs(
+                                    raw_note,
+                                    settings.autotune_strength,
+                                    settings.scale_notes(),
+                                );
 
                                 controls.supersaw = convert_range(
                                     position.z(),

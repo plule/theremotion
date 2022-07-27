@@ -3,7 +3,10 @@ use std::sync::{mpsc::Sender, Arc, Mutex};
 use egui::plot::{HLine, Legend, Line, VLine, Value, Values};
 use faust_state::StateHandle;
 
-use crate::{dsp, settings::Settings};
+use crate::{
+    dsp,
+    settings::{ScaleType, Settings},
+};
 
 pub struct Leapotron {
     dsp: Arc<Mutex<StateHandle>>,
@@ -58,7 +61,10 @@ impl eframe::App for Leapotron {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.style_mut().spacing.slider_width = 200.0;
-            ui.add(crate::ui_keyboard::Keyboard::new(controls.note));
+            ui.add(crate::ui_keyboard::Keyboard::new(
+                controls.note,
+                settings.scale_notes(),
+            ));
 
             ui.horizontal_top(|ui| {
                 ui.add(
@@ -115,11 +121,23 @@ impl eframe::App for Leapotron {
                     .text("Autotune Strength"),
             );
 
+            ui.selectable_value(&mut settings.scale, ScaleType::Chromatic, "Chromatic");
+            ui.selectable_value(&mut settings.scale, ScaleType::Major, "Major");
+            ui.selectable_value(&mut settings.scale, ScaleType::Minor, "Minor");
+            ui.selectable_value(&mut settings.scale, ScaleType::Blues, "Blues");
+
             let smooths = (*dsp::Controls::note_range().start() as usize * 10
                 ..*dsp::Controls::note_range().end() as usize * 10)
                 .map(|i| {
                     let x = i as f32 * 0.1;
-                    Value::new(x, crate::leap::smoothstairs(x, settings.autotune_strength))
+                    Value::new(
+                        x,
+                        crate::leap::smoothstairs(
+                            x,
+                            settings.autotune_strength,
+                            settings.scale_notes(),
+                        ),
+                    )
                 });
             let line = Line::new(Values::from_values_iter(smooths));
 
