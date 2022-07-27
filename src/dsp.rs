@@ -12,6 +12,7 @@ const CUTOFF_NOTE: &str = "cutoff_note";
 const RESONANCE: &str = "res";
 const SUPERSAW: &str = "supersaw";
 const DETUNE: &str = "detune";
+const SUB_VOLUME: &str = "sub_volume";
 
 /// DSP controls
 #[derive(Default, Debug)]
@@ -28,6 +29,8 @@ pub struct Controls {
     pub supersaw: f32,
     /// Supersaw detune
     pub detune: f32,
+    /// Subosc volume
+    pub sub_volume: f32,
 }
 
 impl Controls {
@@ -40,6 +43,7 @@ impl Controls {
         self.resonance = *state.get_by_path(RESONANCE).unwrap();
         self.supersaw = *state.get_by_path(SUPERSAW).unwrap();
         self.detune = *state.get_by_path(DETUNE).unwrap();
+        self.sub_volume = *state.get_by_path(SUB_VOLUME).unwrap();
     }
 
     pub fn send(&self, state: &mut StateHandle) {
@@ -49,6 +53,7 @@ impl Controls {
         state.set_by_path(RESONANCE, self.resonance).unwrap();
         state.set_by_path(SUPERSAW, self.supersaw).unwrap();
         state.set_by_path(DETUNE, self.detune).unwrap();
+        state.set_by_path(SUB_VOLUME, self.sub_volume).unwrap();
         state.send();
     }
 
@@ -74,6 +79,10 @@ impl Controls {
 
     pub fn detune_range() -> RangeInclusive<f32> {
         0.0..=0.1
+    }
+
+    pub fn sub_volume_range() -> RangeInclusive<f32> {
+        -96.0..=0.0
     }
 }
 

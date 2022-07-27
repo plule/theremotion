@@ -7,6 +7,7 @@ import("stdfaust.lib");
 
 note = hslider("note", 60, 0, 127, 0.01) : si.smoo;
 vol = hslider("volume [unit:dB]", -25, -96, 0, 0.01) : ba.db2linear : si.smoo;
+sub_volume = hslider("sub_volume [unit:dB]",  -25, -96, 0, 0.01) : ba.db2linear : si.smoo;
 cutoff_note = hslider("cutoff_note", 0, -20, 50, 0.01) : si.smoo;
 q = hslider("res", 1, 1, 30, 0.01);
 saw_res = hslider("saw_res", 1, 0, 40, 0.1);
@@ -24,4 +25,10 @@ saw1 = os.sawtooth(freq);
 saw2 = os.sawtooth(freq * (1 + detune)) * supersaw;
 saw3 = os.sawtooth(freq * (1 - detune)) * supersaw;
 
-process = saw1, saw2, saw3 :> fi.resonlp(cutoff, q, 1) * vol;
+lead = (saw1 + saw2 + saw3);
+
+// Sub
+sub_note = note;
+sub = os.triangle(sub_note) * sub_volume;
+
+process = lead + sub  : fi.resonlp(cutoff, q, 1)* vol;
