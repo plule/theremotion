@@ -121,6 +121,11 @@ pub fn start_leap_worker(
                                     100.0..=-100.0,
                                     dsp::Controls::resonance_range(),
                                 );
+                                controls.sub_volume = convert_range(
+                                    hand.grab_angle(),
+                                    std::f32::consts::PI..=0.0,
+                                    dsp::Controls::sub_volume_range(),
+                                );
                             }
                         }
                     }
