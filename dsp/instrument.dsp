@@ -31,5 +31,5 @@ lead = (saw1 + saw2 + saw3);
 sub_freq = ba.midikey2hz(note - 12);
 sub = os.oscsin(sub_freq) * sub_volume;
 
-n = lead + sub : ve.moog_vcf_2b(res, cutoff) * vol;
+n = lead + sub : ve.moog_vcf_2b(res, cutoff) : _ * vol : ef.echo(1.0, 0.3, 0.3);
 process = n,n;

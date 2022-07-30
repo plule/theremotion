@@ -87,7 +87,7 @@ impl Controls {
 }
 
 /// Run the DSP thread
-pub fn run_dsp<T>(mut dsp: Box<DspHandle<T>>) -> cpal::Stream
+pub fn run_dsp<T>(mut dsp: DspHandle<T>) -> cpal::Stream
 where
     T: FaustDsp<T = f32> + 'static + Send,
 {

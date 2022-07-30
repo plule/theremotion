@@ -23,7 +23,6 @@ fn main() {
 
     // Init DSP
     let (dsp, state) = DspHandle::<faust::Instrument>::new();
-    let dsp = Box::new(dsp);
 
     state.params_by_path().for_each(|p| {
         println!("{}", p.0);
