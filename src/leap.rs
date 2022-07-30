@@ -123,7 +123,7 @@ pub fn start_leap_worker(
                                 );
                                 controls.sub_volume = convert_range(
                                     hand.grab_angle(),
-                                    std::f32::consts::PI..=0.0,
+                                    0.0..=std::f32::consts::PI,
                                     dsp::Controls::sub_volume_range(),
                                 );
                             }
