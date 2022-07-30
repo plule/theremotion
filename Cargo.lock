@@ -579,7 +579,7 @@ dependencies = [
 [[package]]
 name = "faust-build"
 version = "0.1.0"
-source = "git+https://github.com/Frando/rust-faust#b3238eabdb45f77d1cd27bfbdb90818935e71cfd"
+source = "git+https://github.com/plule/rust-faust?branch=box-dsp#a2d35aeadd88b39f4e8492af26b806d0c23e8d06"
 dependencies = [
  "heck",
  "tempfile",
@@ -588,7 +588,7 @@ dependencies = [
 [[package]]
 name = "faust-state"
 version = "0.1.0"
-source = "git+https://github.com/Frando/rust-faust#b3238eabdb45f77d1cd27bfbdb90818935e71cfd"
+source = "git+https://github.com/plule/rust-faust?branch=box-dsp#a2d35aeadd88b39f4e8492af26b806d0c23e8d06"
 dependencies = [
  "faust-types",
  "rtrb",
@@ -597,7 +597,7 @@ dependencies = [
 [[package]]
 name = "faust-types"
 version = "0.1.0"
-source = "git+https://github.com/Frando/rust-faust#b3238eabdb45f77d1cd27bfbdb90818935e71cfd"
+source = "git+https://github.com/plule/rust-faust?branch=box-dsp#a2d35aeadd88b39f4e8492af26b806d0c23e8d06"
 dependencies = [
  "jack",
  "libm",
