@@ -62,7 +62,7 @@ impl Controls {
     }
 
     pub fn volume_range() -> RangeInclusive<f32> {
-        -96.0..=0.0
+        0.0..=1.0
     }
 
     pub fn cutoff_range() -> RangeInclusive<f32> {
@@ -70,7 +70,7 @@ impl Controls {
     }
 
     pub fn resonance_range() -> RangeInclusive<f32> {
-        1.0..=30.0
+        0.0..=0.99
     }
 
     pub fn supersaw_range() -> RangeInclusive<f32> {
@@ -78,11 +78,11 @@ impl Controls {
     }
 
     pub fn detune_range() -> RangeInclusive<f32> {
-        0.0..=0.1
+        0.001..=0.02
     }
 
     pub fn sub_volume_range() -> RangeInclusive<f32> {
-        -96.0..=0.0
+        0.0..=1.0
     }
 }
 
