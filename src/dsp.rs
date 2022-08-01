@@ -9,14 +9,6 @@ use music_note::midi::MidiNote;
 
 use crate::settings::Settings;
 
-const NOTE: &str = "note";
-const VOLUME: &str = "volume";
-const CUTOFF_NOTE: &str = "cutoff_note";
-const RESONANCE: &str = "res";
-const SUPERSAW: &str = "supersaw";
-const DETUNE: &str = "detune";
-const SUB_VOLUME: &str = "sub_volume";
-
 fn convert_range(
     value: f32,
     input_range: RangeInclusive<f32>,
@@ -104,15 +96,23 @@ pub struct NoteControl {
 
     /// Name for the DSP
     pub path: String,
+
+    /// Raw note, without autotune
+    pub raw_value: f32,
+
+    /// Raw note path
+    pub raw_path: String,
 }
 
 impl NoteControl {
     pub fn receive(&mut self, state: &mut StateHandle) {
         self.value = *state.get_by_path(&self.path).unwrap();
+        self.raw_value = *state.get_by_path(&self.raw_path).unwrap();
     }
 
     pub fn send(&mut self, state: &mut StateHandle) {
         state.set_by_path(&self.path, self.value).unwrap();
+        state.set_by_path(&self.raw_path, self.raw_value).unwrap();
     }
 
     pub fn set_scaled(
@@ -122,16 +122,27 @@ impl NoteControl {
         settings: &Settings,
     ) {
         let range = settings.note_range_f();
-        let raw_note = convert_range(value, value_range, &range);
-        self.value = smoothstairs(raw_note, settings.autotune_strength, settings.scale_notes());
+        self.raw_value = convert_range(value, value_range, &range);
+        self.value = smoothstairs(
+            self.raw_value,
+            settings.autotune_strength,
+            settings.scale_notes(),
+        );
     }
 }
 
-impl From<&Node> for NoteControl {
-    fn from(node: &Node) -> Self {
-        let value = node.init_value();
-        let path = node.path();
-        Self { value, path }
+impl From<(&Node, &Node)> for NoteControl {
+    fn from(nodes: (&Node, &Node)) -> Self {
+        let value = nodes.0.init_value();
+        let path = nodes.0.path();
+        let raw_value = nodes.1.init_value();
+        let raw_path = nodes.1.path();
+        Self {
+            value,
+            path,
+            raw_value,
+            raw_path,
+        }
     }
 }
 
@@ -167,13 +178,17 @@ impl NodeByPath for StateHandle {
 impl From<&StateHandle> for Controls {
     fn from(state: &StateHandle) -> Self {
         Self {
-            note: state.node_by_path(NOTE).unwrap().into(),
-            volume: state.node_by_path(VOLUME).unwrap().into(),
-            cutoff_note: state.node_by_path(CUTOFF_NOTE).unwrap().into(),
-            resonance: state.node_by_path(RESONANCE).unwrap().into(),
-            supersaw: state.node_by_path(SUPERSAW).unwrap().into(),
-            detune: state.node_by_path(DETUNE).unwrap().into(),
-            sub_volume: state.node_by_path(SUB_VOLUME).unwrap().into(),
+            note: (
+                state.node_by_path("note").unwrap(),
+                state.node_by_path("raw_note").unwrap(),
+            )
+                .into(),
+            volume: state.node_by_path("volume").unwrap().into(),
+            cutoff_note: state.node_by_path("cutoff_note").unwrap().into(),
+            resonance: state.node_by_path("res").unwrap().into(),
+            supersaw: state.node_by_path("supersaw").unwrap().into(),
+            detune: state.node_by_path("detune").unwrap().into(),
+            sub_volume: state.node_by_path("sub_volume").unwrap().into(),
         }
     }
 }

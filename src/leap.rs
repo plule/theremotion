@@ -37,9 +37,12 @@ pub fn start_leap_worker(
                                 let position = hand.palm().position();
 
                                 controls.detune.set_scaled(position.x(), -200.0..=0.0);
-                                controls
-                                    .note
-                                    .set_scaled(position.y(), 100.0..=600.0, &settings);
+                                let note_input_range = 100.0..=600.0;
+                                controls.note.set_scaled(
+                                    position.y(),
+                                    note_input_range.to_owned(),
+                                    &settings,
+                                );
                                 controls.supersaw.set_scaled(position.z(), 100.0..=-100.0);
                             }
                             HandType::Right => {
