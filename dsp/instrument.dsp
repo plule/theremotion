@@ -6,14 +6,17 @@ declare license     "BSD";
 import("stdfaust.lib");
 
 // Inputs
-note = hslider("note", 60, 0, 127, 0.01) : si.smoo;
+note_s = hslider("note", 60, 0, 127, 0.01) : si.smoo;
+raw_note = hslider("raw_note", 60, 0, 127, 0.01);
 vol = hslider("volume", 0.8, 0, 1, 0.01) : si.smoo;
 sub_volume = hslider("sub_volume", 0.1, 0, 1, 0.01) : si.smoo;
 cutoff_note = hslider("cutoff_note", 0, -20, 50, 0.01) : si.smoo;
 res = hslider("res", 0, 0, 0.99, 0.01) : si.smoo;
-saw_res = hslider("saw_res", 1, 0, 40, 0.1);
 detune = hslider("detune", 0.001, 0.001, 0.02, 0.001) : si.smoo;
 supersaw = hslider("supersaw", 0, 0, 1.0, 0.01) : si.smoo;
+
+// Prevent raw_note to be optimized
+note = attach(note_s, raw_note);
 
 // Instrument frequencies
 cutoff_freq = ba.midikey2hz(note + cutoff_note);

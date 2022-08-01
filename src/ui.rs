@@ -159,6 +159,8 @@ impl eframe::App for Leapotron {
                 .height(400.0)
                 .show(ui, |plot_ui| {
                     plot_ui.line(line);
+                    plot_ui.vline(VLine::new(controls.note.raw_value));
+                    plot_ui.hline(HLine::new(controls.note.value));
                 });
 
             egui::warn_if_debug_build(ui);
