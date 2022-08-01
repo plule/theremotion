@@ -1,21 +1,24 @@
-use egui::{Color32, Widget};
+use egui::{Color32, Response, Widget};
 use music_note::{midi::MidiNote, Pitch};
 
 /// Display a keyboard with a floating point note
-pub struct Keyboard {
+pub struct Keyboard<'a> {
     /// Currently played midi note
     pub note: f32,
 
     /// Current scale
     pub scale: Vec<MidiNote>,
+
+    /// Root note
+    pub root: &'a mut MidiNote,
 }
 
-impl Keyboard {
-    pub fn new(note: f32, scale: Vec<MidiNote>) -> Self {
-        Self { note, scale }
+impl<'a> Keyboard<'a> {
+    pub fn new(note: f32, scale: Vec<MidiNote>, root: &'a mut MidiNote) -> Self {
+        Self { note, scale, root }
     }
 
-    fn draw_key(&self, ui: &mut egui::Ui, key_dimension: &egui::Vec2, note: &MidiNote) {
+    fn draw_key(&self, ui: &mut egui::Ui, key_dimension: &egui::Vec2, note: &MidiNote) -> Response {
         let note_byte = note.into_byte();
 
         let note_float = note_byte as f32;
@@ -36,10 +39,12 @@ impl Keyboard {
             let radius = 0.1 * rect.height();
             ui.painter().rect(rect, radius, color, visuals.bg_stroke);
         }
+
+        response
     }
 }
 
-impl Widget for Keyboard {
+impl<'a> Widget for Keyboard<'a> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let key_dimension = egui::vec2(
             ui.spacing().interact_size.x / 4.0,
@@ -74,7 +79,9 @@ impl Widget for Keyboard {
                         | Pitch::FSharp
                         | Pitch::GSharp
                         | Pitch::ASharp => {
-                            self.draw_key(ui, &key_dimension, &note);
+                            if self.draw_key(ui, &key_dimension, &note).clicked() {
+                                *self.root = note;
+                            }
                         }
                         _ => {}
                     }
@@ -93,7 +100,9 @@ impl Widget for Keyboard {
                         | Pitch::G
                         | Pitch::A
                         | Pitch::B => {
-                            self.draw_key(ui, &key_dimension, &note);
+                            if self.draw_key(ui, &key_dimension, &note).clicked() {
+                                *self.root = note;
+                            }
                         }
                         _ => {}
                     }
