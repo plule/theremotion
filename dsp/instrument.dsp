@@ -30,7 +30,7 @@ supersaw_osc = saw_osc(detune) + saw_osc(-detune);
 lead = saw_osc(0) + supersaw_osc * supersaw;
 
 // Sub oscillator
-sub = os.oscsin(sub_freq) * sub_volume;
+sub = os.square(sub_freq) * sub_volume;
 
 // Mix
 n = lead + sub : ve.moog_vcf_2b(res, cutoff_freq) * vol : ef.echo(1.0, 0.3, 0.3);
