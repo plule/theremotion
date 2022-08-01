@@ -74,7 +74,21 @@ impl eframe::App for Leapotron {
             ui.horizontal(|ui| {
                 ui.selectable_value(&mut settings.scale, ScaleType::Chromatic, "Chromatic");
                 ui.selectable_value(&mut settings.scale, ScaleType::Major, "Major");
-                ui.selectable_value(&mut settings.scale, ScaleType::Minor, "Minor");
+                ui.selectable_value(
+                    &mut settings.scale,
+                    ScaleType::MelodicMinor,
+                    "Melodic Minor",
+                );
+                ui.selectable_value(
+                    &mut settings.scale,
+                    ScaleType::NaturalMinor,
+                    "Natural Minor",
+                );
+                ui.selectable_value(
+                    &mut settings.scale,
+                    ScaleType::HarmonicMinor,
+                    "Harmonic Minor",
+                );
                 ui.selectable_value(&mut settings.scale, ScaleType::Blues, "Blues");
                 ui.separator();
                 ui.add(
