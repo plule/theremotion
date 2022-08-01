@@ -4,7 +4,7 @@ use egui::plot::{HLine, Legend, Line, VLine, Value, Values};
 use faust_state::StateHandle;
 
 use crate::{
-    dsp,
+    dsp::{self, Controls},
     settings::{ScaleType, Settings},
 };
 
@@ -23,10 +23,11 @@ impl Leapotron {
         settings_tx: Sender<Settings>,
     ) -> Self {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
+        let controls: Controls = { dsp.lock().as_deref().unwrap().into() };
         Self {
             dsp,
             settings_tx,
-            controls: dsp::Controls::default(),
+            controls,
             settings: Settings::default(),
         }
     }
@@ -62,13 +63,14 @@ impl eframe::App for Leapotron {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.style_mut().spacing.slider_width = 200.0;
             ui.add(crate::ui_keyboard::Keyboard::new(
-                controls.note,
+                controls.note.value,
                 settings.scale_notes(),
             ));
 
             ui.horizontal_top(|ui| {
-                ui.add(
-                    egui::Slider::new(&mut controls.note, dsp::Controls::note_range())
+                ui.add_enabled(
+                    false,
+                    egui::Slider::new(&mut controls.note.value, settings.note_range_f())
                         .show_value(false)
                         .text("Pitch")
                         .vertical(),
@@ -78,37 +80,38 @@ impl eframe::App for Leapotron {
                     .allow_drag(false)
                     .allow_scroll(false)
                     .allow_zoom(false)
-                    .include_x(*dsp::Controls::detune_range().start())
-                    .include_x(*dsp::Controls::detune_range().end())
-                    .include_y(*dsp::Controls::supersaw_range().start())
-                    .include_y(*dsp::Controls::supersaw_range().end())
+                    .include_x(*controls.detune.range.start())
+                    .include_x(*controls.detune.range.end())
+                    .include_y(*controls.supersaw.range.start())
+                    .include_y(*controls.supersaw.range.end())
                     .legend(Legend::default())
                     .show_axes([false, false])
                     .width(200.0)
                     .height(200.0)
                     .show(ui, |plot_ui| {
-                        plot_ui.vline(VLine::new(controls.detune).name("Detune"));
-                        plot_ui.hline(HLine::new(controls.supersaw).name("Supersaw"));
+                        plot_ui.vline(VLine::new(controls.detune.value).name("Detune"));
+                        plot_ui.hline(HLine::new(controls.supersaw.value).name("Supersaw"));
                     });
                 egui::plot::Plot::new("rh_plot")
                     .allow_boxed_zoom(false)
                     .allow_drag(false)
                     .allow_scroll(false)
                     .allow_zoom(false)
-                    .include_x(*dsp::Controls::cutoff_range().start())
-                    .include_x(*dsp::Controls::cutoff_range().end())
-                    .include_y(*dsp::Controls::resonance_range().start())
-                    .include_y(*dsp::Controls::resonance_range().end())
+                    .include_x(*controls.cutoff_note.range.start())
+                    .include_x(*controls.cutoff_note.range.end())
+                    .include_y(*controls.resonance.range.start())
+                    .include_y(*controls.resonance.range.end())
                     .legend(Legend::default())
                     .show_axes([false, false])
                     .width(200.0)
                     .height(200.0)
                     .show(ui, |plot_ui| {
-                        plot_ui.vline(VLine::new(controls.cutoff_note).name("Cutoff"));
-                        plot_ui.hline(HLine::new(controls.resonance).name("Resonance"));
+                        plot_ui.vline(VLine::new(controls.cutoff_note.value).name("Cutoff"));
+                        plot_ui.hline(HLine::new(controls.resonance.value).name("Resonance"));
                     });
-                ui.add(
-                    egui::Slider::new(&mut controls.volume, dsp::Controls::volume_range())
+                ui.add_enabled(
+                    false,
+                    egui::Slider::new(&mut controls.volume.value, controls.volume.range.to_owned())
                         .show_value(false)
                         .text("Volume")
                         .vertical(),
@@ -126,13 +129,13 @@ impl eframe::App for Leapotron {
             ui.selectable_value(&mut settings.scale, ScaleType::Minor, "Minor");
             ui.selectable_value(&mut settings.scale, ScaleType::Blues, "Blues");
 
-            let smooths = (*dsp::Controls::note_range().start() as usize * 10
-                ..*dsp::Controls::note_range().end() as usize * 10)
-                .map(|i| {
+            let note_range = settings.note_range();
+            let smooths =
+                (*note_range.start() as usize * 10..*note_range.end() as usize * 10).map(|i| {
                     let x = i as f32 * 0.1;
                     Value::new(
                         x,
-                        crate::leap::smoothstairs(
+                        crate::dsp::smoothstairs(
                             x,
                             settings.autotune_strength,
                             settings.scale_notes(),
@@ -146,10 +149,10 @@ impl eframe::App for Leapotron {
                 .allow_drag(false)
                 .allow_scroll(false)
                 .allow_zoom(false)
-                .include_x(*dsp::Controls::note_range().start())
-                .include_x(*dsp::Controls::note_range().end())
-                .include_y(*dsp::Controls::note_range().start())
-                .include_y(*dsp::Controls::note_range().end())
+                .include_x(*note_range.start())
+                .include_x(*note_range.end())
+                .include_y(*note_range.start())
+                .include_y(*note_range.end())
                 .legend(Legend::default())
                 .show_axes([false, false])
                 .width(400.0)

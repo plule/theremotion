@@ -3,8 +3,11 @@ use std::slice;
 
 use cpal::traits::{DeviceTrait, HostTrait};
 use cpal::{SampleFormat, StreamConfig};
-use faust_state::{DspHandle, StateHandle};
+use faust_state::{DspHandle, Node, StateHandle};
 use faust_types::FaustDsp;
+use music_note::midi::MidiNote;
+
+use crate::settings::Settings;
 
 const NOTE: &str = "note";
 const VOLUME: &str = "volume";
@@ -14,75 +17,189 @@ const SUPERSAW: &str = "supersaw";
 const DETUNE: &str = "detune";
 const SUB_VOLUME: &str = "sub_volume";
 
+fn convert_range(
+    value: f32,
+    input_range: RangeInclusive<f32>,
+    output_range: &RangeInclusive<f32>,
+) -> f32 {
+    {
+        let in_min = *input_range.start();
+        let in_max = *input_range.end();
+        let out_min = *output_range.start();
+        let out_max = *output_range.end();
+        ((((value - in_min) * (out_max - out_min)) / (in_max - in_min)) + out_min)
+            .clamp(out_min, out_max)
+    }
+}
+
+/// Smooth step function loosely "sticking" the value to 0 or 1
+/// Assumes that value is between 0 and 1
+/// https://en.wikipedia.org/wiki/Smoothstep
+fn smoothstep(interval: &RangeInclusive<f32>, x: f32) -> f32 {
+    let x = (x - interval.start()) / (interval.end() - interval.start());
+    x * x * (3.0 - 2.0 * x)
+}
+
+pub fn smoothstairs(value: f32, amount: usize, scale: Vec<MidiNote>) -> f32 {
+    let scale: Vec<_> = scale
+        .windows(2)
+        .map(|w| (w[0].into_byte() as f32)..=(w[1].into_byte() as f32))
+        .collect();
+
+    if let Some(interval) = scale.iter().find(|interval| interval.contains(&value)) {
+        let mut value = value;
+
+        for _ in 0..amount {
+            let smooth = smoothstep(interval, value);
+            value = interval.start() + smooth * (interval.end() - interval.start());
+        }
+        return value;
+    }
+    value
+}
+
+#[derive(Debug)]
+pub struct Control {
+    /// Current value of the control in the DSP
+    pub value: f32,
+
+    /// Range declared to the DSP
+    pub range: RangeInclusive<f32>,
+
+    /// Name for the DSP
+    pub path: String,
+}
+
+impl Control {
+    pub fn receive(&mut self, state: &mut StateHandle) {
+        self.value = *state.get_by_path(&self.path).unwrap();
+    }
+
+    pub fn send(&mut self, state: &mut StateHandle) {
+        state.set_by_path(&self.path, self.value).unwrap();
+    }
+
+    pub fn set_scaled(&mut self, value: f32, value_range: RangeInclusive<f32>) {
+        self.value = convert_range(value, value_range, &self.range);
+    }
+}
+
+impl From<&Node> for Control {
+    fn from(node: &Node) -> Self {
+        let value = node.init_value();
+        let dsp_range = node.min()..=node.max();
+        let path = node.path();
+        Self {
+            value,
+            range: dsp_range,
+            path,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct NoteControl {
+    /// Current value of the control in the DSP
+    pub value: f32,
+
+    /// Name for the DSP
+    pub path: String,
+}
+
+impl NoteControl {
+    pub fn receive(&mut self, state: &mut StateHandle) {
+        self.value = *state.get_by_path(&self.path).unwrap();
+    }
+
+    pub fn send(&mut self, state: &mut StateHandle) {
+        state.set_by_path(&self.path, self.value).unwrap();
+    }
+
+    pub fn set_scaled(
+        &mut self,
+        value: f32,
+        value_range: RangeInclusive<f32>,
+        settings: &Settings,
+    ) {
+        let range = settings.note_range_f();
+        let raw_note = convert_range(value, value_range, &range);
+        self.value = smoothstairs(raw_note, settings.autotune_strength, settings.scale_notes());
+    }
+}
+
+impl From<&Node> for NoteControl {
+    fn from(node: &Node) -> Self {
+        let value = node.init_value();
+        let path = node.path();
+        Self { value, path }
+    }
+}
+
 /// DSP controls
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct Controls {
     /// Midi note, 0-127
-    pub note: f32,
+    pub note: NoteControl,
     /// Volume, -96-0
-    pub volume: f32,
+    pub volume: Control,
     /// Filter cutoff, -20-20
-    pub cutoff_note: f32,
+    pub cutoff_note: Control,
     /// Filter resonnance, 1-30
-    pub resonance: f32,
+    pub resonance: Control,
     /// Supersaw volume
-    pub supersaw: f32,
+    pub supersaw: Control,
     /// Supersaw detune
-    pub detune: f32,
+    pub detune: Control,
     /// Subosc volume
-    pub sub_volume: f32,
+    pub sub_volume: Control,
+}
+
+trait NodeByPath {
+    fn node_by_path(&self, path: &str) -> Option<&Node>;
+}
+
+impl NodeByPath for StateHandle {
+    fn node_by_path(&self, path: &str) -> Option<&Node> {
+        self.params().values().find(|n| n.path() == path)
+    }
+}
+
+impl From<&StateHandle> for Controls {
+    fn from(state: &StateHandle) -> Self {
+        Self {
+            note: state.node_by_path(NOTE).unwrap().into(),
+            volume: state.node_by_path(VOLUME).unwrap().into(),
+            cutoff_note: state.node_by_path(CUTOFF_NOTE).unwrap().into(),
+            resonance: state.node_by_path(RESONANCE).unwrap().into(),
+            supersaw: state.node_by_path(SUPERSAW).unwrap().into(),
+            detune: state.node_by_path(DETUNE).unwrap().into(),
+            sub_volume: state.node_by_path(SUB_VOLUME).unwrap().into(),
+        }
+    }
 }
 
 impl Controls {
     /// Read the current control states from the DSP
     pub fn receive(&mut self, state: &mut StateHandle) {
         state.update();
-        self.note = *state.get_by_path(NOTE).unwrap();
-        self.volume = *state.get_by_path(VOLUME).unwrap();
-        self.cutoff_note = *state.get_by_path(CUTOFF_NOTE).unwrap();
-        self.resonance = *state.get_by_path(RESONANCE).unwrap();
-        self.supersaw = *state.get_by_path(SUPERSAW).unwrap();
-        self.detune = *state.get_by_path(DETUNE).unwrap();
-        self.sub_volume = *state.get_by_path(SUB_VOLUME).unwrap();
+        self.note.receive(state);
+        self.volume.receive(state);
+        self.cutoff_note.receive(state);
+        self.resonance.receive(state);
+        self.supersaw.receive(state);
+        self.detune.receive(state);
+        self.sub_volume.receive(state);
     }
 
-    pub fn send(&self, state: &mut StateHandle) {
-        state.set_by_path(NOTE, self.note).unwrap();
-        state.set_by_path(VOLUME, self.volume).unwrap();
-        state.set_by_path(CUTOFF_NOTE, self.cutoff_note).unwrap();
-        state.set_by_path(RESONANCE, self.resonance).unwrap();
-        state.set_by_path(SUPERSAW, self.supersaw).unwrap();
-        state.set_by_path(DETUNE, self.detune).unwrap();
-        state.set_by_path(SUB_VOLUME, self.sub_volume).unwrap();
+    pub fn send(&mut self, state: &mut StateHandle) {
+        self.note.send(state);
+        self.volume.send(state);
+        self.cutoff_note.send(state);
+        self.resonance.send(state);
+        self.supersaw.send(state);
+        self.detune.send(state);
+        self.sub_volume.send(state);
         state.send();
-    }
-
-    pub fn note_range() -> RangeInclusive<f32> {
-        34.0..=72.0
-    }
-
-    pub fn volume_range() -> RangeInclusive<f32> {
-        0.0..=1.0
-    }
-
-    pub fn cutoff_range() -> RangeInclusive<f32> {
-        -20.0..=60.0
-    }
-
-    pub fn resonance_range() -> RangeInclusive<f32> {
-        0.0..=0.99
-    }
-
-    pub fn supersaw_range() -> RangeInclusive<f32> {
-        0.0..=1.0
-    }
-
-    pub fn detune_range() -> RangeInclusive<f32> {
-        0.001..=0.02
-    }
-
-    pub fn sub_volume_range() -> RangeInclusive<f32> {
-        0.0..=1.0
     }
 }
 
