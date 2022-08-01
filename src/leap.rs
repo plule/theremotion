@@ -36,7 +36,7 @@ pub fn start_leap_worker(
                             HandType::Left => {
                                 let position = hand.palm().position();
 
-                                controls.detune.set_scaled(position.x(), -200.0..=0.0);
+                                controls.detune.set_scaled(position.x(), -200.0..=-50.0);
                                 let note_input_range = 100.0..=600.0;
                                 let fingertip = hand.index().distal().next_joint().y();
                                 controls.note.set_scaled(
@@ -51,7 +51,7 @@ pub fn start_leap_worker(
                             HandType::Right => {
                                 let position = hand.palm().position();
 
-                                controls.cutoff_note.set_scaled(position.x(), 0.0..=200.0);
+                                controls.cutoff_note.set_scaled(position.x(), 50.0..=200.0);
                                 controls.volume.set_scaled(position.y(), 200.0..=300.0);
                                 controls.resonance.set_scaled(position.z(), 100.0..=-100.0);
                                 controls

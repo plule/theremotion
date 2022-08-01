@@ -14,7 +14,7 @@ cutoff_note = hslider("cutoff_note", 0, -20, 50, 0.01) : si.smoo;
 res = hslider("res", 0, 0, 0.99, 0.01) : si.smoo;
 detune = hslider("detune", 0.001, 0.001, 0.02, 0.001) : si.smoo;
 supersaw = hslider("supersaw", 0, 0, 1.0, 0.01) : si.smoo;
-autotune_strength = hslider("autotune_strength", 0, 0, 6, 1);
+autotune_strength = hslider("autotune_strength", 0, 0, 7, 1);
 
 // hack, raw note and autotune strength not yet in dsp, prevent optim
 note = attach(attach(note_s, autotune_strength), raw_note);
