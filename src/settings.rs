@@ -34,13 +34,14 @@ impl Settings {
     }
 
     pub fn octave_notes(&self) -> Vec<Pitch> {
-        match self.scale {
+        match &self.scale {
             ScaleType::Chromatic => (0..=11).map(Pitch::from_byte).collect(),
             ScaleType::Major => Scale::major(self.root_note.pitch()).collect(),
             ScaleType::NaturalMinor => Scale::natural_minor(self.root_note.pitch()).collect(),
             ScaleType::MelodicMinor => Scale::melodic_minor(self.root_note.pitch()).collect(),
             ScaleType::HarmonicMinor => Scale::harmonic_minor(self.root_note.pitch()).collect(),
             ScaleType::Blues => Scale::blues(self.root_note.pitch()).collect(),
+            ScaleType::Custom(pitches) => pitches.clone(),
         }
     }
 
@@ -74,4 +75,5 @@ pub enum ScaleType {
     HarmonicMinor,
     MelodicMinor,
     Blues,
+    Custom(Vec<Pitch>),
 }

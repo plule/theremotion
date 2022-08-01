@@ -1,31 +1,31 @@
 use egui::{Color32, Response, Widget};
 use music_note::{midi::MidiNote, Pitch};
 
+use crate::settings::{ScaleType, Settings};
+
 /// Display a keyboard with a floating point note
 pub struct Keyboard<'a> {
     /// Currently played midi note
     pub note: f32,
 
-    /// Current scale
-    pub scale: Vec<MidiNote>,
-
-    /// Root note
-    pub root: &'a mut MidiNote,
+    /// Settings
+    pub settings: &'a mut Settings,
 }
 
 impl<'a> Keyboard<'a> {
-    pub fn new(note: f32, scale: Vec<MidiNote>, root: &'a mut MidiNote) -> Self {
-        Self { note, scale, root }
+    pub fn new(note: f32, settings: &'a mut Settings) -> Self {
+        Self { note, settings }
     }
 
     fn draw_key(&self, ui: &mut egui::Ui, key_dimension: &egui::Vec2, note: &MidiNote) -> Response {
+        let scale = self.settings.scale_notes();
         let note_byte = note.into_byte();
 
         let note_float = note_byte as f32;
         let note_distance = (note_float - self.note).abs().clamp(0.0, 1.0);
 
         let red = ((1.0 - note_distance) * 255.0) as u8;
-        let blue = if self.scale.contains(note) { 255 } else { 0 };
+        let blue = if scale.contains(note) { 255 } else { 0 };
 
         let color = Color32::from_rgb(red, 0, blue);
         let (rect, mut response) = ui.allocate_exact_size(*key_dimension, egui::Sense::click());
@@ -42,10 +42,27 @@ impl<'a> Keyboard<'a> {
 
         response
     }
+
+    fn add_key(&mut self, ui: &mut egui::Ui, key_dimension: egui::Vec2, note: MidiNote) {
+        let response = self.draw_key(ui, &key_dimension, &note);
+        if response.clicked() {
+            self.settings.root_note = note;
+        }
+        if response.secondary_clicked() {
+            let mut notes = self.settings.octave_notes();
+            if let Some(idx) = notes.iter().position(|n| &note.pitch() == n) {
+                notes.remove(idx);
+            } else {
+                notes.push(note.pitch());
+            }
+            notes.sort();
+            self.settings.scale = ScaleType::Custom(notes);
+        }
+    }
 }
 
 impl<'a> Widget for Keyboard<'a> {
-    fn ui(self, ui: &mut egui::Ui) -> egui::Response {
+    fn ui(mut self, ui: &mut egui::Ui) -> egui::Response {
         let key_dimension = egui::vec2(
             ui.spacing().interact_size.x / 4.0,
             ui.spacing().interact_size.y,
@@ -79,9 +96,7 @@ impl<'a> Widget for Keyboard<'a> {
                         | Pitch::FSharp
                         | Pitch::GSharp
                         | Pitch::ASharp => {
-                            if self.draw_key(ui, &key_dimension, &note).clicked() {
-                                *self.root = note;
-                            }
+                            self.add_key(ui, key_dimension, note);
                         }
                         _ => {}
                     }
@@ -100,9 +115,7 @@ impl<'a> Widget for Keyboard<'a> {
                         | Pitch::G
                         | Pitch::A
                         | Pitch::B => {
-                            if self.draw_key(ui, &key_dimension, &note).clicked() {
-                                *self.root = note;
-                            }
+                            self.add_key(ui, key_dimension, note);
                         }
                         _ => {}
                     }
@@ -112,3 +125,5 @@ impl<'a> Widget for Keyboard<'a> {
         .response
     }
 }
+
+impl<'a> Keyboard<'a> {}

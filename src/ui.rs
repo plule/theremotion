@@ -67,8 +67,7 @@ impl eframe::App for Leapotron {
             ui.style_mut().spacing.slider_width = 200.0;
             ui.add(crate::ui_keyboard::Keyboard::new(
                 controls.note.value,
-                settings.scale_notes(),
-                &mut settings.root_note,
+                settings,
             ));
 
             ui.horizontal(|ui| {
