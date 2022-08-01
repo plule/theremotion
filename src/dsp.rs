@@ -102,46 +102,56 @@ pub struct NoteControl {
 
     /// Raw note path
     pub raw_path: String,
+
+    /// Autotune controls
+    pub autotune: Control,
 }
 
 impl NoteControl {
     pub fn receive(&mut self, state: &mut StateHandle) {
         self.value = *state.get_by_path(&self.path).unwrap();
         self.raw_value = *state.get_by_path(&self.raw_path).unwrap();
+        self.autotune.receive(state);
     }
 
     pub fn send(&mut self, state: &mut StateHandle) {
         state.set_by_path(&self.path, self.value).unwrap();
         state.set_by_path(&self.raw_path, self.raw_value).unwrap();
+        self.autotune.send(state);
     }
 
     pub fn set_scaled(
         &mut self,
         value: f32,
         value_range: RangeInclusive<f32>,
+        autotune_value: f32,
+        autotune_range: RangeInclusive<f32>,
         settings: &Settings,
     ) {
         let range = settings.note_range_f();
         self.raw_value = convert_range(value, value_range, &range);
+        self.autotune.set_scaled(autotune_value, autotune_range);
         self.value = smoothstairs(
             self.raw_value,
-            settings.autotune_strength,
+            self.autotune.value as usize,
             settings.scale_notes(),
         );
     }
 }
 
-impl From<(&Node, &Node)> for NoteControl {
-    fn from(nodes: (&Node, &Node)) -> Self {
+impl From<(&Node, &Node, &Node)> for NoteControl {
+    fn from(nodes: (&Node, &Node, &Node)) -> Self {
         let value = nodes.0.init_value();
         let path = nodes.0.path();
         let raw_value = nodes.1.init_value();
         let raw_path = nodes.1.path();
+        let autotune = nodes.2.into();
         Self {
             value,
             path,
             raw_value,
             raw_path,
+            autotune,
         }
     }
 }
@@ -181,6 +191,7 @@ impl From<&StateHandle> for Controls {
             note: (
                 state.node_by_path("note").unwrap(),
                 state.node_by_path("raw_note").unwrap(),
+                state.node_by_path("autotune_strength").unwrap(),
             )
                 .into(),
             volume: state.node_by_path("volume").unwrap().into(),

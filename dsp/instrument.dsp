@@ -8,15 +8,16 @@ import("stdfaust.lib");
 // Inputs
 note_s = hslider("note", 60, 0, 127, 0.01) : si.smoo;
 raw_note = hslider("raw_note", 60, 0, 127, 0.01);
-vol = hslider("volume", 0.8, 0, 1, 0.01) : si.smoo;
+vol = hslider("volume", 0.0, 0, 1, 0.01) : si.smoo;
 sub_volume = hslider("sub_volume", 0.1, 0, 1, 0.01) : si.smoo;
 cutoff_note = hslider("cutoff_note", 0, -20, 50, 0.01) : si.smoo;
 res = hslider("res", 0, 0, 0.99, 0.01) : si.smoo;
 detune = hslider("detune", 0.001, 0.001, 0.02, 0.001) : si.smoo;
 supersaw = hslider("supersaw", 0, 0, 1.0, 0.01) : si.smoo;
+autotune_strength = hslider("autotune_strength", 0, 0, 6, 1);
 
-// Prevent raw_note to be optimized
-note = attach(note_s, raw_note);
+// hack, raw note and autotune strength not yet in dsp, prevent optim
+note = attach(attach(note_s, autotune_strength), raw_note);
 
 // Instrument frequencies
 cutoff_freq = ba.midikey2hz(note + cutoff_note);

@@ -8,10 +8,6 @@ use music_note::{
 /// Application settings
 #[derive(Clone)]
 pub struct Settings {
-    /// How much note sticks to just notes
-    /// 0 means no autotune.
-    pub autotune_strength: usize,
-
     /// Root note of the keyboard
     pub root_note: MidiNote,
 
@@ -59,7 +55,6 @@ impl Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            autotune_strength: 0,
             root_note: MidiNote::new(Pitch::C, Octave::ONE),
             octave_range: 3,
             scale: ScaleType::Chromatic,

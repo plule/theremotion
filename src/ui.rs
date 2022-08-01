@@ -89,12 +89,6 @@ impl eframe::App for Leapotron {
                     "Harmonic Minor",
                 );
                 ui.selectable_value(&mut settings.scale, ScaleType::Blues, "Blues");
-                ui.separator();
-                ui.add(
-                    egui::Slider::new(&mut settings.autotune_strength, 0..=5)
-                        .integer()
-                        .text("Autotune Strength"),
-                );
             });
 
             ui.separator();
@@ -149,7 +143,7 @@ fn autotune_plot(ui: &mut egui::Ui, settings: &mut Settings, control: &dsp::Note
         let x = i as f32 * 0.1;
         Value::new(
             x,
-            crate::dsp::smoothstairs(x, settings.autotune_strength, settings.scale_notes()),
+            crate::dsp::smoothstairs(x, control.autotune.value as usize, settings.scale_notes()),
         )
     });
     let line = Line::new(Values::from_values_iter(smooths));

@@ -38,9 +38,12 @@ pub fn start_leap_worker(
 
                                 controls.detune.set_scaled(position.x(), -200.0..=0.0);
                                 let note_input_range = 100.0..=600.0;
+                                let fingertip = hand.index().distal().next_joint().y();
                                 controls.note.set_scaled(
-                                    position.y(),
+                                    fingertip,
                                     note_input_range.to_owned(),
+                                    hand.pinch_strength(),
+                                    0.0..=1.0,
                                     &settings,
                                 );
                                 controls.supersaw.set_scaled(position.z(), 100.0..=-100.0);
