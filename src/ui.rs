@@ -1,7 +1,10 @@
 use std::sync::{mpsc::Sender, Arc, Mutex};
 
-use egui::plot::{HLine, Legend, Line, VLine, Value, Values};
+use egui::plot::{
+    uniform_grid_spacer, HLine, Legend, Line, MarkerShape, Points, VLine, Value, Values,
+};
 use faust_state::StateHandle;
+use music_note::midi::MidiNote;
 
 use crate::{
     dsp::{self, Controls},
@@ -67,6 +70,21 @@ impl eframe::App for Leapotron {
                 settings.scale_notes(),
             ));
 
+            ui.horizontal(|ui| {
+                ui.selectable_value(&mut settings.scale, ScaleType::Chromatic, "Chromatic");
+                ui.selectable_value(&mut settings.scale, ScaleType::Major, "Major");
+                ui.selectable_value(&mut settings.scale, ScaleType::Minor, "Minor");
+                ui.selectable_value(&mut settings.scale, ScaleType::Blues, "Blues");
+                ui.separator();
+                ui.add(
+                    egui::Slider::new(&mut settings.autotune_strength, 0..=5)
+                        .integer()
+                        .text("Autotune Strength"),
+                );
+            });
+
+            ui.separator();
+
             ui.horizontal_top(|ui| {
                 ui.add_enabled(
                     false,
@@ -116,52 +134,62 @@ impl eframe::App for Leapotron {
                         .text("Volume")
                         .vertical(),
                 );
-            });
 
-            ui.add(
-                egui::Slider::new(&mut settings.autotune_strength, 0..=5)
-                    .integer()
-                    .text("Autotune Strength"),
-            );
+                ui.spacing();
 
-            ui.selectable_value(&mut settings.scale, ScaleType::Chromatic, "Chromatic");
-            ui.selectable_value(&mut settings.scale, ScaleType::Major, "Major");
-            ui.selectable_value(&mut settings.scale, ScaleType::Minor, "Minor");
-            ui.selectable_value(&mut settings.scale, ScaleType::Blues, "Blues");
-
-            let note_range = settings.note_range();
-            let smooths =
-                (*note_range.start() as usize * 10..*note_range.end() as usize * 10).map(|i| {
-                    let x = i as f32 * 0.1;
-                    Value::new(
-                        x,
-                        crate::dsp::smoothstairs(
+                let note_range = settings.note_range();
+                let smooths = (*note_range.start() as usize * 10..*note_range.end() as usize * 10)
+                    .map(|i| {
+                        let x = i as f32 * 0.1;
+                        Value::new(
                             x,
-                            settings.autotune_strength,
-                            settings.scale_notes(),
-                        ),
-                    )
-                });
-            let line = Line::new(Values::from_values_iter(smooths));
+                            crate::dsp::smoothstairs(
+                                x,
+                                settings.autotune_strength,
+                                settings.scale_notes(),
+                            ),
+                        )
+                    });
+                let line = Line::new(Values::from_values_iter(smooths));
 
-            egui::plot::Plot::new("autotune_plot")
-                .allow_boxed_zoom(false)
-                .allow_drag(false)
-                .allow_scroll(false)
-                .allow_zoom(false)
-                .include_x(*note_range.start())
-                .include_x(*note_range.end())
-                .include_y(*note_range.start())
-                .include_y(*note_range.end())
-                .legend(Legend::default())
-                .show_axes([false, false])
-                .width(400.0)
-                .height(400.0)
-                .show(ui, |plot_ui| {
-                    plot_ui.line(line);
-                    plot_ui.vline(VLine::new(controls.note.raw_value));
-                    plot_ui.hline(HLine::new(controls.note.value));
-                });
+                //let note_formater:
+
+                egui::plot::Plot::new("autotune_plot")
+                    .allow_boxed_zoom(false)
+                    .allow_drag(false)
+                    .allow_scroll(false)
+                    .allow_zoom(false)
+                    .include_x(*note_range.start())
+                    .include_x(*note_range.end())
+                    .include_y(*note_range.start())
+                    .include_y(*note_range.end())
+                    .x_grid_spacer(uniform_grid_spacer(|_| [12.0, 1.0, 1.0]))
+                    .y_grid_spacer(uniform_grid_spacer(|_| [12.0, 1.0, 1.0]))
+                    .x_axis_formatter(|v, _| {
+                        let note = MidiNote::from_byte(v as u8);
+                        format!("{}{}", note.pitch(), note.octave())
+                    })
+                    .y_axis_formatter(|v, _| {
+                        let note = MidiNote::from_byte(v as u8);
+                        format!("{}{}", note.pitch(), note.octave())
+                    })
+                    .legend(Legend::default())
+                    .width(200.0)
+                    .height(200.0)
+                    .show(ui, |plot_ui| {
+                        plot_ui.line(line);
+                        plot_ui.points(
+                            Points::new(Values::from_values(vec![Value::new(
+                                controls.note.raw_value,
+                                controls.note.value,
+                            )]))
+                            .shape(MarkerShape::Plus)
+                            .radius(6.0),
+                        );
+                        //plot_ui.vline(VLine::new(controls.note.raw_value));
+                        //plot_ui.hline(HLine::new(controls.note.value));
+                    });
+            });
 
             egui::warn_if_debug_build(ui);
         });
