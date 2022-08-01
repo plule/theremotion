@@ -56,8 +56,8 @@ impl Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            autotune_strength: 2,
-            root_note: MidiNote::new(Pitch::C, Octave::TWO),
+            autotune_strength: 0,
+            root_note: MidiNote::new(Pitch::C, Octave::ONE),
             octave_range: 3,
             scale: ScaleType::Chromatic,
         }
