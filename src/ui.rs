@@ -68,6 +68,7 @@ impl eframe::App for Leapotron {
             ui.add(crate::ui_keyboard::Keyboard::new(
                 controls.note.value,
                 settings.scale_notes(),
+                &mut settings.root_note,
             ));
 
             ui.horizontal(|ui| {
@@ -86,6 +87,8 @@ impl eframe::App for Leapotron {
             ui.separator();
 
             ui.horizontal_top(|ui| {
+                autotune_plot(ui, settings, &controls.note);
+                ui.add_space(10.0);
                 ui.add_enabled(
                     false,
                     egui::Slider::new(&mut controls.note.value, settings.note_range_f())
@@ -93,40 +96,23 @@ impl eframe::App for Leapotron {
                         .text("Pitch")
                         .vertical(),
                 );
-                egui::plot::Plot::new("lh_hond")
-                    .allow_boxed_zoom(false)
-                    .allow_drag(false)
-                    .allow_scroll(false)
-                    .allow_zoom(false)
-                    .include_x(*controls.detune.range.start())
-                    .include_x(*controls.detune.range.end())
-                    .include_y(*controls.supersaw.range.start())
-                    .include_y(*controls.supersaw.range.end())
-                    .legend(Legend::default())
-                    .show_axes([false, false])
-                    .width(200.0)
-                    .height(200.0)
-                    .show(ui, |plot_ui| {
-                        plot_ui.vline(VLine::new(controls.detune.value).name("Detune"));
-                        plot_ui.hline(HLine::new(controls.supersaw.value).name("Supersaw"));
-                    });
-                egui::plot::Plot::new("rh_plot")
-                    .allow_boxed_zoom(false)
-                    .allow_drag(false)
-                    .allow_scroll(false)
-                    .allow_zoom(false)
-                    .include_x(*controls.cutoff_note.range.start())
-                    .include_x(*controls.cutoff_note.range.end())
-                    .include_y(*controls.resonance.range.start())
-                    .include_y(*controls.resonance.range.end())
-                    .legend(Legend::default())
-                    .show_axes([false, false])
-                    .width(200.0)
-                    .height(200.0)
-                    .show(ui, |plot_ui| {
-                        plot_ui.vline(VLine::new(controls.cutoff_note.value).name("Cutoff"));
-                        plot_ui.hline(HLine::new(controls.resonance.value).name("Resonance"));
-                    });
+                xy_plot(
+                    ui,
+                    "lh_hand",
+                    &controls.detune,
+                    &controls.supersaw,
+                    "Detune",
+                    "Supersaw",
+                );
+                ui.spacing();
+                xy_plot(
+                    ui,
+                    "rh_hand",
+                    &controls.cutoff_note,
+                    &controls.resonance,
+                    "Cutoff",
+                    "Resonance",
+                );
                 ui.add_enabled(
                     false,
                     egui::Slider::new(&mut controls.volume.value, controls.volume.range.to_owned())
@@ -134,66 +120,90 @@ impl eframe::App for Leapotron {
                         .text("Volume")
                         .vertical(),
                 );
-
-                ui.spacing();
-
-                let note_range = settings.note_range();
-                let smooths = (*note_range.start() as usize * 10..*note_range.end() as usize * 10)
-                    .map(|i| {
-                        let x = i as f32 * 0.1;
-                        Value::new(
-                            x,
-                            crate::dsp::smoothstairs(
-                                x,
-                                settings.autotune_strength,
-                                settings.scale_notes(),
-                            ),
-                        )
-                    });
-                let line = Line::new(Values::from_values_iter(smooths));
-
-                //let note_formater:
-
-                egui::plot::Plot::new("autotune_plot")
-                    .allow_boxed_zoom(false)
-                    .allow_drag(false)
-                    .allow_scroll(false)
-                    .allow_zoom(false)
-                    .include_x(*note_range.start())
-                    .include_x(*note_range.end())
-                    .include_y(*note_range.start())
-                    .include_y(*note_range.end())
-                    .x_grid_spacer(uniform_grid_spacer(|_| [12.0, 1.0, 1.0]))
-                    .y_grid_spacer(uniform_grid_spacer(|_| [12.0, 1.0, 1.0]))
-                    .x_axis_formatter(|v, _| {
-                        let note = MidiNote::from_byte(v as u8);
-                        format!("{}{}", note.pitch(), note.octave())
-                    })
-                    .y_axis_formatter(|v, _| {
-                        let note = MidiNote::from_byte(v as u8);
-                        format!("{}{}", note.pitch(), note.octave())
-                    })
-                    .legend(Legend::default())
-                    .width(200.0)
-                    .height(200.0)
-                    .show(ui, |plot_ui| {
-                        plot_ui.line(line);
-                        plot_ui.points(
-                            Points::new(Values::from_values(vec![Value::new(
-                                controls.note.raw_value,
-                                controls.note.value,
-                            )]))
-                            .shape(MarkerShape::Plus)
-                            .radius(6.0),
-                        );
-                        //plot_ui.vline(VLine::new(controls.note.raw_value));
-                        //plot_ui.hline(HLine::new(controls.note.value));
-                    });
             });
+            ui.separator();
 
             egui::warn_if_debug_build(ui);
         });
         settings_tx.send(settings.clone()).unwrap();
         ctx.request_repaint();
     }
+}
+
+fn autotune_plot(ui: &mut egui::Ui, settings: &mut Settings, control: &dsp::NoteControl) {
+    let note_range = settings.note_range();
+    let smooths = (*note_range.start() as usize * 10..*note_range.end() as usize * 10).map(|i| {
+        let x = i as f32 * 0.1;
+        Value::new(
+            x,
+            crate::dsp::smoothstairs(x, settings.autotune_strength, settings.scale_notes()),
+        )
+    });
+    let line = Line::new(Values::from_values_iter(smooths));
+    // hack: force the include_x/include_y to recenter on root note change
+    let plot_id = format!(
+        "{}{}",
+        settings.root_note.pitch(),
+        settings.root_note.octave()
+    );
+    egui::plot::Plot::new(plot_id)
+        .allow_boxed_zoom(false)
+        .allow_drag(false)
+        .allow_scroll(false)
+        .allow_zoom(false)
+        .include_x(*note_range.start())
+        .include_x(*note_range.end())
+        .include_y(*note_range.start())
+        .include_y(*note_range.end())
+        .x_grid_spacer(uniform_grid_spacer(|_| [12.0, 1.0, 1.0]))
+        .y_grid_spacer(uniform_grid_spacer(|_| [12.0, 1.0, 1.0]))
+        .x_axis_formatter(|v, _| {
+            let note = MidiNote::from_byte(v as u8);
+            format!("{}{}", note.pitch(), note.octave())
+        })
+        .y_axis_formatter(|v, _| {
+            let note = MidiNote::from_byte(v as u8);
+            format!("{}{}", note.pitch(), note.octave())
+        })
+        .legend(Legend::default())
+        .width(200.0)
+        .height(200.0)
+        .show(ui, |plot_ui| {
+            plot_ui.line(line);
+            plot_ui.points(
+                Points::new(Values::from_values(vec![Value::new(
+                    control.raw_value,
+                    control.value,
+                )]))
+                .shape(MarkerShape::Plus)
+                .radius(6.0),
+            );
+        });
+}
+
+fn xy_plot(
+    ui: &mut egui::Ui,
+    plot_name: &str,
+    control_x: &dsp::Control,
+    control_y: &dsp::Control,
+    control_x_name: &str,
+    control_y_name: &str,
+) {
+    egui::plot::Plot::new(plot_name)
+        .allow_boxed_zoom(false)
+        .allow_drag(false)
+        .allow_scroll(false)
+        .allow_zoom(false)
+        .include_x(*control_x.range.start())
+        .include_x(*control_x.range.end())
+        .include_y(*control_y.range.start())
+        .include_y(*control_y.range.end())
+        .legend(Legend::default())
+        .show_axes([false, false])
+        .width(200.0)
+        .height(200.0)
+        .show(ui, |plot_ui| {
+            plot_ui.vline(VLine::new(control_x.value).name(control_x_name));
+            plot_ui.hline(HLine::new(control_y.value).name(control_y_name));
+        });
 }
