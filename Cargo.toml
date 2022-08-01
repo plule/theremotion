@@ -5,6 +5,10 @@ authors = ["Pierre Lulé <pierre@lule.fr>"]
 edition = "2021"
 rust-version = "1.60"
 
+[features]
+default = ["gemini"]
+gemini = ["leaprs/gemini"]
+
 [dependencies]
 egui = "0.18.0"
 eframe = { version = "0.18.0" }
@@ -12,7 +16,7 @@ tracing-subscriber = "0.3"
 cpal = "0.13.5"
 faust-types = { git = "https://github.com/plule/rust-faust", branch="box-dsp" }
 faust-state = { git = "https://github.com/plule/rust-faust", branch="box-dsp" }
-leaprs = "0.0.3"
+leaprs = { version = "0.0.6", default-features = false }
 music-note = "0.3.0"
 
 [build-dependencies]
