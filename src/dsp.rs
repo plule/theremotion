@@ -90,6 +90,35 @@ impl From<&Node> for Control {
 }
 
 #[derive(Debug)]
+pub struct BoolControl {
+    /// On-off state
+    pub value: bool,
+
+    /// Name for the DSP
+    pub path: String,
+}
+
+impl BoolControl {
+    pub fn receive(&mut self, state: &mut StateHandle) {
+        self.value = *state.get_by_path(&self.path).unwrap() > 0.5;
+    }
+
+    pub fn send(&mut self, state: &mut StateHandle) {
+        state
+            .set_by_path(&self.path, if self.value { 1.0 } else { 0.0 })
+            .unwrap();
+    }
+}
+
+impl From<&Node> for BoolControl {
+    fn from(node: &Node) -> Self {
+        let value = node.init_value() > 0.5;
+        let path = node.path();
+        Self { value, path }
+    }
+}
+
+#[derive(Debug)]
 pub struct NoteControl {
     /// Current value of the control in the DSP
     pub value: f32,
@@ -173,6 +202,10 @@ pub struct Controls {
     pub detune: Control,
     /// Subosc volume
     pub sub_volume: Control,
+    /// Guitar pluck
+    pub pluck: BoolControl,
+    /// Guitare pluck position
+    pub pluck_position: Control,
 }
 
 trait NodeByPath {
@@ -200,6 +233,8 @@ impl From<&StateHandle> for Controls {
             supersaw: state.node_by_path("supersaw").unwrap().into(),
             detune: state.node_by_path("detune").unwrap().into(),
             sub_volume: state.node_by_path("sub_volume").unwrap().into(),
+            pluck: state.node_by_path("pluck").unwrap().into(),
+            pluck_position: state.node_by_path("pluck_position").unwrap().into(),
         }
     }
 }
@@ -215,6 +250,8 @@ impl Controls {
         self.supersaw.receive(state);
         self.detune.receive(state);
         self.sub_volume.receive(state);
+        self.pluck.receive(state);
+        self.pluck_position.receive(state);
     }
 
     pub fn send(&mut self, state: &mut StateHandle) {
@@ -225,6 +262,8 @@ impl Controls {
         self.supersaw.send(state);
         self.detune.send(state);
         self.sub_volume.send(state);
+        self.pluck.send(state);
+        self.pluck_position.send(state);
         state.send();
     }
 }
