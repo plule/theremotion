@@ -20,6 +20,7 @@ pub fn start_leap_worker(
         let mut controls: Controls = { dsp.lock().as_deref().unwrap().into() };
         let mut settings = Settings::default();
         loop {
+            controls.pluck.value = false;
             if let Ok(message) = connection.poll(1000) {
                 if let Event::Tracking(e) = message.event() {
                     {
@@ -30,7 +31,6 @@ pub fn start_leap_worker(
                     if let Some(new_settings) = settings_rx.try_iter().last() {
                         settings = new_settings;
                     }
-
                     for hand in e.hands() {
                         match hand.hand_type() {
                             HandType::Left => {
@@ -51,12 +51,17 @@ pub fn start_leap_worker(
                             HandType::Right => {
                                 let position = hand.palm().position();
 
+                                controls.pluck.value = hand.pinch_strength() > 0.9
+                                    && hand.palm().velocity().y() > 800.0;
                                 controls.cutoff_note.set_scaled(position.x(), 50.0..=200.0);
-                                controls.volume.set_scaled(position.y(), 200.0..=300.0);
+                                controls.volume.set_scaled(position.y(), 300.0..=400.0);
                                 controls.resonance.set_scaled(position.z(), 100.0..=-100.0);
                                 controls
-                                    .sub_volume
-                                    .set_scaled(hand.grab_angle(), 0.0..=std::f32::consts::PI);
+                                    .pluck_position
+                                    .set_scaled(position.x(), 50.0..=200.0);
+                                /*controls
+                                .sub_volume
+                                .set_scaled(hand.grab_angle(), 0.0..=std::f32::consts::PI);*/
                             }
                         }
                     }
