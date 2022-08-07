@@ -50,7 +50,7 @@ pub fn smoothstairs(value: f32, amount: usize, scale: Vec<MidiNote>) -> f32 {
     value
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Control {
     /// Current value of the control in the DSP
     pub value: f32,
@@ -89,7 +89,7 @@ impl From<&Node> for Control {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BoolControl {
     /// On-off state
     pub value: bool,
@@ -118,7 +118,7 @@ impl From<&Node> for BoolControl {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NoteControl {
     /// Current value of the control in the DSP
     pub value: f32,
@@ -186,7 +186,7 @@ impl From<(&Node, &Node, &Node)> for NoteControl {
 }
 
 /// DSP controls
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Controls {
     /// Midi note, 0-127
     pub note: NoteControl,
