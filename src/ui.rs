@@ -6,13 +6,13 @@ use egui::plot::{
 use music_note::midi::MidiNote;
 
 use crate::{
-    dsp::{self, Controls},
+    controls,
     settings::{ScaleType, Settings},
 };
 
 pub struct Leapotron {
-    dsp_controls_rx: Receiver<Controls>,
-    controls: dsp::Controls,
+    dsp_controls_rx: Receiver<controls::Controls>,
+    controls: controls::Controls,
     settings: Settings,
     settings_tx: Sender<Settings>,
 }
@@ -21,11 +21,11 @@ impl Leapotron {
     /// Called once before the first frame.
     pub fn new(
         cc: &eframe::CreationContext<'_>,
-        dsp_controls_rx: Receiver<Controls>,
+        dsp_controls_rx: Receiver<controls::Controls>,
         settings_tx: Sender<Settings>,
     ) -> Self {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
-        let controls: Controls = dsp_controls_rx.recv().unwrap();
+        let controls = dsp_controls_rx.recv().unwrap();
         Self {
             dsp_controls_rx,
             settings_tx,
@@ -135,13 +135,13 @@ impl eframe::App for Leapotron {
     }
 }
 
-fn autotune_plot(ui: &mut egui::Ui, settings: &mut Settings, control: &dsp::NoteControl) {
+fn autotune_plot(ui: &mut egui::Ui, settings: &mut Settings, control: &controls::NoteControl) {
     let note_range = settings.note_range();
     let smooths = (*note_range.start() as usize * 10..*note_range.end() as usize * 10).map(|i| {
         let x = i as f32 * 0.1;
         Value::new(
             x,
-            crate::dsp::smoothstairs(x, control.autotune.value as usize, settings.scale_notes()),
+            controls::smoothstairs(x, control.autotune.value as usize, settings.scale_notes()),
         )
     });
     let line = Line::new(Values::from_values_iter(smooths));
@@ -189,8 +189,8 @@ fn autotune_plot(ui: &mut egui::Ui, settings: &mut Settings, control: &dsp::Note
 fn xy_plot(
     ui: &mut egui::Ui,
     plot_name: &str,
-    control_x: &dsp::Control,
-    control_y: &dsp::Control,
+    control_x: &controls::Control,
+    control_y: &controls::Control,
     control_x_name: &str,
     control_y_name: &str,
 ) {
