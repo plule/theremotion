@@ -6,14 +6,14 @@ declare license     "BSD";
 import("stdfaust.lib");
 
 // Inputs
-note = hslider("note", 60, 0, 127, 0) : si.smoo;
-vol = hslider("volume", 0.0, 0, 1, 0) : si.smoo;
-sub_volume = hslider("sub_volume", 0.5, 0, 1, 0) : si.smoo;
-cutoff_note = hslider("cutoff_note", 0, -20, 50, 0) : si.smoo;
-res = hslider("res", 0, 0, 0.99, 0) : si.smoo;
-detune = hslider("detune", 0.001, 0.001, 0.02, 0) : si.smoo;
-supersaw = hslider("supersaw", 0, 0, 1.0, 0) : si.smoo;
-pluck_position = hslider("pluck_position", 0.5, 0, 1, 0) : si.smoo;
+note = hslider("note", 60, 0, 127, 0.001) : si.smoo;
+vol = hslider("volume", 0.0, 0, 1, 0.001) : si.smoo;
+sub_volume = hslider("sub_volume", 0.5, 0, 1, 0.001) : si.smoo;
+cutoff_note = hslider("cutoff_note", 0, -20, 50, 0.001) : si.smoo;
+res = hslider("res", 0, 0, 0.99, 0.001) : si.smoo;
+detune = hslider("detune", 0.001, 0.001, 0.02, 0.001) : si.smoo;
+supersaw = hslider("supersaw", 0, 0, 1.0, 0.001) : si.smoo;
+pluck_position = hslider("pluck_position", 0.5, 0, 1, 0.001) : si.smoo;
 pluck = button("pluck");
 
 // Lead oscillator
