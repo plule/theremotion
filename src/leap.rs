@@ -1,8 +1,9 @@
 use std::{
-    sync::{mpsc::Receiver, Arc, Mutex},
+    sync::{Arc, Mutex},
     thread,
 };
 
+use crossbeam_channel::Receiver;
 use faust_state::StateHandle;
 use leaprs::*;
 

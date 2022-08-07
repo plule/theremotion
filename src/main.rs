@@ -12,7 +12,7 @@ mod faust {
     include!(concat!(env!("OUT_DIR"), "/dsp.rs"));
 }
 
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex};
 
 use cpal::traits::StreamTrait;
 use faust_state::DspHandle;
@@ -21,6 +21,9 @@ fn main() {
     // Log to stdout (if you run with `RUST_LOG=debug`).
     tracing_subscriber::fmt::init();
 
+    // Init communication channels
+    let (settings_tx, settings_rx) = crossbeam_channel::unbounded();
+
     // Init DSP
     let (dsp, state) = DspHandle::<faust::Instrument>::new();
 
@@ -28,7 +31,6 @@ fn main() {
         println!("{}", p.0);
     });
 
-    let (settings_tx, settings_rx) = mpsc::channel();
     let state = Arc::new(Mutex::new(state));
 
     // Init sound output
