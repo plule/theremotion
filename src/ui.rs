@@ -1,4 +1,6 @@
-use std::sync::{mpsc::Sender, Arc, Mutex};
+use std::sync::{Arc, Mutex};
+
+use crossbeam_channel::Sender;
 
 use egui::plot::{
     uniform_grid_spacer, HLine, Legend, Line, MarkerShape, Points, VLine, Value, Values,

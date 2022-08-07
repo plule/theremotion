@@ -409,6 +409,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "crossbeam-channel"
+version = "0.5.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2dd04ddaf88237dc3b8d8f9a3c1004b506b54b3313403944054d23c0870c521"
+dependencies = [
+ "cfg-if 1.0.0",
+ "crossbeam-utils",
+]
+
+[[package]]
+name = "crossbeam-utils"
+version = "0.8.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51887d4adc7b564537b15adcfb307936f8075dfcd5f00dde9a9f1d29383682bc"
+dependencies = [
+ "cfg-if 1.0.0",
+ "once_cell",
+]
+
+[[package]]
 name = "cty"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -885,6 +905,7 @@ name = "leapotron"
 version = "0.1.0"
 dependencies = [
  "cpal",
+ "crossbeam-channel",
  "eframe",
  "egui",
  "faust-build",
@@ -897,9 +918,9 @@ dependencies = [
 
 [[package]]
 name = "leaprs"
-version = "0.0.6"
+version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf9470d4a677b27ab09cb7b60fdf42bf3833b2cfda49a14899a40c300c9f8dd1"
+checksum = "f80782f90bc31cba1bf089065019b95f5e6f6284adc7beb3983b6ef09b8e6a1e"
 dependencies = [
  "bitflags",
  "leap-sys",
