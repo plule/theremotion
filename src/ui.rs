@@ -141,7 +141,7 @@ fn autotune_plot(ui: &mut egui::Ui, settings: &mut Settings, control: &controls:
         let x = i as f32 * 0.1;
         Value::new(
             x,
-            controls::smoothstairs(x, control.autotune.value as usize, settings.scale_notes()),
+            controls::smoothstairs(x, control.autotune, settings.scale_notes()),
         )
     });
     let line = Line::new(Values::from_values_iter(smooths));

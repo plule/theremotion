@@ -52,12 +52,7 @@ impl ControlTrait for Controls {
 impl From<&StateHandle> for Controls {
     fn from(state: &StateHandle) -> Self {
         Self {
-            note: (
-                state.node_by_path("note").unwrap(),
-                state.node_by_path("raw_note").unwrap(),
-                state.node_by_path("autotune_strength").unwrap(),
-            )
-                .into(),
+            note: state.node_by_path("note").unwrap().into(),
             volume: state.node_by_path("volume").unwrap().into(),
             cutoff_note: state.node_by_path("cutoff_note").unwrap().into(),
             resonance: state.node_by_path("res").unwrap().into(),
@@ -143,18 +138,13 @@ pub struct NoteControl {
     /// Raw note, without autotune
     pub raw_value: f32,
 
-    /// Raw note path
-    pub raw_path: String,
-
-    /// Autotune controls
-    pub autotune: Control,
+    /// Autotune strength
+    pub autotune: usize,
 }
 
 impl ControlTrait for NoteControl {
     fn send(&mut self, state: &mut StateHandle) {
         state.set_by_path(&self.path, self.value).unwrap();
-        state.set_by_path(&self.raw_path, self.raw_value).unwrap();
-        self.autotune.send(state);
     }
 }
 
@@ -169,27 +159,21 @@ impl NoteControl {
     ) {
         let range = settings.note_range_f();
         self.raw_value = convert_range(value, value_range, &range);
-        self.autotune.set_scaled(autotune_value, autotune_range);
-        self.value = smoothstairs(
-            self.raw_value,
-            self.autotune.value as usize,
-            settings.scale_notes(),
-        );
+        self.autotune = convert_range(autotune_value, autotune_range, &(0.0..=5.0)) as usize;
+        self.value = smoothstairs(self.raw_value, self.autotune, settings.scale_notes());
     }
 }
 
-impl From<(&Node, &Node, &Node)> for NoteControl {
-    fn from(nodes: (&Node, &Node, &Node)) -> Self {
-        let value = nodes.0.init_value();
-        let path = nodes.0.path();
-        let raw_value = nodes.1.init_value();
-        let raw_path = nodes.1.path();
-        let autotune = nodes.2.into();
+impl From<&Node> for NoteControl {
+    fn from(node: &Node) -> Self {
+        let value = node.init_value();
+        let path = node.path();
+        let raw_value = node.init_value();
+        let autotune = 0;
         Self {
             value,
             path,
             raw_value,
-            raw_path,
             autotune,
         }
     }
