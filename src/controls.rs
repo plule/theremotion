@@ -5,11 +5,8 @@ use music_note::midi::MidiNote;
 
 use crate::settings::Settings;
 
-/// Ability to echange with the DSP state
+/// Ability to exchange with the DSP state
 pub trait ControlTrait {
-    /// Receive the current state from the DSP
-    fn receive(&mut self, state: &mut StateHandle);
-
     /// Set the current state to the DSP
     fn send(&mut self, state: &mut StateHandle);
 }
@@ -38,19 +35,6 @@ pub struct Controls {
 }
 
 impl ControlTrait for Controls {
-    fn receive(&mut self, state: &mut StateHandle) {
-        state.update();
-        self.note.receive(state);
-        self.volume.receive(state);
-        self.cutoff_note.receive(state);
-        self.resonance.receive(state);
-        self.supersaw.receive(state);
-        self.detune.receive(state);
-        self.sub_volume.receive(state);
-        self.pluck.receive(state);
-        self.pluck_position.receive(state);
-    }
-
     fn send(&mut self, state: &mut StateHandle) {
         self.note.send(state);
         self.volume.send(state);
@@ -99,10 +83,6 @@ pub struct Control {
 }
 
 impl ControlTrait for Control {
-    fn receive(&mut self, state: &mut StateHandle) {
-        self.value = *state.get_by_path(&self.path).unwrap();
-    }
-
     fn send(&mut self, state: &mut StateHandle) {
         state.set_by_path(&self.path, self.value).unwrap();
     }
@@ -137,10 +117,6 @@ pub struct BoolControl {
 }
 
 impl ControlTrait for BoolControl {
-    fn receive(&mut self, state: &mut StateHandle) {
-        self.value = *state.get_by_path(&self.path).unwrap() > 0.5;
-    }
-
     fn send(&mut self, state: &mut StateHandle) {
         state
             .set_by_path(&self.path, if self.value { 1.0 } else { 0.0 })
@@ -175,12 +151,6 @@ pub struct NoteControl {
 }
 
 impl ControlTrait for NoteControl {
-    fn receive(&mut self, state: &mut StateHandle) {
-        self.value = *state.get_by_path(&self.path).unwrap();
-        self.raw_value = *state.get_by_path(&self.raw_path).unwrap();
-        self.autotune.receive(state);
-    }
-
     fn send(&mut self, state: &mut StateHandle) {
         state.set_by_path(&self.path, self.value).unwrap();
         state.set_by_path(&self.raw_path, self.raw_value).unwrap();
