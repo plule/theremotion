@@ -16,24 +16,29 @@ supersaw = hslider("supersaw", 0, 0, 1.0, 0) : si.smoo;
 pluck_position = hslider("pluck_position", 0.5, 0, 1, 0) : si.smoo;
 pluck = button("pluck");
 
-// Instrument frequencies
-cutoff_freq = ba.midikey2hz(note + cutoff_note);
-note_freq = ba.midikey2hz(note);
-sub_freq = ba.midikey2hz(note - 12);
-
 // Lead oscillator
-saw_osc(detune) = os.sawtooth(note_freq * (1 + detune));
-supersaw_osc = saw_osc(detune) + saw_osc(-detune);
-lead = saw_osc(0) + supersaw_osc * supersaw;
+lead = saw_osc(0) + supersaw_osc * supersaw
+with {
+    f = note : ba.midikey2hz;
+    saw_osc(detune) = os.sawtooth(f * (1 + detune));
+    supersaw_osc = saw_osc(detune) + saw_osc(-detune);
+};
 
 // Sub oscillator
-sub = os.square(sub_freq) * sub_volume;
+sub = os.square(f) * sub_volume
+with {
+    f = note - 12 : ba.midikey2hz;
+};
 
 // Guitar
-guitar_f = note + 12 : ba.midikey2hz;
-guitar = pm.guitar(pm.f2l(guitar_f), pluck_position, 1.0, pluck);
+guitar = pm.guitar(pm.f2l(f), pluck_position, 1.0, pluck)
+with {
+    f = note + 12 : ba.midikey2hz;
+};
 
 
 // Mix
-n = lead + sub : ve.moog_vcf_2b(res, cutoff_freq) * vol : ef.echo(1.0, 0.3, 0.3) : _ + guitar;
-process = n,n;
+process = lead + sub : ve.moog_vcf_2b(res, cutoff_freq) * vol : ef.echo(1.0, 0.3, 0.3) : _ + guitar <: _, _
+with {
+    cutoff_freq = ba.midikey2hz(note + cutoff_note);
+};
