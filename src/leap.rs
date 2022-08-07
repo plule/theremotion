@@ -26,6 +26,14 @@ pub fn start_leap_worker(
                     if let Some(new_settings) = settings_rx.try_iter().last() {
                         settings = new_settings;
                     }
+
+                    if let Some(drone) = settings.drone {
+                        controls.drone_note.value = drone.into_byte() as f32;
+                        controls.drone_volume.value = 0.2;
+                    } else {
+                        controls.drone_volume.value = 0.0;
+                    }
+
                     for hand in e.hands() {
                         match hand.hand_type() {
                             HandType::Left => {

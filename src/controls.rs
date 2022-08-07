@@ -32,6 +32,10 @@ pub struct Controls {
     pub pluck: BoolControl,
     /// Guitare pluck position
     pub pluck_position: Control,
+    /// Drone volume
+    pub drone_volume: Control,
+    /// Drone note
+    pub drone_note: Control,
 }
 
 impl ControlTrait for Controls {
@@ -45,6 +49,8 @@ impl ControlTrait for Controls {
         self.sub_volume.send(state);
         self.pluck.send(state);
         self.pluck_position.send(state);
+        self.drone_volume.send(state);
+        self.drone_note.send(state);
         state.send();
     }
 }
@@ -61,6 +67,8 @@ impl From<&StateHandle> for Controls {
             sub_volume: state.node_by_path("sub_volume").unwrap().into(),
             pluck: state.node_by_path("pluck").unwrap().into(),
             pluck_position: state.node_by_path("pluck_position").unwrap().into(),
+            drone_volume: state.node_by_path("drone_volume").unwrap().into(),
+            drone_note: state.node_by_path("drone_note").unwrap().into(),
         }
     }
 }
