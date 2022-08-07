@@ -1,9 +1,6 @@
-use std::{
-    sync::{Arc, Mutex},
-    thread,
-};
+use std::thread;
 
-use crossbeam_channel::Receiver;
+use crossbeam_channel::{Receiver, Sender};
 use faust_state::StateHandle;
 use leaprs::*;
 
@@ -11,23 +8,22 @@ use crate::{dsp::Controls, settings::Settings};
 
 /// Start the leap motion thread
 pub fn start_leap_worker(
-    dsp: Arc<Mutex<StateHandle>>,
+    mut dsp: StateHandle,
     settings_rx: Receiver<Settings>,
+    dsp_controls_tx: Sender<Controls>,
 ) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         let mut connection =
             Connection::create(ConnectionConfig::default()).expect("Failed to connect");
         connection.open().expect("Failed to open the connection");
-        let mut controls: Controls = { dsp.lock().as_deref().unwrap().into() };
+        let mut controls: Controls = (&dsp).into();
         let mut settings = Settings::default();
+        dsp_controls_tx.send(controls.clone()).unwrap();
         loop {
             controls.pluck.value = false;
             if let Ok(message) = connection.poll(1000) {
                 if let Event::Tracking(e) = message.event() {
-                    {
-                        let mut dsp = dsp.lock().expect("DSP thread poisened");
-                        controls.receive(&mut dsp);
-                    }
+                    controls.receive(&mut dsp);
 
                     if let Some(new_settings) = settings_rx.try_iter().last() {
                         settings = new_settings;
@@ -67,10 +63,8 @@ pub fn start_leap_worker(
                         }
                     }
 
-                    {
-                        let mut dsp = dsp.lock().expect("DSP thread poisened");
-                        controls.send(&mut dsp);
-                    }
+                    controls.send(&mut dsp);
+                    dsp_controls_tx.send(controls.clone()).unwrap();
                 }
             }
         }

@@ -1,11 +1,8 @@
-use std::sync::{Arc, Mutex};
-
-use crossbeam_channel::Sender;
+use crossbeam_channel::{Receiver, Sender};
 
 use egui::plot::{
     uniform_grid_spacer, HLine, Legend, Line, MarkerShape, Points, VLine, Value, Values,
 };
-use faust_state::StateHandle;
 use music_note::midi::MidiNote;
 
 use crate::{
@@ -14,7 +11,7 @@ use crate::{
 };
 
 pub struct Leapotron {
-    dsp: Arc<Mutex<StateHandle>>,
+    dsp_controls_rx: Receiver<Controls>,
     controls: dsp::Controls,
     settings: Settings,
     settings_tx: Sender<Settings>,
@@ -24,13 +21,13 @@ impl Leapotron {
     /// Called once before the first frame.
     pub fn new(
         cc: &eframe::CreationContext<'_>,
-        dsp: Arc<Mutex<StateHandle>>,
+        dsp_controls_rx: Receiver<Controls>,
         settings_tx: Sender<Settings>,
     ) -> Self {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
-        let controls: Controls = { dsp.lock().as_deref().unwrap().into() };
+        let controls: Controls = dsp_controls_rx.recv().unwrap();
         Self {
-            dsp,
+            dsp_controls_rx,
             settings_tx,
             controls,
             settings: Settings::default(),
@@ -43,16 +40,15 @@ impl eframe::App for Leapotron {
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let Self {
-            dsp,
+            dsp_controls_rx,
             controls,
             settings,
             settings_tx,
         } = self;
 
         // Update the current control state from the DSP
-        {
-            let mut dsp = dsp.lock().expect("DSP thread poisened");
-            controls.receive(&mut dsp);
+        if let Some(new_controls) = dsp_controls_rx.try_iter().last() {
+            *controls = new_controls;
         }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
