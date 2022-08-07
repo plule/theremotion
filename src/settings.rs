@@ -16,6 +16,9 @@ pub struct Settings {
 
     /// Scale of the autotune
     pub scale: ScaleType,
+
+    /// Current drone
+    pub drone: Option<MidiNote>,
 }
 
 impl Settings {
@@ -58,6 +61,7 @@ impl Default for Settings {
             root_note: MidiNote::new(Pitch::C, Octave::ONE),
             octave_range: 3,
             scale: ScaleType::Chromatic,
+            drone: None,
         }
     }
 }

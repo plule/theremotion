@@ -25,9 +25,14 @@ impl<'a> Keyboard<'a> {
         let note_distance = (note_float - self.note).abs().clamp(0.0, 1.0);
 
         let red = ((1.0 - note_distance) * 255.0) as u8;
+        let green = if matches!(self.settings.drone, Some(drone) if drone == *note) {
+            255
+        } else {
+            0
+        };
         let blue = if scale.contains(note) { 255 } else { 0 };
 
-        let color = Color32::from_rgb(red, 0, blue);
+        let color = Color32::from_rgb(red, green, blue);
         let (rect, mut response) = ui.allocate_exact_size(*key_dimension, egui::Sense::click());
         if response.clicked() {
             response.mark_changed();
@@ -57,6 +62,17 @@ impl<'a> Keyboard<'a> {
             }
             notes.sort();
             self.settings.scale = ScaleType::Custom(notes);
+        }
+        if response.middle_clicked() {
+            self.settings.drone = if let Some(drone) = self.settings.drone {
+                if drone == note {
+                    None
+                } else {
+                    Some(note)
+                }
+            } else {
+                Some(note)
+            }
         }
     }
 }
