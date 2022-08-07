@@ -6,20 +6,15 @@ declare license     "BSD";
 import("stdfaust.lib");
 
 // Inputs
-note_s = hslider("note", 60, 0, 127, 0) : si.smoo;
-raw_note = hslider("raw_note", 60, 0, 127, 0);
+note = hslider("note", 60, 0, 127, 0) : si.smoo;
 vol = hslider("volume", 0.0, 0, 1, 0) : si.smoo;
 sub_volume = hslider("sub_volume", 0.5, 0, 1, 0) : si.smoo;
 cutoff_note = hslider("cutoff_note", 0, -20, 50, 0) : si.smoo;
 res = hslider("res", 0, 0, 0.99, 0) : si.smoo;
 detune = hslider("detune", 0.001, 0.001, 0.02, 0) : si.smoo;
 supersaw = hslider("supersaw", 0, 0, 1.0, 0) : si.smoo;
-autotune_strength = hslider("autotune_strength", 0, 0, 7, 1);
 pluck_position = hslider("pluck_position", 0.5, 0, 1, 0) : si.smoo;
 pluck = button("pluck");
-
-// hack, raw note and autotune strength not yet in dsp, prevent optim
-note = attach(attach(note_s, autotune_strength), raw_note);
 
 // Instrument frequencies
 cutoff_freq = ba.midikey2hz(note + cutoff_note);
