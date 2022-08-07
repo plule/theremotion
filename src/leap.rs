@@ -3,6 +3,7 @@ use std::thread;
 use crossbeam_channel::{Receiver, Sender};
 use faust_state::StateHandle;
 use leaprs::*;
+use nalgebra::Vector3;
 
 use crate::{controls, controls::ControlTrait, settings::Settings};
 
@@ -20,7 +21,6 @@ pub fn start_leap_worker(
         let mut settings = Settings::default();
         dsp_controls_tx.send(controls.clone()).unwrap();
         loop {
-            controls.pluck.value = false;
             if let Ok(message) = connection.poll(1000) {
                 if let Event::Tracking(e) = message.event() {
                     if let Some(new_settings) = settings_rx.try_iter().last() {
@@ -46,8 +46,11 @@ pub fn start_leap_worker(
                             HandType::Right => {
                                 let position = hand.palm().position();
 
-                                controls.pluck.value = hand.pinch_strength() > 0.9
-                                    && hand.palm().velocity().y() > 800.0;
+                                if hand.pinch_strength() > 0.9 {
+                                    let palm_normal = Vector3::from(hand.palm().normal().array());
+                                    let palm_dot = palm_normal.dot(&Vector3::y());
+                                    controls.pluck.value = palm_dot > 0.0;
+                                }
                                 controls.cutoff_note.set_scaled(position.x(), 50.0..=200.0);
                                 controls.volume.set_scaled(position.y(), 300.0..=400.0);
                                 controls.resonance.set_scaled(position.z(), 100.0..=-100.0);
