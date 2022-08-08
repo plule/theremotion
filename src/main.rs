@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 mod controls;
-mod dsp;
+mod dsp_thread;
 mod leap;
 mod settings;
 mod ui;
@@ -10,10 +10,12 @@ mod ui_keyboard;
 
 #[allow(clippy::all)]
 #[rustfmt::skip]
-mod faust;
+mod dsp;
 
 use cpal::traits::StreamTrait;
 use faust_state::DspHandle;
+
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
     // Log to stdout (if you run with `RUST_LOG=debug`).
@@ -24,10 +26,10 @@ fn main() {
     let (dsp_controls_tx, dsp_controls_rx) = crossbeam_channel::unbounded();
 
     // Init DSP
-    let (dsp, state) = DspHandle::<faust::Instrument>::new();
+    let (dsp, state) = DspHandle::<dsp::Instrument>::new();
 
     // Init sound output
-    let stream = dsp::run_dsp(dsp);
+    let stream = dsp_thread::run(dsp);
     stream.play().expect("Failed to play stream");
 
     // Init leap thread
@@ -36,7 +38,7 @@ fn main() {
     // Start UI
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
-        "Leapotron",
+        format!("Leapotron v{}", VERSION).as_str(),
         native_options,
         Box::new(move |cc| Box::new(ui::Leapotron::new(cc, dsp_controls_rx, settings_tx))),
     );
