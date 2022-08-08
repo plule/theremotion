@@ -37,7 +37,7 @@ pub fn start_leap_worker(
                             controls.drone_volume.value = 0.0;
                         }
 
-                        if e.hands().len() == 0 {
+                        if e.hands().is_empty() {
                             controls.warning = Some("No hand in view".to_string());
                         }
 
