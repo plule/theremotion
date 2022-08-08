@@ -1,6 +1,6 @@
 [package]
 name = "leapotron"
-version = "0.1.1"
+version = "0.1.2-dev"
 authors = ["Pierre Lulé <pierre@lule.fr>"]
 edition = "2021"
 rust-version = "1.60"
