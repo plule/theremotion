@@ -1,6 +1,21 @@
+use std::path::PathBuf;
+
 use faust_build::build_dsp;
 
 fn main() {
     println!("cargo:rerun-if-changed=dsp");
-    build_dsp("dsp/instrument.dsp");
+
+    if std::env::var("LEAPOTRON_REGEN_DSP").is_ok() {
+        build_dsp("dsp/instrument.dsp");
+
+        let mut generated = PathBuf::new();
+        generated.push(std::env::var("OUT_DIR").unwrap());
+        generated.push("dsp.rs");
+
+        let mut dst = PathBuf::new();
+        dst.push("src");
+        dst.push("faust.rs");
+
+        std::fs::copy(generated, dst).unwrap();
+    }
 }
