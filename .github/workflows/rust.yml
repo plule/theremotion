@@ -3,18 +3,35 @@ on: [push, pull_request]
 name: CI
 
 jobs:
-  fmt:
-    name: Rustfmt
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        include:
+          - sdk-redist-ref: gemini
+            cargo-features: --no-default-features --features gemini
+          - sdk-redist-ref: orion
+            cargo-features: --no-default-features
+    name: build
+    runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - run: rustup component add rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+    - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ matrix.sdk-redist-ref }}
+        repository: plule/leap-sdk-redist
+        token: ${{ secrets.LEAP_SDK_REDIST_PAT }}
+        path: leap-sdk-redist
+    - uses: Swatinem/rust-cache@v1
+    - name: Build
+      run: cargo build ${{ matrix.cargo-features }}
+    - name: Build Examples
+      run: cargo build ${{ matrix.cargo-features }} --examples
+    - name: Build Tests
+      run: cargo build ${{ matrix.cargo-features }} --tests
+    - name: Doc
+      run: cargo doc
+    - name: Style
+      run: cargo fmt -- --check
+    - name: Clippy
+      run: cargo clippy -- -D warnings
