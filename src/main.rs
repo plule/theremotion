@@ -22,14 +22,15 @@ fn main() {
     tracing_subscriber::fmt::init();
 
     // Init communication channels
-    let (settings_tx, settings_rx) = crossbeam_channel::unbounded();
-    let (dsp_controls_tx, dsp_controls_rx) = crossbeam_channel::unbounded();
+    let (settings_tx, settings_rx) = crossbeam_channel::unbounded(); // UI to Leap
+    let (dsp_controls_tx, dsp_controls_rx) = crossbeam_channel::unbounded(); // Leap to UI
+    let (monitoring_tx, monitoring_rx) = crossbeam_channel::unbounded(); // DSP out to UI
 
     // Init DSP
     let (dsp, state) = DspHandle::<dsp::Instrument>::new();
 
     // Init sound output
-    let stream = dsp_thread::run(dsp);
+    let stream = dsp_thread::run(dsp, monitoring_tx);
     stream.play().expect("Failed to play stream");
 
     // Init leap thread
@@ -40,6 +41,13 @@ fn main() {
     eframe::run_native(
         format!("Leapotron v{}", VERSION).as_str(),
         native_options,
-        Box::new(move |cc| Box::new(ui::Leapotron::new(cc, dsp_controls_rx, settings_tx))),
+        Box::new(move |cc| {
+            Box::new(ui::Leapotron::new(
+                cc,
+                dsp_controls_rx,
+                settings_tx,
+                monitoring_rx,
+            ))
+        }),
     );
 }

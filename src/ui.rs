@@ -16,6 +16,8 @@ pub struct Leapotron {
     controls: controls::Controls,
     settings: Settings,
     settings_tx: Sender<Settings>,
+    monitoring_rx: Receiver<Vec<f32>>,
+    monitoring: Vec<f32>,
 }
 
 impl Leapotron {
@@ -24,6 +26,7 @@ impl Leapotron {
         cc: &eframe::CreationContext<'_>,
         dsp_controls_rx: Receiver<controls::Controls>,
         settings_tx: Sender<Settings>,
+        monitoring_rx: Receiver<Vec<f32>>,
     ) -> Self {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
         let controls = dsp_controls_rx.recv().unwrap();
@@ -31,6 +34,8 @@ impl Leapotron {
             dsp_controls_rx,
             settings_tx,
             controls,
+            monitoring_rx,
+            monitoring: Vec::default(),
             settings: Settings::default(),
         }
     }
@@ -45,11 +50,17 @@ impl eframe::App for Leapotron {
             controls,
             settings,
             settings_tx,
+            monitoring,
+            monitoring_rx,
         } = self;
 
         // Update the current control state from the DSP
         if let Some(new_controls) = dsp_controls_rx.try_iter().last() {
             *controls = new_controls;
+        }
+
+        if let Some(new_monitoring) = monitoring_rx.try_iter().last() {
+            *monitoring = new_monitoring;
         }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
@@ -130,6 +141,8 @@ impl eframe::App for Leapotron {
                 );
             });
             ui.separator();
+
+            monitoring_plot(ui, "monitoring", monitoring);
 
             ui.collapsing("Instructions", |ui| {
                 ui.label("👐 Leapotron is a synthesizer controlled by your hands.");
@@ -235,5 +248,34 @@ fn xy_plot(
         .show(ui, |plot_ui| {
             plot_ui.vline(VLine::new(control_x.value).name(control_x_name));
             plot_ui.hline(HLine::new(control_y.value).name(control_y_name));
+        });
+}
+
+fn monitoring_plot(ui: &mut egui::Ui, plot_name: &str, monitoring: &Vec<f32>) {
+    let line = Line::new(Values::from_values_iter(
+        monitoring
+            .iter()
+            // Wait for zero-cross
+            .skip_while(|s| **s <= 0.0)
+            .skip_while(|s| **s >= 0.0)
+            .step_by(30)
+            .enumerate()
+            .map(|(index, value)| Value::new(index as f64, *value)),
+    ))
+    .fill(0.0)
+    .highlight(true);
+    egui::plot::Plot::new(plot_name)
+        .allow_boxed_zoom(false)
+        .allow_drag(false)
+        .allow_scroll(false)
+        .allow_zoom(false)
+        .include_x(0.0)
+        .include_x(30.0)
+        .include_y(-2.0)
+        .include_y(2.0)
+        .width(100.0)
+        .height(50.0)
+        .show(ui, |plot_ui| {
+            plot_ui.line(line);
         });
 }
