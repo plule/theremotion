@@ -9,9 +9,7 @@ mod ui;
 mod ui_keyboard;
 
 #[allow(clippy::all)]
-mod faust {
-    include!(concat!(env!("OUT_DIR"), "/dsp.rs"));
-}
+mod faust;
 
 use cpal::traits::StreamTrait;
 use faust_state::DspHandle;
