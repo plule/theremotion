@@ -55,7 +55,14 @@ jobs:
       with:
         name: leapotron-${{ matrix.sdk-ver }}
         path: leapotron-${{ matrix.sdk-ver }}.zip
-    
+  investig:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/download-artifact@v3
+    - run: tree
   release:
     needs:
       - build
