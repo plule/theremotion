@@ -1,6 +1,17 @@
-on: [push, pull_request]
-
 name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  create:
+    tags:
+      - v*
+
+env:
+  CARGO_TERM_COLOR: always
+  LEAPSDK_LIB_PATH: leap-sdk-redist/LeapSDK/lib/x64
 
 jobs:
   build:
