@@ -32,7 +32,7 @@ fn main() {
 
         let mut dst = PathBuf::new();
         dst.push("src");
-        dst.push("faust.rs");
+        dst.push("dsp.rs");
 
         std::fs::copy(generated, dst).unwrap();
     }
