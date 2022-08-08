@@ -53,16 +53,8 @@ jobs:
         path: leapotron-${{ matrix.sdk-ver }}
     - uses: actions/upload-artifact@v3
       with:
-        name: leapotron-${{ matrix.sdk-ver }}
+        name: ${{ matrix.sdk-ver }}
         path: leapotron-${{ matrix.sdk-ver }}.zip
-  investig:
-    needs:
-      - build
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/download-artifact@v3
-    - run: tree
   release:
     needs:
       - build
@@ -81,6 +73,6 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          leapotron-orion.zip
-          leapotron-gemini.zip
+          orion/leapotron-orion.zip
+          gemini/leapotron-gemini.zip
           
