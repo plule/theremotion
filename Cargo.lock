@@ -911,7 +911,7 @@ checksum = "23603c7542c3b4b3b6fd83c7fe267a744f33573ec242ef150f4388e12ae52562"
 
 [[package]]
 name = "leapotron"
-version = "0.1.3"
+version = "0.1.4-dev"
 dependencies = [
  "cpal",
  "crossbeam-channel",
