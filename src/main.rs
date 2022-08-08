@@ -9,6 +9,7 @@ mod ui;
 mod ui_keyboard;
 
 #[allow(clippy::all)]
+#[rustfmt::skip]
 mod faust;
 
 use cpal::traits::StreamTrait;
