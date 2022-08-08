@@ -36,6 +36,11 @@ pub struct Controls {
     pub drone_volume: Control,
     /// Drone note
     pub drone_note: Control,
+
+    /// Warning message
+    pub warning: Option<String>,
+    /// Error message
+    pub error: Option<String>,
 }
 
 impl ControlTrait for Controls {
@@ -69,6 +74,8 @@ impl From<&StateHandle> for Controls {
             pluck_position: state.node_by_path("pluck_position").unwrap().into(),
             drone_volume: state.node_by_path("drone_volume").unwrap().into(),
             drone_note: state.node_by_path("drone_note").unwrap().into(),
+            warning: None,
+            error: None,
         }
     }
 }
