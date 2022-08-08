@@ -44,7 +44,7 @@ jobs:
       run: |
         mkdir -p leapotron-${{ matrix.sdk-ver }}
         cp target/release/leapotron.exe leapotron-${{ matrix.sdk-ver }}
-        cp target/release/leapotron.exe leapotron-${{ matrix.sdk-ver }}
+        cp leap-sdk-redist/LeapSDK/lib/x64/LeapC.dll leapotron-${{ matrix.sdk-ver }}
     - name: Archive Release
       uses: thedoctor0/zip-release@main
       with:
