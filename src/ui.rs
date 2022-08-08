@@ -1,7 +1,8 @@
 use crossbeam_channel::{Receiver, Sender};
 
-use egui::plot::{
-    uniform_grid_spacer, HLine, Legend, Line, MarkerShape, Points, VLine, Value, Values,
+use egui::{
+    plot::{uniform_grid_spacer, HLine, Legend, Line, MarkerShape, Points, VLine, Value, Values},
+    RichText,
 };
 use music_note::midi::MidiNote;
 
@@ -66,27 +67,29 @@ impl eframe::App for Leapotron {
             ui.add(crate::ui_keyboard::Keyboard::new(
                 controls.note.value,
                 settings,
-            ));
+            )).on_hover_text(
+                "🎼 Left click: Set root. 🎹 Right click: Change scale. ♒ Middle click: Set Drone.",
+            );
 
             ui.horizontal(|ui| {
-                ui.selectable_value(&mut settings.scale, ScaleType::Chromatic, "Chromatic");
-                ui.selectable_value(&mut settings.scale, ScaleType::Major, "Major");
+                ui.selectable_value(&mut settings.scale, ScaleType::Chromatic, "🎼 Chromatic");
+                ui.selectable_value(&mut settings.scale, ScaleType::Major, "🎼 Major");
                 ui.selectable_value(
                     &mut settings.scale,
                     ScaleType::MelodicMinor,
-                    "Melodic Minor",
+                    "🎼 Melodic Minor",
                 );
                 ui.selectable_value(
                     &mut settings.scale,
                     ScaleType::NaturalMinor,
-                    "Natural Minor",
+                    "🎼 Natural Minor",
                 );
                 ui.selectable_value(
                     &mut settings.scale,
                     ScaleType::HarmonicMinor,
-                    "Harmonic Minor",
+                    "🎼 Harmonic Minor",
                 );
-                ui.selectable_value(&mut settings.scale, ScaleType::Blues, "Blues");
+                ui.selectable_value(&mut settings.scale, ScaleType::Blues, "🎼 Blues");
             });
 
             ui.separator();
@@ -127,6 +130,28 @@ impl eframe::App for Leapotron {
                 );
             });
             ui.separator();
+
+            ui.collapsing("Instructions", |ui| {
+                ui.label("👐 Leapotron is a synthesizer controlled by your hands.");
+                ui.label("👉 Move up and down your right hand to control the volume.");
+                ui.label("👈 Move up and down your left hand to control the pitch.");
+                ui.label("👋 Move your hands on the horizontal plane to adapt the timbre.");
+                ui.label("👌 Pinch with your left hand to stick on a scale.");
+                ui.label("🎸 Pinch with your right hand, and rotate it to play guitar.");
+                ui.label("🎼 Left click on the keyboard to select a root note.");
+                ui.label("🎹 Choose a predefined scale or right click on the keyboard to make a custom scale.");
+                ui.label("♒ Middle click on the keyboard to enable a Drone.");
+            });
+
+            if let Some(warning) = &controls.warning {
+                let warning = format!("⚠ Leap: {}", warning);
+                ui.label(RichText::new(warning).small().color(egui::Color32::YELLOW));
+            }
+
+            if let Some(error) = &controls.error {
+                let error = format!("⚠ Leap: {}", error);
+                ui.label(RichText::new(error).small().color(egui::Color32::RED));
+            }
 
             egui::warn_if_debug_build(ui);
         });
