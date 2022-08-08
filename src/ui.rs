@@ -251,7 +251,7 @@ fn xy_plot(
         });
 }
 
-fn monitoring_plot(ui: &mut egui::Ui, plot_name: &str, monitoring: &Vec<f32>) {
+fn monitoring_plot(ui: &mut egui::Ui, plot_name: &str, monitoring: &[f32]) {
     let line = Line::new(Values::from_values_iter(
         monitoring
             .iter()
