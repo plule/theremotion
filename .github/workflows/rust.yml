@@ -45,10 +45,16 @@ jobs:
         mkdir -p leapotron-${{ matrix.sdk-ver }}
         cp target/release/leapotron.exe leapotron-${{ matrix.sdk-ver }}
         cp target/release/leapotron.exe leapotron-${{ matrix.sdk-ver }}
+    - name: Archive Release
+      uses: thedoctor0/zip-release@main
+      with:
+        type: 'zip'
+        filename: 'leapotron-${{ matrix.sdk-ver }}.zip'
+        path: leapotron-${{ matrix.sdk-ver }}
     - uses: actions/upload-artifact@v3
       with:
         name: leapotron-${{ matrix.sdk-ver }}
-        path: leapotron-${{ matrix.sdk-ver }}
+        path: leapotron-${{ matrix.sdk-ver }}.zip
     
   release:
     needs:
