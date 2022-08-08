@@ -35,11 +35,7 @@ jobs:
         path: leap-sdk-redist
     - uses: Swatinem/rust-cache@v1
     - name: Build
-      run: cargo build ${{ matrix.cargo-features }}
-    - name: Build Examples
-      run: cargo build ${{ matrix.cargo-features }} --examples
-    - name: Build Tests
-      run: cargo build ${{ matrix.cargo-features }} --tests
+      run: cargo build --release ${{ matrix.cargo-features }}
     - name: Doc
       run: cargo doc
     - name: Style
