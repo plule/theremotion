@@ -257,8 +257,8 @@ fn monitoring_plot(ui: &mut egui::Ui, plot_name: &str, monitoring: &[f32]) {
             .iter()
             // Wait for zero-cross
             .skip_while(|s| **s <= 0.0)
-            .skip_while(|s| **s >= 0.0)
-            .step_by(30)
+            .skip_while(|s| **s >= 1.0)
+            .step_by(10)
             .enumerate()
             .map(|(index, value)| Value::new(index as f64, *value)),
     ))
