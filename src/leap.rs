@@ -37,47 +37,45 @@ pub fn start_leap_worker(
                             controls.drone_volume.value = 0.0;
                         }
 
-                        if e.hands().is_empty() {
+                        let hands = e.hands();
+
+                        if hands.is_empty() {
                             controls.warning = Some("No hand in view".to_string());
                         }
 
-                        for hand in e.hands() {
-                            match hand.hand_type() {
-                                HandType::Left => {
-                                    let position = hand.palm().position();
+                        let left_hand = hands.iter().find(|h| h.hand_type() == HandType::Left);
+                        let right_hand = hands.iter().find(|h| h.hand_type() == HandType::Right);
 
-                                    controls.detune.set_scaled(position.x(), -200.0..=-50.0);
-                                    let note_input_range = 100.0..=600.0;
-                                    let fingertip = hand.index().distal().next_joint().y();
-                                    controls.note.set_scaled(
-                                        fingertip,
-                                        note_input_range.to_owned(),
-                                        hand.pinch_strength(),
-                                        0.0..=1.0,
-                                        &settings,
-                                    );
-                                    controls.supersaw.set_scaled(position.z(), 100.0..=-100.0);
-                                }
-                                HandType::Right => {
-                                    let position = hand.palm().position();
+                        if let Some(hand) = left_hand {
+                            let position = hand.palm().position();
 
-                                    if hand.pinch_strength() > 0.9 {
-                                        let palm_normal =
-                                            Vector3::from(hand.palm().normal().array());
-                                        let palm_dot = palm_normal.dot(&Vector3::y());
-                                        controls.pluck.value = palm_dot > 0.0;
-                                    }
-                                    controls.cutoff_note.set_scaled(position.x(), 50.0..=200.0);
-                                    controls.volume.set_scaled(position.y(), 300.0..=400.0);
-                                    controls.resonance.set_scaled(position.z(), 100.0..=-100.0);
-                                    controls
-                                        .pluck_position
-                                        .set_scaled(position.x(), 50.0..=200.0);
-                                    /*controls
-                                    .sub_volume
-                                    .set_scaled(hand.grab_angle(), 0.0..=std::f32::consts::PI);*/
-                                }
+                            controls.detune.set_scaled(position.x(), -200.0..=-50.0);
+                            let note_input_range = 100.0..=600.0;
+                            let fingertip = hand.index().distal().next_joint().y();
+                            controls.note.set_scaled(
+                                fingertip,
+                                note_input_range.to_owned(),
+                                hand.pinch_strength(),
+                                0.0..=1.0,
+                                &settings,
+                            );
+                            controls.supersaw.set_scaled(position.z(), 100.0..=-100.0);
+                        }
+
+                        if let Some(hand) = right_hand {
+                            let position = hand.palm().position();
+
+                            if hand.pinch_strength() > 0.9 {
+                                let palm_normal = Vector3::from(hand.palm().normal().array());
+                                let palm_dot = palm_normal.dot(&Vector3::y());
+                                controls.pluck.value = palm_dot > 0.0;
                             }
+                            controls.cutoff_note.set_scaled(position.x(), 50.0..=200.0);
+                            controls.volume.set_scaled(position.y(), 300.0..=400.0);
+                            controls.resonance.set_scaled(position.z(), 100.0..=-100.0);
+                            controls
+                                .pluck_position
+                                .set_scaled(position.x(), 50.0..=200.0);
                         }
 
                         controls.send(&mut dsp);
