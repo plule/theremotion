@@ -134,7 +134,7 @@ impl eframe::App for Leapotron {
                 );
                 ui.add_enabled(
                     false,
-                    egui::Slider::new(&mut controls.volume.value, controls.volume.range.to_owned())
+                    egui::Slider::new(&mut controls.volume.value, controls.volume.input.range.to_owned())
                         .show_value(false)
                         .text("Volume")
                         .vertical(),
@@ -237,10 +237,10 @@ fn xy_plot(
         .allow_drag(false)
         .allow_scroll(false)
         .allow_zoom(false)
-        .include_x(*control_x.range.start())
-        .include_x(*control_x.range.end())
-        .include_y(*control_y.range.start())
-        .include_y(*control_y.range.end())
+        .include_x(*control_x.input.range.start())
+        .include_x(*control_x.input.range.end())
+        .include_y(*control_y.input.range.start())
+        .include_y(*control_y.input.range.end())
         .legend(Legend::default())
         .show_axes([false, false])
         .width(200.0)

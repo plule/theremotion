@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 
-use faust_state::{Node, StateHandle};
+use faust_state::{Node, RangedInput, StateHandle, WidgetType};
 use music_note::midi::MidiNote;
 
 use crate::settings::Settings;
@@ -85,8 +85,8 @@ pub struct Control {
     /// Current value of the control in the DSP
     pub value: f32,
 
-    /// Range declared to the DSP
-    pub range: RangeInclusive<f32>,
+    /// DSP metadata
+    pub input: RangedInput,
 
     /// Name for the DSP
     pub path: String,
@@ -100,19 +100,22 @@ impl ControlTrait for Control {
 
 impl Control {
     pub fn set_scaled(&mut self, value: f32, value_range: RangeInclusive<f32>) {
-        self.value = convert_range(value, value_range, &self.range);
+        self.value = convert_range(value, value_range, &self.input.range);
     }
 }
 
 impl From<&Node> for Control {
     fn from(node: &Node) -> Self {
-        let value = node.init_value();
-        let dsp_range = node.min()..=node.max();
-        let path = node.path();
-        Self {
-            value,
-            range: dsp_range,
-            path,
+        if let WidgetType::RangedInput(input) = node.widget_type() {
+            let value = node.widget_type().init_value();
+            let path = node.path();
+            Self {
+                value,
+                input: input.clone(),
+                path,
+            }
+        } else {
+            panic!("The parameter {} is not a ranged input.", node.path())
         }
     }
 }
@@ -136,7 +139,7 @@ impl ControlTrait for BoolControl {
 
 impl From<&Node> for BoolControl {
     fn from(node: &Node) -> Self {
-        let value = node.init_value() > 0.5;
+        let value = node.widget_type().init_value() > 0.5;
         let path = node.path();
         Self { value, path }
     }
@@ -181,9 +184,9 @@ impl NoteControl {
 
 impl From<&Node> for NoteControl {
     fn from(node: &Node) -> Self {
-        let value = node.init_value();
+        let value = node.widget_type().init_value();
         let path = node.path();
-        let raw_value = node.init_value();
+        let raw_value = node.widget_type().init_value();
         let autotune = 0;
         Self {
             value,
