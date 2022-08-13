@@ -928,9 +928,9 @@ dependencies = [
 
 [[package]]
 name = "leaprs"
-version = "0.0.7"
+version = "0.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f80782f90bc31cba1bf089065019b95f5e6f6284adc7beb3983b6ef09b8e6a1e"
+checksum = "48104820219234943d748de071545748e20e2745c4e6c6feb688955b17077a64"
 dependencies = [
  "bitflags",
  "leap-sys",

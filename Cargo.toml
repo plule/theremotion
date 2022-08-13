@@ -16,7 +16,7 @@ tracing-subscriber = "0.3"
 cpal = "0.13.5"
 faust-types = { git = "https://github.com/plule/rust-faust", branch="contrib" }
 faust-state = { git = "https://github.com/plule/rust-faust", branch="contrib" }
-leaprs = { version = "0.0.7", default-features = false }
+leaprs = { version = "0.0.8", default-features = false }
 music-note = "0.3.0"
 crossbeam-channel = "0.5.6"
 nalgebra = "0.31.1"
