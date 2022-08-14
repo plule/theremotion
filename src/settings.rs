@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 
-use music_note::{
+use staff::{
     midi::{MidiNote, Octave},
     Interval, Pitch, Scale,
 };

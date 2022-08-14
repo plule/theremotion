@@ -921,8 +921,8 @@ dependencies = [
  "faust-state",
  "faust-types",
  "leaprs",
- "music-note",
  "nalgebra",
+ "staff",
  "tracing-subscriber",
 ]
 
@@ -1062,15 +1062,6 @@ dependencies = [
  "log",
  "wasi",
  "windows-sys",
-]
-
-[[package]]
-name = "music-note"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cb69e31b7694eb9ecd221aa4afeda49ae82bffb6a135753e51d90d713ae1f5f"
-dependencies = [
- "num-traits",
 ]
 
 [[package]]
@@ -1654,6 +1645,15 @@ dependencies = [
  "wayland-client",
  "wayland-cursor",
  "wayland-protocols",
+]
+
+[[package]]
+name = "staff"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a67d8b5c7c693ee3c66e952b467aa4a3aac6cedb5bd24ab1712cac92c1e44bfd"
+dependencies = [
+ "num-traits",
 ]
 
 [[package]]

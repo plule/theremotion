@@ -1,5 +1,5 @@
 use egui::{Color32, Response, Widget};
-use music_note::{midi::MidiNote, Pitch};
+use staff::{midi::MidiNote, Pitch};
 
 use crate::settings::{ScaleType, Settings};
 

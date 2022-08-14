@@ -1,7 +1,7 @@
 use std::ops::RangeInclusive;
 
 use faust_state::{Node, RangedInput, StateHandle, WidgetType};
-use music_note::midi::MidiNote;
+use staff::midi::MidiNote;
 
 use crate::settings::Settings;
 
