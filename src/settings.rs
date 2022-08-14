@@ -16,7 +16,7 @@ pub struct Settings {
     pub octave_range: u8,
 
     /// Scale of the autotune
-    pub scale: ScaleType,
+    pub scale: ScaleIntervals,
 
     /// Current drone
     pub drone: Option<MidiNote>,
@@ -33,27 +33,13 @@ impl Settings {
         (*range.start() as f32)..=(*range.end() as f32)
     }
 
-    pub fn scale(&self) -> ScaleIntervals {
-        match &self.scale {
-            ScaleType::Chromatic => ScaleIntervals::all(),
-            ScaleType::Major => ScaleIntervals::major(),
-            ScaleType::NaturalMinor => ScaleIntervals::natural_minor(),
-            ScaleType::MelodicMinor => ScaleIntervals::melodic_minor(),
-            ScaleType::HarmonicMinor => ScaleIntervals::harmonic_minor(),
-            ScaleType::Blues => ScaleIntervals::blues(),
-            ScaleType::Custom(intervals) => {
-                ScaleIntervals::from_iter(intervals.clone().into_iter())
-            }
-        }
-    }
-
     /// List all the existing notes of the current
     pub fn scale_notes(&self) -> Vec<MidiNote> {
         self.note_range()
             .map(MidiNote::from_byte)
             .filter(|note| {
                 let interval = Interval::new((*note - self.root_note).semitones() % 12);
-                self.scale().contains(interval)
+                self.scale.contains(interval)
             })
             .collect()
     }
@@ -64,19 +50,8 @@ impl Default for Settings {
         Self {
             root_note: MidiNote::new(Pitch::C, Octave::ONE),
             octave_range: 3,
-            scale: ScaleType::Chromatic,
+            scale: ScaleIntervals::all(),
             drone: None,
         }
     }
-}
-
-#[derive(Clone, PartialEq)]
-pub enum ScaleType {
-    Chromatic,
-    Major,
-    NaturalMinor,
-    HarmonicMinor,
-    MelodicMinor,
-    Blues,
-    Custom(ScaleIntervals),
 }

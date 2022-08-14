@@ -4,7 +4,7 @@ use egui::{
     plot::{uniform_grid_spacer, HLine, Legend, Line, MarkerShape, Points, VLine, Value, Values},
     RichText,
 };
-use staff::midi::MidiNote;
+use staff::{midi::MidiNote, scale::ScaleIntervals};
 
 use crate::{
     controls,
@@ -83,24 +83,24 @@ impl eframe::App for Leapotron {
             );
 
             ui.horizontal(|ui| {
-                ui.selectable_value(&mut settings.scale, ScaleType::Chromatic, "🎼 Chromatic");
-                ui.selectable_value(&mut settings.scale, ScaleType::Major, "🎼 Major");
+                ui.selectable_value(&mut settings.scale, ScaleIntervals::all(), "🎼 Chromatic");
+                ui.selectable_value(&mut settings.scale, ScaleIntervals::major(), "🎼 Major");
                 ui.selectable_value(
                     &mut settings.scale,
-                    ScaleType::MelodicMinor,
+                    ScaleIntervals::melodic_minor(),
                     "🎼 Melodic Minor",
                 );
                 ui.selectable_value(
                     &mut settings.scale,
-                    ScaleType::NaturalMinor,
+                    ScaleIntervals::natural_minor(),
                     "🎼 Natural Minor",
                 );
                 ui.selectable_value(
                     &mut settings.scale,
-                    ScaleType::HarmonicMinor,
+                    ScaleIntervals::harmonic_minor(),
                     "🎼 Harmonic Minor",
                 );
-                ui.selectable_value(&mut settings.scale, ScaleType::Blues, "🎼 Blues");
+                ui.selectable_value(&mut settings.scale, ScaleIntervals::blues(), "🎼 Blues");
             });
 
             ui.separator();
