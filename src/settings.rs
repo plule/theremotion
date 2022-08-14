@@ -3,7 +3,6 @@ use std::ops::RangeInclusive;
 use staff::{
     midi::{MidiNote, Octave},
     scale::ScaleIntervals,
-    set::Set,
     Interval, Pitch,
 };
 
@@ -34,28 +33,28 @@ impl Settings {
         (*range.start() as f32)..=(*range.end() as f32)
     }
 
-    pub fn scale(&self) -> Set<Interval, u16> {
+    pub fn scale(&self) -> ScaleIntervals {
         match &self.scale {
-            ScaleType::Chromatic => Set::from_iter((0..=11).map(Interval::new)), // (0..=11).map(Interval::new).collect(),
+            ScaleType::Chromatic => ScaleIntervals::all(),
             ScaleType::Major => ScaleIntervals::major(),
             ScaleType::NaturalMinor => ScaleIntervals::natural_minor(),
             ScaleType::MelodicMinor => ScaleIntervals::melodic_minor(),
             ScaleType::HarmonicMinor => ScaleIntervals::harmonic_minor(),
             ScaleType::Blues => ScaleIntervals::blues(),
-            ScaleType::Custom(intervals) => Set::from_iter(intervals.clone().into_iter()),
+            ScaleType::Custom(intervals) => {
+                ScaleIntervals::from_iter(intervals.clone().into_iter())
+            }
         }
     }
 
     /// List all the existing notes of the current
     pub fn scale_notes(&self) -> Vec<MidiNote> {
-        let pitches: Vec<Pitch> = self
-            .scale()
-            .map(|interval| (self.root_note + interval).pitch())
-            .collect();
-
         self.note_range()
             .map(MidiNote::from_byte)
-            .filter(|n| pitches.contains(&n.pitch()))
+            .filter(|note| {
+                let interval = Interval::new((*note - self.root_note).semitones() % 12);
+                self.scale().contains(interval)
+            })
             .collect()
     }
 }
@@ -79,5 +78,5 @@ pub enum ScaleType {
     HarmonicMinor,
     MelodicMinor,
     Blues,
-    Custom(Set<Interval, u16>),
+    Custom(ScaleIntervals),
 }
