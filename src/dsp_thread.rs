@@ -47,7 +47,7 @@ where
         .iter_mut()
         .map(|output| unsafe { slice::from_raw_parts_mut(output.as_mut_ptr(), buffer_size) })
         .collect();
-    let stream = if let SampleFormat::F32 = sample_format {
+    if let SampleFormat::F32 = sample_format {
         device
             .build_output_stream(
                 &config,
@@ -67,6 +67,5 @@ where
             .unwrap()
     } else {
         panic!("only looked as f32 rn");
-    };
-    stream
+    }
 }

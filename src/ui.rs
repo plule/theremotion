@@ -6,10 +6,7 @@ use egui::{
 };
 use staff::{midi::MidiNote, scale::ScaleIntervals};
 
-use crate::{
-    controls,
-    settings::{ScaleType, Settings},
-};
+use crate::{controls, settings::Settings};
 
 pub struct Leapotron {
     dsp_controls_rx: Receiver<controls::Controls>,
