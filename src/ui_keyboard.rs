@@ -1,7 +1,7 @@
 use egui::{Color32, Response, Widget};
-use staff::{midi::MidiNote, set::Set, Interval, Pitch};
+use staff::{midi::MidiNote, Interval, Pitch};
 
-use crate::settings::{ScaleType, Settings};
+use crate::settings::Settings;
 
 /// Display a keyboard with a floating point note
 pub struct Keyboard<'a> {
@@ -56,13 +56,11 @@ impl<'a> Keyboard<'a> {
         if response.secondary_clicked() {
             let interval = note - self.settings.root_note;
             let interval = Interval::new(interval.semitones() % 12);
-            let mut scale = self.settings.scale();
-            if scale.contains(interval) {
-                scale.remove(interval);
+            if self.settings.scale.contains(interval) {
+                self.settings.scale.remove(interval);
             } else {
-                scale.push(interval);
+                self.settings.scale.push(interval);
             }
-            self.settings.scale = ScaleType::Custom(scale);
         }
         if response.middle_clicked() {
             self.settings.drone = if let Some(drone) = self.settings.drone {
