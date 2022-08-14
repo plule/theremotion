@@ -17,9 +17,9 @@ cpal = "0.13.5"
 faust-types = { git = "https://github.com/plule/rust-faust", branch="type-safe-node-type" }
 faust-state = { git = "https://github.com/plule/rust-faust", branch="type-safe-node-type" }
 leaprs = { version = "0.0.8", default-features = false }
-music-note = "0.3.0"
 crossbeam-channel = "0.5.6"
 nalgebra = "0.31.1"
+staff = "0.2.0"
 
 [build-dependencies]
 faust-build = { git = "https://github.com/plule/rust-faust", branch="type-safe-node-type" }

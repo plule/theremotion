@@ -4,7 +4,7 @@ use egui::{
     plot::{uniform_grid_spacer, HLine, Legend, Line, MarkerShape, Points, VLine, Value, Values},
     RichText,
 };
-use music_note::midi::MidiNote;
+use staff::midi::MidiNote;
 
 use crate::{
     controls,
