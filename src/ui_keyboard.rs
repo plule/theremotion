@@ -1,5 +1,5 @@
 use egui::{Color32, Response, Widget};
-use staff::{midi::MidiNote, Pitch};
+use staff::{midi::MidiNote, set::Set, Interval, Pitch};
 
 use crate::settings::{ScaleType, Settings};
 
@@ -54,14 +54,17 @@ impl<'a> Keyboard<'a> {
             self.settings.root_note = note;
         }
         if response.secondary_clicked() {
-            let mut notes = self.settings.octave_notes();
-            if let Some(idx) = notes.iter().position(|n| &note.pitch() == n) {
-                notes.remove(idx);
+            let interval = note - self.settings.root_note;
+            let interval = Interval::new(interval.semitones() % 12);
+            let mut scale = self.settings.scale();
+            if scale.contains(interval) {
+                // scale.remove(interval)
+                // https://github.com/matthunz/staff/pull/8
+                scale = Set::from_iter(scale.filter(|i| i.semitones() != interval.semitones()));
             } else {
-                notes.push(note.pitch());
+                scale.push(interval);
             }
-            notes.sort();
-            self.settings.scale = ScaleType::Custom(notes);
+            self.settings.scale = ScaleType::Custom(scale);
         }
         if response.middle_clicked() {
             self.settings.drone = if let Some(drone) = self.settings.drone {

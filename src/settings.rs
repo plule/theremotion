@@ -2,7 +2,9 @@ use std::ops::RangeInclusive;
 
 use staff::{
     midi::{MidiNote, Octave},
-    Interval, Pitch, Scale,
+    scale::ScaleIntervals,
+    set::Set,
+    Interval, Pitch,
 };
 
 /// Application settings
@@ -32,25 +34,28 @@ impl Settings {
         (*range.start() as f32)..=(*range.end() as f32)
     }
 
-    pub fn octave_notes(&self) -> Vec<Pitch> {
+    pub fn scale(&self) -> Set<Interval, u16> {
         match &self.scale {
-            ScaleType::Chromatic => (0..=11).map(Pitch::from_byte).collect(),
-            ScaleType::Major => Scale::major(self.root_note.pitch()).collect(),
-            ScaleType::NaturalMinor => Scale::natural_minor(self.root_note.pitch()).collect(),
-            ScaleType::MelodicMinor => Scale::melodic_minor(self.root_note.pitch()).collect(),
-            ScaleType::HarmonicMinor => Scale::harmonic_minor(self.root_note.pitch()).collect(),
-            ScaleType::Blues => Scale::blues(self.root_note.pitch()).collect(),
-            ScaleType::Custom(pitches) => pitches.clone(),
+            ScaleType::Chromatic => Set::from_iter((0..=11).map(Interval::new)), // (0..=11).map(Interval::new).collect(),
+            ScaleType::Major => ScaleIntervals::major(),
+            ScaleType::NaturalMinor => ScaleIntervals::natural_minor(),
+            ScaleType::MelodicMinor => ScaleIntervals::melodic_minor(),
+            ScaleType::HarmonicMinor => ScaleIntervals::harmonic_minor(),
+            ScaleType::Blues => ScaleIntervals::blues(),
+            ScaleType::Custom(intervals) => Set::from_iter(intervals.clone().into_iter()),
         }
     }
 
     /// List all the existing notes of the current
     pub fn scale_notes(&self) -> Vec<MidiNote> {
-        let scale = self.octave_notes();
+        let pitches: Vec<Pitch> = self
+            .scale()
+            .map(|interval| (self.root_note + interval).pitch())
+            .collect();
 
         self.note_range()
             .map(MidiNote::from_byte)
-            .filter(|n| scale.contains(&n.pitch()))
+            .filter(|n| pitches.contains(&n.pitch()))
             .collect()
     }
 }
@@ -74,5 +79,5 @@ pub enum ScaleType {
     HarmonicMinor,
     MelodicMinor,
     Blues,
-    Custom(Vec<Pitch>),
+    Custom(Set<Interval, u16>),
 }
