@@ -1650,8 +1650,7 @@ dependencies = [
 [[package]]
 name = "staff"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a67d8b5c7c693ee3c66e952b467aa4a3aac6cedb5bd24ab1712cac92c1e44bfd"
+source = "git+https://github.com/plule/music-theory?branch=main#3c5daa6f6d5c347c367d5dcddd90c49d5645902d"
 dependencies = [
  "num-traits",
 ]

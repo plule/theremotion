@@ -58,9 +58,7 @@ impl<'a> Keyboard<'a> {
             let interval = Interval::new(interval.semitones() % 12);
             let mut scale = self.settings.scale();
             if scale.contains(interval) {
-                // scale.remove(interval)
-                // https://github.com/matthunz/staff/pull/8
-                scale = Set::from_iter(scale.filter(|i| i.semitones() != interval.semitones()));
+                scale.remove(interval);
             } else {
                 scale.push(interval);
             }
