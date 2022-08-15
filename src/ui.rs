@@ -79,6 +79,8 @@ impl eframe::App for Leapotron {
                 "🎼 Left click: Set root. 🎹 Right click: Change scale. ♒ Middle click: Set Drone.",
             );
 
+            ui.separator();
+
             ui.horizontal(|ui| {
                 ui.selectable_value(&mut settings.scale, ScaleIntervals::all(), "🎼 Chromatic");
                 ui.selectable_value(&mut settings.scale, ScaleIntervals::major(), "🎼 Major");
@@ -89,14 +91,16 @@ impl eframe::App for Leapotron {
                 );
                 ui.selectable_value(
                     &mut settings.scale,
+                    ScaleIntervals::harmonic_minor(),
+                    "🎼 Harmonic Minor",
+                );
+                ui.selectable_value(
+                    &mut settings.scale,
                     ScaleIntervals::natural_minor(),
                     "🎼 Natural Minor",
                 );
                 ui.selectable_value(
-                    &mut settings.scale,
-                    ScaleIntervals::harmonic_minor(),
-                    "🎼 Harmonic Minor",
-                );
+                    &mut settings.scale, ScaleIntervals::dorian(), "🎼 Dorian");
                 ui.selectable_value(&mut settings.scale, ScaleIntervals::blues(), "🎼 Blues");
             });
 
@@ -197,14 +201,8 @@ fn autotune_plot(ui: &mut egui::Ui, settings: &mut Settings, control: &controls:
         .include_y(*note_range.end())
         .x_grid_spacer(uniform_grid_spacer(|_| [12.0, 1.0, 1.0]))
         .y_grid_spacer(uniform_grid_spacer(|_| [12.0, 1.0, 1.0]))
-        .x_axis_formatter(|v, _| {
-            let note = MidiNote::from_byte(v as u8);
-            format!("{}{}", note.pitch(), note.octave())
-        })
-        .y_axis_formatter(|v, _| {
-            let note = MidiNote::from_byte(v as u8);
-            format!("{}{}", note.pitch(), note.octave())
-        })
+        .x_axis_formatter(|v, _| MidiNote::from_byte(v as u8).to_string())
+        .y_axis_formatter(|v, _| MidiNote::from_byte(v as u8).to_string())
         .legend(Legend::default())
         .width(200.0)
         .height(200.0)
