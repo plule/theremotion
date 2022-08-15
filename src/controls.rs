@@ -106,16 +106,16 @@ impl Control {
 
 impl From<&Node> for Control {
     fn from(node: &Node) -> Self {
-        if let WidgetType::RangedInput(input) = node.widget_type() {
-            let value = node.widget_type().init_value();
-            let path = node.path();
-            Self {
-                value,
-                input: input.clone(),
-                path,
-            }
-        } else {
-            panic!("The parameter {} is not a ranged input.", node.path())
+        let input = match node.widget_type() {
+            WidgetType::VerticalSlider(input) => input,
+            WidgetType::HorizontalSlider(input) => input,
+            WidgetType::NumEntry(input) => input,
+            _ => panic!("The parameter {} is not a ranged input.", node.path()),
+        };
+        Self {
+            value: input.init,
+            input: input.clone(),
+            path: node.path(),
         }
     }
 }
