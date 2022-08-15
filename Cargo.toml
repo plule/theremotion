@@ -19,7 +19,7 @@ faust-state = { git = "https://github.com/plule/rust-faust", branch="type-safe-n
 leaprs = { version = "0.0.8", default-features = false }
 crossbeam-channel = "0.5.6"
 nalgebra = "0.31.1"
-staff = { git = "https://github.com/plule/music-theory", branch="main" }
+staff = "0.3.0"
 
 [build-dependencies]
 faust-build = { git = "https://github.com/plule/rust-faust", branch="type-safe-node-type" }
