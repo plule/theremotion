@@ -35,7 +35,7 @@ with {
 // Guitar
 guitar = pm.guitar(pm.f2l(f), pluck_position, 1.0, pluck)
 with {
-    f = note : ba.midikey2hz;
+    f = note - 12 : ba.midikey2hz;
 };
 
 // Drone
