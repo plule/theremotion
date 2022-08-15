@@ -1,5 +1,6 @@
 use std::ops::RangeInclusive;
 
+use serde::{Deserialize, Serialize};
 use staff::{
     midi::{MidiNote, Octave},
     scale::ScaleIntervals,
@@ -7,7 +8,7 @@ use staff::{
 };
 
 /// Application settings
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct Settings {
     /// Root note of the keyboard
     pub root_note: MidiNote,
@@ -23,6 +24,27 @@ pub struct Settings {
 }
 
 impl Settings {
+    pub fn try_read() -> Option<Self> {
+        let f = std::fs::File::open("settings.yaml").ok()?;
+        let settings: Settings = serde_yaml::from_reader(f).ok()?;
+        Some(settings)
+    }
+
+    pub fn read() -> Self {
+        Self::try_read().unwrap_or_default()
+    }
+
+    pub fn save(&self) {
+        let f = std::fs::OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .create(true)
+            .open("settings.yaml")
+            .ok()
+            .unwrap();
+        serde_yaml::to_writer(f, &self).unwrap();
+    }
+
     pub fn note_range(&self) -> RangeInclusive<u8> {
         self.root_note.into_byte()
             ..=(self.root_note + Interval::new(self.octave_range * 12)).into_byte()

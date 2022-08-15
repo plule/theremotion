@@ -12,6 +12,7 @@ pub struct Leapotron {
     dsp_controls_rx: Receiver<controls::Controls>,
     controls: controls::Controls,
     settings: Settings,
+    saved_settings: Settings,
     settings_tx: Sender<Settings>,
     monitoring_rx: Receiver<Vec<f32>>,
     monitoring: Vec<f32>,
@@ -27,13 +28,16 @@ impl Leapotron {
     ) -> Self {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
         let controls = dsp_controls_rx.recv().unwrap();
+        let settings = Settings::read();
+        settings_tx.send(settings.clone()).unwrap();
         Self {
             dsp_controls_rx,
             settings_tx,
             controls,
             monitoring_rx,
             monitoring: Vec::default(),
-            settings: Settings::default(),
+            saved_settings: settings.clone(),
+            settings,
         }
     }
 }
@@ -49,6 +53,7 @@ impl eframe::App for Leapotron {
             settings_tx,
             monitoring,
             monitoring_rx,
+            saved_settings,
         } = self;
 
         // Update the current control state from the DSP
@@ -171,7 +176,12 @@ impl eframe::App for Leapotron {
 
             egui::warn_if_debug_build(ui);
         });
-        settings_tx.send(settings.clone()).unwrap();
+
+        if saved_settings != settings {
+            settings.save();
+            *saved_settings = settings.clone();
+            settings_tx.send(settings.clone()).unwrap();
+        }
         ctx.request_repaint();
     }
 }
