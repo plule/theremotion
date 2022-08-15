@@ -6,7 +6,7 @@ use egui::{
 };
 use staff::{midi::MidiNote, scale::ScaleIntervals};
 
-use crate::{controls, settings::Settings};
+use crate::{controls, scales::MoreScales, settings::Settings};
 
 pub struct Leapotron {
     dsp_controls_rx: Receiver<controls::Controls>,
@@ -102,6 +102,8 @@ impl eframe::App for Leapotron {
                 ui.selectable_value(
                     &mut settings.scale, ScaleIntervals::dorian(), "🎼 Dorian");
                 ui.selectable_value(&mut settings.scale, ScaleIntervals::blues(), "🎼 Blues");
+                ui.selectable_value(&mut settings.scale, ScaleIntervals::freygish(), "🎼 Freygish");
+                ui.selectable_value(&mut settings.scale, ScaleIntervals::altered_dorian(), "🎼 Altered Dorian");
             });
 
             ui.separator();

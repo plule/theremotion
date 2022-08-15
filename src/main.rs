@@ -4,6 +4,7 @@
 mod controls;
 mod dsp_thread;
 mod leap;
+mod scales;
 mod settings;
 mod ui;
 mod ui_keyboard;
