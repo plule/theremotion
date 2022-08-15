@@ -48,7 +48,7 @@ impl Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            root_note: MidiNote::new(Pitch::C, Octave::ONE),
+            root_note: MidiNote::new(Pitch::C, Octave::THREE),
             octave_range: 3,
             scale: ScaleIntervals::all(),
             drone: None,
