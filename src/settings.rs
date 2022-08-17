@@ -8,7 +8,7 @@ use staff::{
 };
 
 /// Application settings
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Settings {
     /// Root note of the keyboard
     pub root_note: MidiNote,
@@ -18,9 +18,6 @@ pub struct Settings {
 
     /// Scale of the autotune
     pub scale: ScaleIntervals,
-
-    /// Current drone
-    pub drone: Option<MidiNote>,
 }
 
 impl Settings {
@@ -73,7 +70,6 @@ impl Default for Settings {
             root_note: MidiNote::new(Pitch::C, Octave::THREE),
             octave_range: 3,
             scale: ScaleIntervals::all(),
-            drone: None,
         }
     }
 }

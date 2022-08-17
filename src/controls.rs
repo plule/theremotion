@@ -207,7 +207,7 @@ impl NodeByPath for StateHandle {
     }
 }
 
-fn convert_range(
+pub fn convert_range(
     value: f32,
     input_range: RangeInclusive<f32>,
     output_range: &RangeInclusive<f32>,

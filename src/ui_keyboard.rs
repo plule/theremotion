@@ -8,13 +8,20 @@ pub struct Keyboard<'a> {
     /// Currently played midi note
     pub note: f32,
 
+    /// Currently played drone note
+    pub drone_note: f32,
+
     /// Settings
     pub settings: &'a mut Settings,
 }
 
 impl<'a> Keyboard<'a> {
-    pub fn new(note: f32, settings: &'a mut Settings) -> Self {
-        Self { note, settings }
+    pub fn new(note: f32, drone_note: f32, settings: &'a mut Settings) -> Self {
+        Self {
+            note,
+            drone_note,
+            settings,
+        }
     }
 
     fn draw_key(&self, ui: &mut egui::Ui, key_dimension: &egui::Vec2, note: &MidiNote) -> Response {
@@ -23,13 +30,10 @@ impl<'a> Keyboard<'a> {
 
         let note_float = note_byte as f32;
         let note_distance = (note_float - self.note).abs().clamp(0.0, 1.0);
+        let drone_note_distance = (note_float - self.drone_note).abs().clamp(0.0, 1.0);
 
         let red = ((1.0 - note_distance) * 255.0) as u8;
-        let green = if matches!(self.settings.drone, Some(drone) if drone == *note) {
-            255
-        } else {
-            0
-        };
+        let green = ((1.0 - drone_note_distance) * 255.0) as u8;
         let blue = if scale.contains(note) { 255 } else { 0 };
 
         let color = Color32::from_rgb(red, green, blue);
@@ -60,17 +64,6 @@ impl<'a> Keyboard<'a> {
                 self.settings.scale.remove(interval);
             } else {
                 self.settings.scale.push(interval);
-            }
-        }
-        if response.middle_clicked() {
-            self.settings.drone = if let Some(drone) = self.settings.drone {
-                if drone == note {
-                    None
-                } else {
-                    Some(note)
-                }
-            } else {
-                Some(note)
             }
         }
     }
