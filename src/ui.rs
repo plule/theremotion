@@ -78,10 +78,9 @@ impl eframe::App for Leapotron {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.add(crate::ui_keyboard::Keyboard::new(
                 controls.note.value,
-                controls.drone_note.value,
                 settings,
             )).on_hover_text(
-                "🎼 Left click: Set root. 🎹 Right click: Change scale.",
+                "🎼 Left click: Set root. 🎹 Right click: Change scale. ♒ Middle click: Set Drone.",
             );
 
             ui.separator();
@@ -165,6 +164,7 @@ impl eframe::App for Leapotron {
                 ui.label("🎸 Pinch with your right hand, and rotate it to play guitar.");
                 ui.label("🎼 Left click on the keyboard to select a root note.");
                 ui.label("🎹 Choose a predefined scale or right click on the keyboard to make a custom scale.");
+                ui.label("♒ Middle click on the keyboard to enable a Drone.");
             });
 
             if let Some(warning) = &controls.warning {
