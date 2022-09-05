@@ -76,7 +76,6 @@ impl eframe::App for Leapotron {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.style_mut().spacing.slider_width = 200.0;
             ui.add(crate::ui_keyboard::Keyboard::new(
                 controls.note.value,
                 controls.drone_note.value,
@@ -115,7 +114,9 @@ impl eframe::App for Leapotron {
             ui.separator();
 
             ui.horizontal_top(|ui| {
-                autotune_plot(ui, settings, &controls.note);
+                let plot_size = (ui.available_width() - 100.0) / 3.0;
+                ui.style_mut().spacing.slider_width = plot_size;
+                autotune_plot(ui, plot_size, settings, &controls.note);
                 ui.add_space(10.0);
                 ui.add_enabled(
                     false,
@@ -126,6 +127,7 @@ impl eframe::App for Leapotron {
                 );
                 xy_plot(
                     ui,
+                    plot_size,
                     "lh_hand",
                     &controls.detune,
                     &controls.supersaw,
@@ -135,6 +137,7 @@ impl eframe::App for Leapotron {
                 ui.spacing();
                 xy_plot(
                     ui,
+                    plot_size,
                     "rh_hand",
                     &controls.cutoff_note,
                     &controls.resonance,
@@ -186,7 +189,12 @@ impl eframe::App for Leapotron {
     }
 }
 
-fn autotune_plot(ui: &mut egui::Ui, settings: &mut Settings, control: &controls::NoteControl) {
+fn autotune_plot(
+    ui: &mut egui::Ui,
+    size: f32,
+    settings: &mut Settings,
+    control: &controls::NoteControl,
+) {
     let note_range = settings.note_range();
     let smooths = (*note_range.start() as usize * 10..*note_range.end() as usize * 10).map(|i| {
         let x = i as f32 * 0.1;
@@ -216,8 +224,8 @@ fn autotune_plot(ui: &mut egui::Ui, settings: &mut Settings, control: &controls:
         .x_axis_formatter(|v, _| MidiNote::from_byte(v as u8).to_string())
         .y_axis_formatter(|v, _| MidiNote::from_byte(v as u8).to_string())
         .legend(Legend::default())
-        .width(200.0)
-        .height(200.0)
+        .width(size)
+        .height(size)
         .show(ui, |plot_ui| {
             plot_ui.line(line);
             plot_ui.points(
@@ -233,6 +241,7 @@ fn autotune_plot(ui: &mut egui::Ui, settings: &mut Settings, control: &controls:
 
 fn xy_plot(
     ui: &mut egui::Ui,
+    size: f32,
     plot_name: &str,
     control_x: &controls::Control,
     control_y: &controls::Control,
@@ -250,8 +259,8 @@ fn xy_plot(
         .include_y(*control_y.input.range.end())
         .legend(Legend::default())
         .show_axes([false, false])
-        .width(200.0)
-        .height(200.0)
+        .width(size)
+        .height(size)
         .show(ui, |plot_ui| {
             plot_ui.vline(VLine::new(control_x.value).name(control_x_name));
             plot_ui.hline(HLine::new(control_y.value).name(control_y_name));
