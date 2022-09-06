@@ -5,18 +5,31 @@ declare license     "BSD";
 
 import("stdfaust.lib");
 
-// Inputs
-note = hslider("note", 60, 0, 127, 0.001) : si.smoo;
-vol = hslider("volume", 0.0, 0, 1, 0.001) : si.smoo;
-sub_volume = hslider("sub_volume", 0.5, 0, 1, 0.001) : si.smoo;
-cutoff_note = hslider("cutoff_note", 0, -20, 50, 0.001) : si.smoo;
-res = hslider("res", 0, 0, 0.99, 0.001) : si.smoo;
-detune = hslider("detune", 0.001, 0.001, 0.02, 0.001) : si.smoo;
-supersaw = hslider("supersaw", 0, 0, 1.0, 0.001) : si.smoo;
-pluck_position = hslider("pluck_position", 0.5, 0, 1, 0.001) : si.smoo;
-pluck = button("pluck");
-drone_volume = hslider("drone_volume", 0, 0, 1, 0.001) : si.smoo;
-drone_note = hslider("drone_note", 60, 0, 127, 0.001) : si.smoo;
+// Main voice controls
+leadGroup(x) = vgroup("[0]lead", x);
+vol = leadGroup(hslider("[0]volume", 0.0, 0, 1, 0.001)) : si.smoo;
+note = leadGroup(hslider("[1]note", 60, 0, 127, 0.001)) : si.smoo;
+sub_volume = leadGroup(hslider("[2]sub", 0.5, 0, 1, 0.001)) : si.smoo;
+
+// Main voice supersaw controls
+ssawGroup(x) = leadGroup(hgroup("[3]supersaw", x));
+supersaw = ssawGroup(hslider("[0]volume", 0, 0, 1.0, 0.001)) : si.smoo;
+detune = ssawGroup(hslider("[1]detune", 0.001, 0.001, 0.02, 0.001)) : si.smoo;
+
+// Main voice filter
+filterGroup(x) = leadGroup(hgroup("[4]filter", x));
+cutoff_note = filterGroup(hslider("[0]cutoff_note", 0, -20, 50, 0.001)) : si.smoo;
+res = filterGroup(hslider("[1]res", 0, 0, 0.99, 0.001)) : si.smoo;
+
+// Pluck voice
+pluckGroup(x) = hgroup("[1]pluck", x);
+pluck = pluckGroup(button("[0]gate"));
+pluck_position = pluckGroup(hslider("[1]position", 0.5, 0, 1, 0.001)) : si.smoo;
+
+// Drone voice
+droneGroup(x) = hgroup("[2]drone", x);
+drone_volume = droneGroup(hslider("[0]volume", 0, 0, 1, 0.001)) : si.smoo;
+drone_note = droneGroup(hslider("[1]note", 60, 0, 127, 0.001)) : si.smoo;
 
 // Lead oscillator
 lead = saw_osc(0) + supersaw_osc * supersaw

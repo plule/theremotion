@@ -63,17 +63,20 @@ impl ControlTrait for Controls {
 impl From<&StateHandle> for Controls {
     fn from(state: &StateHandle) -> Self {
         Self {
-            note: state.node_by_path("note").unwrap().into(),
-            volume: state.node_by_path("volume").unwrap().into(),
-            cutoff_note: state.node_by_path("cutoff_note").unwrap().into(),
-            resonance: state.node_by_path("res").unwrap().into(),
-            supersaw: state.node_by_path("supersaw").unwrap().into(),
-            detune: state.node_by_path("detune").unwrap().into(),
-            sub_volume: state.node_by_path("sub_volume").unwrap().into(),
-            pluck: state.node_by_path("pluck").unwrap().into(),
-            pluck_position: state.node_by_path("pluck_position").unwrap().into(),
-            drone_volume: state.node_by_path("drone_volume").unwrap().into(),
-            drone_note: state.node_by_path("drone_note").unwrap().into(),
+            note: state.node_by_path("lead/note").unwrap().into(),
+            volume: state.node_by_path("lead/volume").unwrap().into(),
+            sub_volume: state.node_by_path("lead/sub").unwrap().into(),
+            cutoff_note: state
+                .node_by_path("lead/filter/cutoff_note")
+                .unwrap()
+                .into(),
+            resonance: state.node_by_path("lead/filter/res").unwrap().into(),
+            supersaw: state.node_by_path("lead/supersaw/volume").unwrap().into(),
+            detune: state.node_by_path("lead/supersaw/detune").unwrap().into(),
+            pluck: state.node_by_path("pluck/gate").unwrap().into(),
+            pluck_position: state.node_by_path("pluck/position").unwrap().into(),
+            drone_volume: state.node_by_path("drone/volume").unwrap().into(),
+            drone_note: state.node_by_path("drone/note").unwrap().into(),
             warning: None,
             error: None,
         }
