@@ -1,7 +1,9 @@
 use crossbeam_channel::{Receiver, Sender};
 
 use egui::{
-    plot::{uniform_grid_spacer, HLine, Legend, Line, MarkerShape, Points, VLine, Value, Values},
+    plot::{
+        uniform_grid_spacer, HLine, Legend, Line, MarkerShape, PlotPoint, PlotPoints, Points, VLine,
+    },
     RichText,
 };
 use staff::{midi::MidiNote, scale::ScaleIntervals};
@@ -69,7 +71,7 @@ impl eframe::App for Leapotron {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("Quit").clicked() {
-                        frame.quit();
+                        frame.close();
                     }
                 });
             });
@@ -198,12 +200,12 @@ fn autotune_plot(
     let note_range = settings.note_range();
     let smooths = (*note_range.start() as usize * 10..*note_range.end() as usize * 10).map(|i| {
         let x = i as f32 * 0.1;
-        Value::new(
+        PlotPoint::new(
             x,
             controls::smoothstairs(x, control.autotune, settings.scale_notes()),
         )
     });
-    let line = Line::new(Values::from_values_iter(smooths));
+    let line = Line::new(PlotPoints::Owned(smooths.collect()));
     // hack: force the include_x/include_y to recenter on root note change
     let plot_id = format!(
         "{}{}",
@@ -229,7 +231,7 @@ fn autotune_plot(
         .show(ui, |plot_ui| {
             plot_ui.line(line);
             plot_ui.points(
-                Points::new(Values::from_values(vec![Value::new(
+                Points::new(PlotPoints::Owned(vec![PlotPoint::new(
                     control.raw_value,
                     control.value,
                 )]))
@@ -268,7 +270,7 @@ fn xy_plot(
 }
 
 fn monitoring_plot(ui: &mut egui::Ui, plot_name: &str, monitoring: &[f32]) {
-    let line = Line::new(Values::from_values_iter(
+    let line = Line::new(PlotPoints::Owned(
         monitoring
             .iter()
             // Wait for zero-cross
@@ -276,7 +278,8 @@ fn monitoring_plot(ui: &mut egui::Ui, plot_name: &str, monitoring: &[f32]) {
             .skip_while(|s| **s >= 1.0)
             .step_by(10)
             .enumerate()
-            .map(|(index, value)| Value::new(index as f64, *value)),
+            .map(|(index, value)| PlotPoint::new(index as f64, *value))
+            .collect(),
     ))
     .fill(0.0)
     .highlight(true);

@@ -10,13 +10,13 @@ default = ["gemini"]
 gemini = ["leaprs/gemini"]
 
 [dependencies]
-egui = "0.18.0"
-eframe = { version = "0.18.0" }
+egui = "0.19.0"
+eframe = { version = "0.19.0" }
 tracing-subscriber = "0.3"
-cpal = "0.13.5"
+cpal = "0.14.0"
 faust-types = { git = "https://github.com/Frando/rust-faust", branch="main" }
 faust-state = { git = "https://github.com/Frando/rust-faust", branch="main" }
-leaprs = { version = "0.0.8", default-features = false }
+leaprs = { version = "0.1.0", default-features = false }
 crossbeam-channel = "0.5.6"
 nalgebra = "0.31.1"
 staff = { git = "https://github.com/matthunz/staff", branch="main", features = ["serde"] }

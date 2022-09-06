@@ -8,7 +8,7 @@ use staff::{
 };
 
 /// Application settings
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Settings {
     /// Root note of the keyboard
     pub root_note: MidiNote,
