@@ -29,6 +29,8 @@ pub fn start_leap_worker(
                         if let Some(new_settings) = settings_rx.try_iter().last() {
                             settings = new_settings;
                         }
+                        let full_scale =
+                            crate::auto_chord::build_scale(settings.root_note, settings.scale);
 
                         if let Some(drone) = settings.drone {
                             controls.drone_note.value = drone.into_byte() as f32;
@@ -59,6 +61,18 @@ pub fn start_leap_worker(
                                 0.0..=1.0,
                                 &settings,
                             );
+                            if let Some(chord_note) =
+                                crate::auto_chord::auto_chord(controls.note1.value, &full_scale, 2)
+                            {
+                                controls.lead[0].note.value = chord_note;
+                            }
+
+                            if let Some(chord_note) =
+                                crate::auto_chord::auto_chord(controls.note1.value, &full_scale, 4)
+                            {
+                                controls.lead[1].note.value = chord_note;
+                            }
+
                             controls.pluck_note.value = controls.note1.value;
                             controls.supersaw.set_scaled(position.z(), 100.0..=-100.0);
                         }
@@ -74,6 +88,8 @@ pub fn start_leap_worker(
                             controls.pluck_damping.set_scaled(palm_dot, 0.0..=-1.0);
                             controls.cutoff_note.set_scaled(position.x(), 50.0..=200.0);
                             controls.vol1.set_scaled(position.y(), 300.0..=400.0);
+                            controls.lead[0].volume.value = controls.vol1.value;
+                            controls.lead[1].volume.value = controls.vol1.value;
                             controls.resonance.set_scaled(position.z(), 100.0..=-100.0);
                         }
 

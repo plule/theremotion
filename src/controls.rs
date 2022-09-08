@@ -19,7 +19,7 @@ pub struct Controls {
     /// Volume of the main voice
     pub vol1: Control,
     /// Chord notes
-    pub chords: [(Control, Control); 3],
+    pub lead: [NoteControl2; 3],
     /// Filter cutoff
     pub cutoff_note: Control,
     /// Filter resonnance
@@ -51,9 +51,9 @@ impl ControlTrait for Controls {
     fn send(&mut self, state: &mut StateHandle) {
         self.note1.send(state);
         self.vol1.send(state);
-        for (note, volume) in &mut self.chords {
-            note.send(state);
-            volume.send(state);
+        for note in &mut self.lead {
+            note.note.send(state);
+            note.volume.send(state);
         }
         self.cutoff_note.send(state);
         self.resonance.send(state);
@@ -74,19 +74,22 @@ impl From<&StateHandle> for Controls {
         Self {
             note1: state.node_by_path("lead/note1").unwrap().into(),
             vol1: state.node_by_path("lead/vol1").unwrap().into(),
-            chords: [
+            lead: [
                 (
-                    state.node_by_path("lead/note2").unwrap().into(),
-                    state.node_by_path("lead/vol2").unwrap().into(),
-                ),
+                    state.node_by_path("lead/note2").unwrap(),
+                    state.node_by_path("lead/vol2").unwrap(),
+                )
+                    .into(),
                 (
-                    state.node_by_path("lead/note3").unwrap().into(),
-                    state.node_by_path("lead/vol3").unwrap().into(),
-                ),
+                    state.node_by_path("lead/note3").unwrap(),
+                    state.node_by_path("lead/vol3").unwrap(),
+                )
+                    .into(),
                 (
-                    state.node_by_path("lead/note4").unwrap().into(),
-                    state.node_by_path("lead/vol4").unwrap().into(),
-                ),
+                    state.node_by_path("lead/note4").unwrap(),
+                    state.node_by_path("lead/vol4").unwrap(),
+                )
+                    .into(),
             ],
             cutoff_note: state
                 .node_by_path("lead/filter/cutoff_note")
@@ -169,6 +172,24 @@ impl From<&Node> for BoolControl {
         let value = node.widget_type().init_value() > 0.5;
         let path = node.path();
         Self { value, path }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct NoteControl2 {
+    /// Control for the pitch of the note
+    pub note: Control,
+
+    /// Control for the volume of the note
+    pub volume: Control,
+}
+
+impl From<(&Node, &Node)> for NoteControl2 {
+    fn from((note, volume): (&Node, &Node)) -> Self {
+        Self {
+            note: note.into(),
+            volume: volume.into(),
+        }
     }
 }
 
