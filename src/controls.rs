@@ -15,9 +15,11 @@ pub trait ControlTrait {
 #[derive(Debug, Clone)]
 pub struct Controls {
     /// Midi note
-    pub note: NoteControl,
+    pub note1: NoteControl,
     /// Volume of the main voice
-    pub volume: Control,
+    pub vol1: Control,
+    /// Chord notes
+    pub chords: [(Control, Control); 3],
     /// Filter cutoff
     pub cutoff_note: Control,
     /// Filter resonnance
@@ -26,10 +28,10 @@ pub struct Controls {
     pub supersaw: Control,
     /// Supersaw detune
     pub detune: Control,
-    /// Subosc volume
-    pub sub_volume: Control,
     /// Guitar pluck
     pub pluck: BoolControl,
+    /// Guitare note
+    pub pluck_note: Control,
     /// Guitar pluck gain
     pub pluck_gain: Control,
     /// Guitar pluck damping
@@ -47,14 +49,18 @@ pub struct Controls {
 
 impl ControlTrait for Controls {
     fn send(&mut self, state: &mut StateHandle) {
-        self.note.send(state);
-        self.volume.send(state);
+        self.note1.send(state);
+        self.vol1.send(state);
+        for (note, volume) in &mut self.chords {
+            note.send(state);
+            volume.send(state);
+        }
         self.cutoff_note.send(state);
         self.resonance.send(state);
         self.supersaw.send(state);
         self.detune.send(state);
-        self.sub_volume.send(state);
         self.pluck.send(state);
+        self.pluck_note.send(state);
         self.pluck_gain.send(state);
         self.pluck_damping.send(state);
         self.drone_volume.send(state);
@@ -66,9 +72,22 @@ impl ControlTrait for Controls {
 impl From<&StateHandle> for Controls {
     fn from(state: &StateHandle) -> Self {
         Self {
-            note: state.node_by_path("lead/note").unwrap().into(),
-            volume: state.node_by_path("lead/volume").unwrap().into(),
-            sub_volume: state.node_by_path("lead/sub").unwrap().into(),
+            note1: state.node_by_path("lead/note1").unwrap().into(),
+            vol1: state.node_by_path("lead/vol1").unwrap().into(),
+            chords: [
+                (
+                    state.node_by_path("lead/note2").unwrap().into(),
+                    state.node_by_path("lead/vol2").unwrap().into(),
+                ),
+                (
+                    state.node_by_path("lead/note3").unwrap().into(),
+                    state.node_by_path("lead/vol3").unwrap().into(),
+                ),
+                (
+                    state.node_by_path("lead/note4").unwrap().into(),
+                    state.node_by_path("lead/vol4").unwrap().into(),
+                ),
+            ],
             cutoff_note: state
                 .node_by_path("lead/filter/cutoff_note")
                 .unwrap()
@@ -77,6 +96,7 @@ impl From<&StateHandle> for Controls {
             supersaw: state.node_by_path("lead/supersaw/volume").unwrap().into(),
             detune: state.node_by_path("lead/supersaw/detune").unwrap().into(),
             pluck: state.node_by_path("pluck/gate").unwrap().into(),
+            pluck_note: state.node_by_path("pluck/note").unwrap().into(),
             pluck_gain: state.node_by_path("pluck/gain").unwrap().into(),
             pluck_damping: state.node_by_path("pluck/damping").unwrap().into(),
             drone_volume: state.node_by_path("drone/volume").unwrap().into(),

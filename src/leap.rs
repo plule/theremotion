@@ -52,13 +52,14 @@ pub fn start_leap_worker(
                             controls.detune.set_scaled(position.x(), -200.0..=-50.0);
                             let note_input_range = 100.0..=600.0;
                             let fingertip = hand.index().distal().next_joint().y();
-                            controls.note.set_scaled(
+                            controls.note1.set_scaled(
                                 fingertip,
                                 note_input_range.to_owned(),
                                 hand.pinch_strength(),
                                 0.0..=1.0,
                                 &settings,
                             );
+                            controls.pluck_note.value = controls.note1.value;
                             controls.supersaw.set_scaled(position.z(), 100.0..=-100.0);
                         }
 
@@ -72,7 +73,7 @@ pub fn start_leap_worker(
                             }
                             controls.pluck_damping.set_scaled(palm_dot, 0.0..=-1.0);
                             controls.cutoff_note.set_scaled(position.x(), 50.0..=200.0);
-                            controls.volume.set_scaled(position.y(), 300.0..=400.0);
+                            controls.vol1.set_scaled(position.y(), 300.0..=400.0);
                             controls.resonance.set_scaled(position.z(), 100.0..=-100.0);
                         }
 

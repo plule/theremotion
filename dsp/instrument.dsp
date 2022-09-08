@@ -7,25 +7,31 @@ import("stdfaust.lib");
 
 // Main voice controls
 leadGroup(x) = vgroup("[0]lead", x);
-vol = leadGroup(hslider("[0]volume", 0.0, 0, 1, 0.001)) : si.smoo;
-note = leadGroup(hslider("[1]note", 60, 0, 127, 0.001)) : si.smoo;
-sub_volume = leadGroup(hslider("[2]sub", 0.5, 0, 1, 0.001)) : si.smoo;
+vol1 = leadGroup(hslider("[0]vol1", 0.0, 0, 1, 0.001)) : si.smoo;
+vol2 = leadGroup(hslider("[2]vol2", 0.0, 0, 1, 0.001)) : si.smoo;
+vol3 = leadGroup(hslider("[4]vol3", 0.0, 0, 1, 0.001)) : si.smoo;
+vol4 = leadGroup(hslider("[6]vol4", 0.0, 0, 1, 0.001)) : si.smoo;
+note1 = leadGroup(hslider("[1]note1", 60, 0, 127, 0.001)) : si.smoo;
+note2 = leadGroup(hslider("[3]note2", 60, 0, 127, 0.001)) : si.smoo;
+note3 = leadGroup(hslider("[5]note3", 60, 0, 127, 0.001)) : si.smoo;
+note4 = leadGroup(hslider("[7]note4", 60, 0, 127, 0.001)) : si.smoo;
 
 // Main voice supersaw controls
-ssawGroup(x) = leadGroup(hgroup("[3]supersaw", x));
+ssawGroup(x) = leadGroup(hgroup("[8]supersaw", x));
 supersaw = ssawGroup(hslider("[0]volume", 0, 0, 1.0, 0.001)) : si.smoo;
 detune = ssawGroup(hslider("[1]detune", 0.001, 0.001, 0.02, 0.001)) : si.smoo;
 
 // Main voice filter
-filterGroup(x) = leadGroup(hgroup("[4]filter", x));
+filterGroup(x) = leadGroup(hgroup("[9]filter", x));
 cutoff_note = filterGroup(hslider("[0]cutoff_note", 0, -20, 50, 0.001)) : si.smoo;
 res = filterGroup(hslider("[1]res", 0, 0, 0.99, 0.001)) : si.smoo;
 
 // Pluck voice
 pluckGroup(x) = hgroup("[1]pluck", x);
 pluck = pluckGroup(button("[0]gate"));
-pluck_gain = pluckGroup(hslider("[1]gain", 0.8, 0, 1, 0.001));
-pluck_damping = pluckGroup(hslider("[2]damping", 0.0, 0, 1, 0.001));
+pluck_note = pluckGroup(hslider("[1]note", 60, 0, 127, 0.001)) : si.smoo;
+pluck_gain = pluckGroup(hslider("[2]gain", 0.8, 0, 1, 0.001));
+pluck_damping = pluckGroup(hslider("[3]damping", 0.0, 0, 1, 0.001));
 
 // Drone voice
 droneGroup(x) = hgroup("[2]drone", x);
@@ -33,23 +39,19 @@ drone_volume = droneGroup(hslider("[0]volume", 0, 0, 1, 0.001)) : si.smoo;
 drone_note = droneGroup(hslider("[1]note", 60, 0, 127, 0.001)) : si.smoo;
 
 // Lead oscillator
-lead = saw_osc(0) + supersaw_osc * supersaw
+lead_i(n, v) = saw_osc(0) + supersaw_osc * supersaw : ve.moog_vcf_2b(res, cutoff_freq) : _ * v / 2
 with {
-    f = note : ba.midikey2hz;
+    f = n : ba.midikey2hz;
     saw_osc(detune) = os.sawtooth(f * (1 + detune));
     supersaw_osc = saw_osc(detune) + saw_osc(-detune);
+    cutoff_freq = ba.midikey2hz(n + cutoff_note);
 };
-
-// Sub oscillator
-sub = os.square(f) * sub_volume
-with {
-    f = note - 12 : ba.midikey2hz;
-};
+lead = lead_i(note1, vol1) + lead_i(note2, vol2) + lead_i(note3, vol3) + lead_i(note4, vol4);
 
 // Guitar
 guitar = pm.ks(len, pluck_damping, pulse)
 with {
-    len = note : ba.midikey2hz : pm.f2l;
+    len = pluck_note : ba.midikey2hz : pm.f2l;
     pulse = pluck : pm.impulseExcitation * pluck_gain;
 };
 
@@ -60,9 +62,5 @@ with {
     drone_osc(note) = osc(note) + osc(note+12.10) + osc(note-12.11) + osc(note + 7.12);
 };
 
-
 // Mix
-process = lead + sub : ve.moog_vcf_2b(res, cutoff_freq) * vol : _ + drone : ef.echo(1.0, 0.3, 0.3) : _ + guitar <: _, _
-with {
-    cutoff_freq = ba.midikey2hz(note + cutoff_note);
-};
+process = lead + drone : ef.echo(1.0, 0.3, 0.3) : _ + guitar <: _, _;
