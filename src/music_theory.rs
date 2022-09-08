@@ -27,14 +27,14 @@ fn neighbours(note: f32, scale: &Vec<MidiNote>) -> Option<usize> {
 ///
 /// Ex, in C major, C degree 2 will E. Note in between the scale will give note in between
 /// the intervals
-pub fn auto_chord(note: f32, scale: &Vec<MidiNote>, degree: usize) -> Option<f32> {
+pub fn auto_chord(note: f32, scale: &Vec<MidiNote>, degree: isize) -> Option<f32> {
     // Find the two closest neighbours belonging to the scale
     let neighbours_index = neighbours(note, scale)?;
 
     // Get the corresponding chord notes based on the given degree
-    let chord1_note = scale.get(neighbours_index + degree)?;
+    let chord1_note = scale.get((neighbours_index as isize + degree) as usize)?;
     let chord1 = chord1_note.into_byte() as f32;
-    let chord2_note = scale.get(neighbours_index + 1 + degree)?;
+    let chord2_note = scale.get((neighbours_index as isize + 1 + degree) as usize)?;
     let chord2 = chord2_note.into_byte() as f32;
 
     // Find the distance between the note and the two scale neighbours
@@ -111,7 +111,7 @@ mod tests {
         #[case] note: MidiNote,
         #[case] root_note: MidiNote,
         #[case] scale: ScaleIntervals,
-        #[case] degree: usize,
+        #[case] degree: isize,
         #[case] expected: f32,
     ) {
         let scale = build_scale(root_note, scale);

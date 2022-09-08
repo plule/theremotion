@@ -12,7 +12,9 @@ pub trait ControlTrait {
 #[derive(Debug, Clone)]
 pub struct Controls {
     /// Lead voice chord
-    pub lead: [NoteControl2; 4],
+    pub lead: [NoteControl; 4],
+    /// Global lead volume
+    pub lead_volume: Control,
     /// Filter cutoff
     pub cutoff_note: Control,
     /// Filter resonnance
@@ -51,6 +53,7 @@ impl ControlTrait for Controls {
         for note in &mut self.lead {
             note.send(state);
         }
+        self.lead_volume.send(state);
         self.cutoff_note.send(state);
         self.resonance.send(state);
         self.supersaw.send(state);
@@ -71,14 +74,15 @@ impl From<&StateHandle> for Controls {
             lead: [1, 2, 3, 4].map(|i| {
                 (
                     state
-                        .node_by_path(format!("lead/note{}", i).as_str())
+                        .node_by_path(format!("lead/chord/note{}", i).as_str())
                         .unwrap(),
                     state
-                        .node_by_path(format!("lead/vol{}", i).as_str())
+                        .node_by_path(format!("lead/chord/vol{}", i).as_str())
                         .unwrap(),
                 )
                     .into()
             }),
+            lead_volume: state.node_by_path("lead/vol").unwrap().into(),
             cutoff_note: state
                 .node_by_path("lead/filter/cutoff_note")
                 .unwrap()
@@ -166,7 +170,7 @@ impl From<&Node> for BoolControl {
 }
 
 #[derive(Debug, Clone)]
-pub struct NoteControl2 {
+pub struct NoteControl {
     /// Control for the pitch of the note
     pub note: Control,
 
@@ -174,13 +178,13 @@ pub struct NoteControl2 {
     pub volume: Control,
 }
 
-impl ControlTrait for NoteControl2 {
+impl ControlTrait for NoteControl {
     fn send(&mut self, state: &mut StateHandle) {
         self.note.send(state);
         self.volume.send(state);
     }
 }
-impl From<(&Node, &Node)> for NoteControl2 {
+impl From<(&Node, &Node)> for NoteControl {
     fn from((note, volume): (&Node, &Node)) -> Self {
         Self {
             note: note.into(),

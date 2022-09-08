@@ -7,22 +7,24 @@ import("stdfaust.lib");
 
 // Main voice controls
 leadGroup(x) = vgroup("[0]lead", x);
-vol1 = leadGroup(hslider("[0]vol1", 0.0, 0, 1, 0.001)) : si.smoo;
-vol2 = leadGroup(hslider("[2]vol2", 0.0, 0, 1, 0.001)) : si.smoo;
-vol3 = leadGroup(hslider("[4]vol3", 0.0, 0, 1, 0.001)) : si.smoo;
-vol4 = leadGroup(hslider("[6]vol4", 0.0, 0, 1, 0.001)) : si.smoo;
-note1 = leadGroup(hslider("[1]note1", 60, 0, 127, 0.001)) : si.smoo;
-note2 = leadGroup(hslider("[3]note2", 60, 0, 127, 0.001)) : si.smoo;
-note3 = leadGroup(hslider("[5]note3", 60, 0, 127, 0.001)) : si.smoo;
-note4 = leadGroup(hslider("[7]note4", 60, 0, 127, 0.001)) : si.smoo;
+lead_volume = leadGroup(hslider("[0]vol", 0.0, 0, 1, 0.001)) : si.smoo;
+chordGroup(x) = leadGroup(vgroup("[1]chord", x));
+vol1 = chordGroup(hslider("[1]vol1", 1.0, 0, 1, 0.001)) : si.smoo;
+vol2 = chordGroup(hslider("[3]vol2", 0.0, 0, 1, 0.001)) : si.smoo;
+vol3 = chordGroup(hslider("[5]vol3", 0.0, 0, 1, 0.001)) : si.smoo;
+vol4 = chordGroup(hslider("[7]vol4", 0.0, 0, 1, 0.001)) : si.smoo;
+note1 = chordGroup(hslider("[2]note1", 60, 0, 127, 0.001)) : si.smoo;
+note2 = chordGroup(hslider("[4]note2", 60, 0, 127, 0.001)) : si.smoo;
+note3 = chordGroup(hslider("[6]note3", 60, 0, 127, 0.001)) : si.smoo;
+note4 = chordGroup(hslider("[8]note4", 60, 0, 127, 0.001)) : si.smoo;
 
 // Main voice supersaw controls
-ssawGroup(x) = leadGroup(hgroup("[8]supersaw", x));
+ssawGroup(x) = leadGroup(hgroup("[9]supersaw", x));
 supersaw = ssawGroup(hslider("[0]volume", 0, 0, 1.0, 0.001)) : si.smoo;
 detune = ssawGroup(hslider("[1]detune", 0.001, 0.001, 0.02, 0.001)) : si.smoo;
 
 // Main voice filter
-filterGroup(x) = leadGroup(hgroup("[9]filter", x));
+filterGroup(x) = leadGroup(hgroup("[10]filter", x));
 cutoff_note = filterGroup(hslider("[0]cutoff_note", 0, -20, 50, 0.001)) : si.smoo;
 res = filterGroup(hslider("[1]res", 0, 0, 0.99, 0.001)) : si.smoo;
 
@@ -46,7 +48,7 @@ with {
     supersaw_osc = saw_osc(detune) + saw_osc(-detune);
     cutoff_freq = ba.midikey2hz(n + cutoff_note);
 };
-lead = lead_i(note1, vol1) + lead_i(note2, vol2) + lead_i(note3, vol3) + lead_i(note4, vol4);
+lead = lead_i(note1, vol1) + lead_i(note2, vol2) + lead_i(note3, vol3) + lead_i(note4, vol4) : _ * lead_volume;
 
 // Guitar
 guitar = pm.ks(len, pluck_damping, pulse)

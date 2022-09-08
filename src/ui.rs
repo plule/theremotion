@@ -79,7 +79,7 @@ impl eframe::App for Leapotron {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.add(crate::ui_keyboard::Keyboard::new(
-                controls.lead.iter().map(|n| n.note.value).into_iter().collect(),
+                controls.lead.iter().collect(),
                 settings,
             )).on_hover_text(
                 "🎼 Left click: Set root. 🎹 Right click: Change scale. ♒ Middle click: Set Drone.",
@@ -147,7 +147,7 @@ impl eframe::App for Leapotron {
                 );
                 ui.add_enabled(
                     false,
-                    egui::Slider::new(&mut controls.lead[0].volume.value, controls.lead[0].volume.input.range.to_owned())
+                    egui::Slider::new(&mut controls.lead_volume.value, controls.lead_volume.input.range.to_owned())
                         .show_value(false)
                         .text("Volume")
                         .vertical(),

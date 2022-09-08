@@ -54,16 +54,39 @@ pub fn start_leap_worker(
                             controls.detune.set_scaled(position.x(), -200.0..=-50.0);
                             let note_input_range = 100.0..=600.0;
                             let fingertip = hand.index().distal().next_joint().y();
-                            controls.autotune = controls::convert_range(
-                                hand.pinch_strength(),
-                                0.0..=1.0,
-                                &(0.0..=5.0),
-                            ) as usize;
+
                             controls.raw_note = controls::convert_range(
                                 fingertip,
                                 note_input_range.to_owned(),
                                 &settings.note_range_f(),
                             );
+
+                            // Depending on finger position,
+                            // either assign autotuned chord
+                            // or single voice
+                            match hand.get_finger_positions() {
+                                (thumb, index, middle, false, false) => {
+                                    // Chord position
+                                    controls.autotune = 4;
+                                    controls.lead[1].volume.value = if thumb { 1.0 } else { 0.0 };
+                                    controls.lead[2].volume.value = if index { 1.0 } else { 0.0 };
+                                    controls.lead[3].volume.value = if middle { 1.0 } else { 0.0 };
+                                }
+                                _ => {
+                                    // Monophonic position
+                                    controls.autotune = controls::convert_range(
+                                        hand.pinch_strength(),
+                                        0.0..=1.0,
+                                        &(0.0..=5.0),
+                                    )
+                                        as usize;
+                                    for chord in controls.lead.iter_mut().skip(1) {
+                                        chord.volume.value = 0.0;
+                                    }
+                                }
+                            }
+
+                            // In any case, assign all the notes
                             let note = crate::music_theory::autotune(
                                 controls.raw_note,
                                 controls.autotune,
@@ -72,9 +95,9 @@ pub fn start_leap_worker(
 
                             let chord = [
                                 Some(note),
-                                crate::music_theory::auto_chord(note, &full_scale, 2),
-                                crate::music_theory::auto_chord(note, &full_scale, 4),
-                                crate::music_theory::auto_chord(note, &full_scale, 6),
+                                crate::music_theory::auto_chord(note, &full_scale, 2), // thumb
+                                crate::music_theory::auto_chord(note, &full_scale, 6), // index
+                                crate::music_theory::auto_chord(note, &full_scale, 3), // middle
                             ];
 
                             for (i, note) in chord.iter().enumerate() {
@@ -97,9 +120,7 @@ pub fn start_leap_worker(
                             }
                             controls.pluck_damping.set_scaled(palm_dot, 0.0..=-1.0);
                             controls.cutoff_note.set_scaled(position.x(), 50.0..=200.0);
-                            for control in &mut controls.lead {
-                                control.volume.set_scaled(position.y(), 300.0..=400.0);
-                            }
+                            controls.lead_volume.set_scaled(position.y(), 300.0..=400.0);
                             controls.resonance.set_scaled(position.z(), 100.0..=-100.0);
                         }
 
@@ -113,4 +134,20 @@ pub fn start_leap_worker(
             dsp_controls_tx.send(controls.clone()).unwrap();
         }
     })
+}
+
+trait FingerPositions {
+    fn get_finger_positions(&self) -> (bool, bool, bool, bool, bool);
+}
+
+impl FingerPositions for Hand<'_> {
+    fn get_finger_positions(&self) -> (bool, bool, bool, bool, bool) {
+        (
+            self.thumb().is_extended(),
+            self.index().is_extended(),
+            self.middle().is_extended(),
+            self.ring().is_extended(),
+            self.pinky().is_extended(),
+        )
+    }
 }

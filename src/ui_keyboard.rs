@@ -1,19 +1,19 @@
 use egui::{Color32, Response, Widget};
 use staff::{midi::MidiNote, Interval, Pitch};
 
-use crate::settings::Settings;
+use crate::{controls::NoteControl, settings::Settings};
 
 /// Display a keyboard with a floating point note
 pub struct Keyboard<'a> {
     /// Currently played midi note
-    pub notes: Vec<f32>,
+    pub notes: Vec<&'a NoteControl>,
 
     /// Settings
     pub settings: &'a mut Settings,
 }
 
 impl<'a> Keyboard<'a> {
-    pub fn new(notes: Vec<f32>, settings: &'a mut Settings) -> Self {
+    pub fn new(notes: Vec<&'a NoteControl>, settings: &'a mut Settings) -> Self {
         Self { notes, settings }
     }
 
@@ -25,8 +25,8 @@ impl<'a> Keyboard<'a> {
         let mut red = 0;
 
         for played_note in &self.notes {
-            let note_distance = (note_float - played_note).abs().clamp(0.0, 1.0);
-            red = red.max(((1.0 - note_distance) * 255.0) as u8);
+            let note_distance = (note_float - played_note.note.value).abs().clamp(0.0, 1.0);
+            red = red.max(((1.0 - note_distance) * 255.0 * played_note.volume.value) as u8);
         }
         let green = if matches!(self.settings.drone, Some(drone) if drone == *note) {
             255
