@@ -79,7 +79,7 @@ impl eframe::App for Leapotron {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.add(crate::ui_keyboard::Keyboard::new(
-                controls.note1.value,
+                controls.lead.iter().map(|n| n.note.value).into_iter().collect(),
                 settings,
             )).on_hover_text(
                 "🎼 Left click: Set root. 🎹 Right click: Change scale. ♒ Middle click: Set Drone.",
@@ -117,11 +117,11 @@ impl eframe::App for Leapotron {
             ui.horizontal_top(|ui| {
                 let plot_size = (ui.available_width() - 100.0) / 3.0;
                 ui.style_mut().spacing.slider_width = plot_size;
-                autotune_plot(ui, plot_size, settings, &controls.note1);
+                autotune_plot(ui, plot_size, settings, controls.autotune, controls.raw_note, controls.lead[0].note.value);
                 ui.add_space(10.0);
                 ui.add_enabled(
                     false,
-                    egui::Slider::new(&mut controls.note1.value, settings.note_range_f())
+                    egui::Slider::new(&mut controls.lead[0].note.value, settings.note_range_f())
                         .show_value(false)
                         .text("Pitch")
                         .vertical(),
@@ -147,7 +147,7 @@ impl eframe::App for Leapotron {
                 );
                 ui.add_enabled(
                     false,
-                    egui::Slider::new(&mut controls.vol1.value, controls.vol1.input.range.to_owned())
+                    egui::Slider::new(&mut controls.lead[0].volume.value, controls.lead[0].volume.input.range.to_owned())
                         .show_value(false)
                         .text("Volume")
                         .vertical(),
@@ -195,14 +195,16 @@ fn autotune_plot(
     ui: &mut egui::Ui,
     size: f32,
     settings: &mut Settings,
-    control: &controls::NoteControl,
+    autotune: usize,
+    raw_value: f32,
+    value: f32,
 ) {
     let note_range = settings.note_range();
     let smooths = (*note_range.start() as usize * 10..*note_range.end() as usize * 10).map(|i| {
         let x = i as f32 * 0.1;
         PlotPoint::new(
             x,
-            controls::smoothstairs(x, control.autotune, settings.scale_notes()),
+            crate::music_theory::autotune(x, autotune, settings.scale_notes()),
         )
     });
     let line = Line::new(PlotPoints::Owned(smooths.collect()));
@@ -231,12 +233,9 @@ fn autotune_plot(
         .show(ui, |plot_ui| {
             plot_ui.line(line);
             plot_ui.points(
-                Points::new(PlotPoints::Owned(vec![PlotPoint::new(
-                    control.raw_value,
-                    control.value,
-                )]))
-                .shape(MarkerShape::Plus)
-                .radius(6.0),
+                Points::new(PlotPoints::Owned(vec![PlotPoint::new(raw_value, value)]))
+                    .shape(MarkerShape::Plus)
+                    .radius(6.0),
             );
         });
 }

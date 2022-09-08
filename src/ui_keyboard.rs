@@ -6,15 +6,15 @@ use crate::settings::Settings;
 /// Display a keyboard with a floating point note
 pub struct Keyboard<'a> {
     /// Currently played midi note
-    pub note: f32,
+    pub notes: Vec<f32>,
 
     /// Settings
     pub settings: &'a mut Settings,
 }
 
 impl<'a> Keyboard<'a> {
-    pub fn new(note: f32, settings: &'a mut Settings) -> Self {
-        Self { note, settings }
+    pub fn new(notes: Vec<f32>, settings: &'a mut Settings) -> Self {
+        Self { notes, settings }
     }
 
     fn draw_key(&self, ui: &mut egui::Ui, key_dimension: &egui::Vec2, note: &MidiNote) -> Response {
@@ -22,9 +22,12 @@ impl<'a> Keyboard<'a> {
         let note_byte = note.into_byte();
 
         let note_float = note_byte as f32;
-        let note_distance = (note_float - self.note).abs().clamp(0.0, 1.0);
+        let mut red = 0;
 
-        let red = ((1.0 - note_distance) * 255.0) as u8;
+        for played_note in &self.notes {
+            let note_distance = (note_float - played_note).abs().clamp(0.0, 1.0);
+            red = red.max(((1.0 - note_distance) * 255.0) as u8);
+        }
         let green = if matches!(self.settings.drone, Some(drone) if drone == *note) {
             255
         } else {

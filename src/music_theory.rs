@@ -1,10 +1,12 @@
+use std::ops::RangeInclusive;
+
 use staff::{midi::MidiNote, scale::ScaleIntervals, Interval};
 
 /// Find the two scale neighbours of a floating note in a scale.
 /// Return the index of the first neighbour, or none if the note is not strictly in the scale.
 /// Assumes that the scale is ordered
 fn neighbours(note: f32, scale: &Vec<MidiNote>) -> Option<usize> {
-    if scale.len() == 0 {
+    if scale.is_empty() {
         return None;
     }
 
@@ -21,9 +23,13 @@ fn neighbours(note: f32, scale: &Vec<MidiNote>) -> Option<usize> {
     })
 }
 
+/// From a floating note, a scale and a degree, get the approximate floating note
+///
+/// Ex, in C major, C degree 2 will E. Note in between the scale will give note in between
+/// the intervals
 pub fn auto_chord(note: f32, scale: &Vec<MidiNote>, degree: usize) -> Option<f32> {
     // Find the two closest neighbours belonging to the scale
-    let neighbours_index = neighbours(note, &scale)?;
+    let neighbours_index = neighbours(note, scale)?;
 
     // Get the corresponding chord notes based on the given degree
     let chord1_note = scale.get(neighbours_index + degree)?;
@@ -48,6 +54,33 @@ pub fn build_scale(root_note: MidiNote, scale: ScaleIntervals) -> Vec<MidiNote> 
             scale.contains(interval)
         })
         .collect()
+}
+
+/// Smooth step function loosely "sticking" the value to 0 or 1
+/// Assumes that value is between 0 and 1
+/// https://en.wikipedia.org/wiki/Smoothstep
+fn smoothstep(interval: &RangeInclusive<f32>, x: f32) -> f32 {
+    let x = (x - interval.start()) / (interval.end() - interval.start());
+    x * x * (3.0 - 2.0 * x)
+}
+
+/// Roughly tune a floating note into a given scale
+pub fn autotune(value: f32, amount: usize, scale: Vec<MidiNote>) -> f32 {
+    let scale: Vec<_> = scale
+        .windows(2)
+        .map(|w| (w[0].into_byte() as f32)..=(w[1].into_byte() as f32))
+        .collect();
+
+    if let Some(interval) = scale.iter().find(|interval| interval.contains(&value)) {
+        let mut value = value;
+
+        for _ in 0..amount {
+            let smooth = smoothstep(interval, value);
+            value = interval.start() + smooth * (interval.end() - interval.start());
+        }
+        return value;
+    }
+    value
 }
 
 #[cfg(test)]

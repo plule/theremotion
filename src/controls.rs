@@ -1,9 +1,6 @@
 use std::ops::RangeInclusive;
 
 use faust_state::{Node, RangedInput, StateHandle, WidgetType};
-use staff::midi::MidiNote;
-
-use crate::settings::Settings;
 
 /// Ability to exchange with the DSP state
 pub trait ControlTrait {
@@ -14,12 +11,8 @@ pub trait ControlTrait {
 /// DSP controls
 #[derive(Debug, Clone)]
 pub struct Controls {
-    /// Midi note
-    pub note1: NoteControl,
-    /// Volume of the main voice
-    pub vol1: Control,
-    /// Chord notes
-    pub lead: [NoteControl2; 3],
+    /// Lead voice chord
+    pub lead: [NoteControl2; 4],
     /// Filter cutoff
     pub cutoff_note: Control,
     /// Filter resonnance
@@ -41,6 +34,12 @@ pub struct Controls {
     /// Drone note
     pub drone_note: Control,
 
+    /// Raw note for the UI
+    pub raw_note: f32,
+
+    /// Autotune amount for the UI
+    pub autotune: usize,
+
     /// Warning message
     pub warning: Option<String>,
     /// Error message
@@ -49,11 +48,8 @@ pub struct Controls {
 
 impl ControlTrait for Controls {
     fn send(&mut self, state: &mut StateHandle) {
-        self.note1.send(state);
-        self.vol1.send(state);
         for note in &mut self.lead {
-            note.note.send(state);
-            note.volume.send(state);
+            note.send(state);
         }
         self.cutoff_note.send(state);
         self.resonance.send(state);
@@ -72,25 +68,17 @@ impl ControlTrait for Controls {
 impl From<&StateHandle> for Controls {
     fn from(state: &StateHandle) -> Self {
         Self {
-            note1: state.node_by_path("lead/note1").unwrap().into(),
-            vol1: state.node_by_path("lead/vol1").unwrap().into(),
-            lead: [
+            lead: [1, 2, 3, 4].map(|i| {
                 (
-                    state.node_by_path("lead/note2").unwrap(),
-                    state.node_by_path("lead/vol2").unwrap(),
+                    state
+                        .node_by_path(format!("lead/note{}", i).as_str())
+                        .unwrap(),
+                    state
+                        .node_by_path(format!("lead/vol{}", i).as_str())
+                        .unwrap(),
                 )
-                    .into(),
-                (
-                    state.node_by_path("lead/note3").unwrap(),
-                    state.node_by_path("lead/vol3").unwrap(),
-                )
-                    .into(),
-                (
-                    state.node_by_path("lead/note4").unwrap(),
-                    state.node_by_path("lead/vol4").unwrap(),
-                )
-                    .into(),
-            ],
+                    .into()
+            }),
             cutoff_note: state
                 .node_by_path("lead/filter/cutoff_note")
                 .unwrap()
@@ -104,6 +92,8 @@ impl From<&StateHandle> for Controls {
             pluck_damping: state.node_by_path("pluck/damping").unwrap().into(),
             drone_volume: state.node_by_path("drone/volume").unwrap().into(),
             drone_note: state.node_by_path("drone/note").unwrap().into(),
+            raw_note: 0.0,
+            autotune: 0,
             warning: None,
             error: None,
         }
@@ -184,63 +174,17 @@ pub struct NoteControl2 {
     pub volume: Control,
 }
 
+impl ControlTrait for NoteControl2 {
+    fn send(&mut self, state: &mut StateHandle) {
+        self.note.send(state);
+        self.volume.send(state);
+    }
+}
 impl From<(&Node, &Node)> for NoteControl2 {
     fn from((note, volume): (&Node, &Node)) -> Self {
         Self {
             note: note.into(),
             volume: volume.into(),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct NoteControl {
-    /// Current value of the control in the DSP
-    pub value: f32,
-
-    /// Name for the DSP
-    pub path: String,
-
-    /// Raw note, without autotune
-    pub raw_value: f32,
-
-    /// Autotune strength
-    pub autotune: usize,
-}
-
-impl ControlTrait for NoteControl {
-    fn send(&mut self, state: &mut StateHandle) {
-        state.set_by_path(&self.path, self.value).unwrap();
-    }
-}
-
-impl NoteControl {
-    pub fn set_scaled(
-        &mut self,
-        value: f32,
-        value_range: RangeInclusive<f32>,
-        autotune_value: f32,
-        autotune_range: RangeInclusive<f32>,
-        settings: &Settings,
-    ) {
-        let range = settings.note_range_f();
-        self.raw_value = convert_range(value, value_range, &range);
-        self.autotune = convert_range(autotune_value, autotune_range, &(0.0..=5.0)) as usize;
-        self.value = smoothstairs(self.raw_value, self.autotune, settings.scale_notes());
-    }
-}
-
-impl From<&Node> for NoteControl {
-    fn from(node: &Node) -> Self {
-        let value = node.widget_type().init_value();
-        let path = node.path();
-        let raw_value = node.widget_type().init_value();
-        let autotune = 0;
-        Self {
-            value,
-            path,
-            raw_value,
-            autotune,
         }
     }
 }
@@ -255,7 +199,7 @@ impl NodeByPath for StateHandle {
     }
 }
 
-fn convert_range(
+pub fn convert_range(
     value: f32,
     input_range: RangeInclusive<f32>,
     output_range: &RangeInclusive<f32>,
@@ -268,30 +212,4 @@ fn convert_range(
         ((((value - in_min) * (out_max - out_min)) / (in_max - in_min)) + out_min)
             .clamp(out_min, out_max)
     }
-}
-
-/// Smooth step function loosely "sticking" the value to 0 or 1
-/// Assumes that value is between 0 and 1
-/// https://en.wikipedia.org/wiki/Smoothstep
-fn smoothstep(interval: &RangeInclusive<f32>, x: f32) -> f32 {
-    let x = (x - interval.start()) / (interval.end() - interval.start());
-    x * x * (3.0 - 2.0 * x)
-}
-
-pub fn smoothstairs(value: f32, amount: usize, scale: Vec<MidiNote>) -> f32 {
-    let scale: Vec<_> = scale
-        .windows(2)
-        .map(|w| (w[0].into_byte() as f32)..=(w[1].into_byte() as f32))
-        .collect();
-
-    if let Some(interval) = scale.iter().find(|interval| interval.contains(&value)) {
-        let mut value = value;
-
-        for _ in 0..amount {
-            let smooth = smoothstep(interval, value);
-            value = interval.start() + smooth * (interval.end() - interval.start());
-        }
-        return value;
-    }
-    value
 }
