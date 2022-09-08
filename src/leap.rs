@@ -65,17 +65,15 @@ pub fn start_leap_worker(
                         if let Some(hand) = right_hand {
                             let position = hand.palm().position();
 
+                            let palm_normal = Vector3::from(hand.palm().normal().array());
+                            let palm_dot = palm_normal.dot(&Vector3::y());
                             if hand.pinch_strength() > 0.9 {
-                                let palm_normal = Vector3::from(hand.palm().normal().array());
-                                let palm_dot = palm_normal.dot(&Vector3::y());
                                 controls.pluck.value = palm_dot > 0.0;
                             }
+                            controls.pluck_damping.set_scaled(palm_dot, 0.0..=-1.0);
                             controls.cutoff_note.set_scaled(position.x(), 50.0..=200.0);
                             controls.volume.set_scaled(position.y(), 300.0..=400.0);
                             controls.resonance.set_scaled(position.z(), 100.0..=-100.0);
-                            controls
-                                .pluck_position
-                                .set_scaled(position.x(), 50.0..=200.0);
                         }
 
                         controls.send(&mut dsp);

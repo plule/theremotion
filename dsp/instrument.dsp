@@ -24,7 +24,8 @@ res = filterGroup(hslider("[1]res", 0, 0, 0.99, 0.001)) : si.smoo;
 // Pluck voice
 pluckGroup(x) = hgroup("[1]pluck", x);
 pluck = pluckGroup(button("[0]gate"));
-pluck_position = pluckGroup(hslider("[1]position", 0.5, 0, 1, 0.001)) : si.smoo;
+pluck_gain = pluckGroup(hslider("[1]gain", 0.8, 0, 1, 0.001));
+pluck_damping = pluckGroup(hslider("[2]damping", 0.0, 0, 1, 0.001));
 
 // Drone voice
 droneGroup(x) = hgroup("[2]drone", x);
@@ -46,9 +47,10 @@ with {
 };
 
 // Guitar
-guitar = pm.guitar(pm.f2l(f), pluck_position, 1.0, pluck)
+guitar = pm.ks(len, pluck_damping, pulse)
 with {
-    f = note - 12 : ba.midikey2hz;
+    len = note : ba.midikey2hz : pm.f2l;
+    pulse = pluck : pm.impulseExcitation * pluck_gain;
 };
 
 // Drone

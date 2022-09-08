@@ -30,8 +30,10 @@ pub struct Controls {
     pub sub_volume: Control,
     /// Guitar pluck
     pub pluck: BoolControl,
-    /// Guitare pluck position
-    pub pluck_position: Control,
+    /// Guitar pluck gain
+    pub pluck_gain: Control,
+    /// Guitar pluck damping
+    pub pluck_damping: Control,
     /// Drone volume
     pub drone_volume: Control,
     /// Drone note
@@ -53,7 +55,8 @@ impl ControlTrait for Controls {
         self.detune.send(state);
         self.sub_volume.send(state);
         self.pluck.send(state);
-        self.pluck_position.send(state);
+        self.pluck_gain.send(state);
+        self.pluck_damping.send(state);
         self.drone_volume.send(state);
         self.drone_note.send(state);
         state.send();
@@ -74,7 +77,8 @@ impl From<&StateHandle> for Controls {
             supersaw: state.node_by_path("lead/supersaw/volume").unwrap().into(),
             detune: state.node_by_path("lead/supersaw/detune").unwrap().into(),
             pluck: state.node_by_path("pluck/gate").unwrap().into(),
-            pluck_position: state.node_by_path("pluck/position").unwrap().into(),
+            pluck_gain: state.node_by_path("pluck/gain").unwrap().into(),
+            pluck_damping: state.node_by_path("pluck/damping").unwrap().into(),
             drone_volume: state.node_by_path("drone/volume").unwrap().into(),
             drone_note: state.node_by_path("drone/note").unwrap().into(),
             warning: None,
