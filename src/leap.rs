@@ -110,7 +110,7 @@ pub fn start_leap_worker(
                             controls.supersaw.set_scaled(position.z(), 100.0..=-100.0);
                             controls
                                 .pitch_bend
-                                .set_scaled(velocity.x() + velocity.z(), -600.0..=600.0);
+                                .set_scaled(velocity.x() + velocity.z(), -400.0..=400.0);
                         }
 
                         if let Some(hand) = right_hand {
