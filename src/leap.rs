@@ -53,10 +53,9 @@ pub fn start_leap_worker(
 
                             controls.detune.set_scaled(position.x(), -200.0..=-50.0);
                             let note_input_range = 100.0..=600.0;
-                            let fingertip = hand.index().distal().next_joint().y();
 
                             controls.raw_note = controls::convert_range(
-                                fingertip,
+                                position.y(),
                                 note_input_range.to_owned(),
                                 &settings.note_range_f(),
                             );
