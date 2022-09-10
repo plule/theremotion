@@ -50,6 +50,7 @@ pub fn start_leap_worker(
 
                         if let Some(hand) = left_hand {
                             let position = hand.palm().position();
+                            let velocity = hand.palm().velocity();
 
                             controls.detune.set_scaled(position.x(), -200.0..=-50.0);
                             let note_input_range = 100.0..=600.0;
@@ -107,6 +108,9 @@ pub fn start_leap_worker(
 
                             controls.pluck_note.value = note;
                             controls.supersaw.set_scaled(position.z(), 100.0..=-100.0);
+                            controls
+                                .pitch_bend
+                                .set_scaled(velocity.x() + velocity.z(), -600.0..=600.0);
                         }
 
                         if let Some(hand) = right_hand {
@@ -117,7 +121,6 @@ pub fn start_leap_worker(
                             if hand.pinch_strength() > 0.9 {
                                 controls.pluck.value = palm_dot > 0.0;
                             }
-                            dbg!(palm_dot);
                             controls.pluck_release.set_scaled(palm_dot, -1.0..=0.0);
                             controls.pluck_wah.set_scaled(palm_dot, 0.0..=1.0);
                             controls.cutoff_note.set_scaled(position.x(), 50.0..=200.0);

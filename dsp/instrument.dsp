@@ -32,7 +32,7 @@ res = filterGroup(hslider("[1]res", 0, 0, 0.99, 0.001)) : si.smoo;
 pluckGroup(x) = hgroup("[1]pluck", x);
 pluck = pluckGroup(button("[0]gate"));
 pluck_note = pluckGroup(hslider("[1]note", 60, 0, 127, 0.001)) : si.smoo;
-pluck_wah = pluckGroup(hslider("[1]wah", 0.5, 0, 1, 0.001)) : si.smoo;
+pluck_wah = pluckGroup(hslider("[1]wah", 0.5, 0.25, 0.75, 0.001)) : si.smoo;
 pluck_gain = pluckGroup(hslider("[2]gain", 1.0, 0, 1, 0.001));
 pluck_release = pluckGroup(hslider("[3]release", 10, 0, 10, 0.001));
 
@@ -41,10 +41,13 @@ droneGroup(x) = hgroup("[2]drone", x);
 drone_volume = droneGroup(hslider("[0]volume", 0, 0, 1, 0.001)) : si.smoo;
 drone_note = droneGroup(hslider("[1]note", 60, 0, 127, 0.001)) : si.smoo;
 
+// Global
+pitch_bend = hslider("[3]pitchBend", 0, -1, 1, 0.001);
+
 // Lead oscillator
 lead_i(n, v) = saw_osc(0) + supersaw_osc * supersaw : ve.moog_vcf_2b(res, cutoff_freq) : _ * v / 2
 with {
-    f = n : ba.midikey2hz;
+    f = n + pitch_bend : ba.midikey2hz;
     saw_osc(detune) = os.sawtooth(f * (1 + detune));
     supersaw_osc = saw_osc(detune) + saw_osc(-detune);
     cutoff_freq = ba.midikey2hz(n + cutoff_note);
@@ -54,7 +57,7 @@ lead = lead_i(note1, vol1) + lead_i(note2, vol2) + lead_i(note3, vol3) + lead_i(
 // Guitar
 guitar = sy.combString(f, pluck_release, pluck) : ve.crybaby(pluck_wah) : ve.moog_vcf_2b(0.0, f * 4) : _ * pluck_gain * 2
 with {
-    f = pluck_note : ba.midikey2hz;
+    f = pluck_note + pitch_bend : ba.midikey2hz;
     osc(f) = os.square(f) + os.square(f*2.01);
     env = en.ar(0.01, pluck_release, pluck);
 };

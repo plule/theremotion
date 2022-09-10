@@ -37,6 +37,8 @@ pub struct Controls {
     pub drone_volume: Control,
     /// Drone note
     pub drone_note: Control,
+    /// Global pitch bend (guitar+lead)
+    pub pitch_bend: Control,
 
     /// Raw note for the UI
     pub raw_note: f32,
@@ -67,6 +69,7 @@ impl ControlTrait for Controls {
         self.pluck_release.send(state);
         self.drone_volume.send(state);
         self.drone_note.send(state);
+        self.pitch_bend.send(state);
         state.send();
     }
 }
@@ -100,6 +103,7 @@ impl From<&StateHandle> for Controls {
             pluck_release: state.node_by_path("pluck/release").unwrap().into(),
             drone_volume: state.node_by_path("drone/volume").unwrap().into(),
             drone_note: state.node_by_path("drone/note").unwrap().into(),
+            pitch_bend: state.node_by_path("pitchBend").unwrap().into(),
             raw_note: 0.0,
             autotune: 0,
             warning: None,
