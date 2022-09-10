@@ -32,8 +32,9 @@ res = filterGroup(hslider("[1]res", 0, 0, 0.99, 0.001)) : si.smoo;
 pluckGroup(x) = hgroup("[1]pluck", x);
 pluck = pluckGroup(button("[0]gate"));
 pluck_note = pluckGroup(hslider("[1]note", 60, 0, 127, 0.001)) : si.smoo;
-pluck_gain = pluckGroup(hslider("[2]gain", 0.8, 0, 1, 0.001));
-pluck_damping = pluckGroup(hslider("[3]damping", 0.0, 0, 1, 0.001));
+pluck_wah = pluckGroup(hslider("[1]wah", 0.5, 0, 1, 0.001)) : si.smoo;
+pluck_gain = pluckGroup(hslider("[2]gain", 1.0, 0, 1, 0.001));
+pluck_release = pluckGroup(hslider("[3]release", 10, 0, 10, 0.001));
 
 // Drone voice
 droneGroup(x) = hgroup("[2]drone", x);
@@ -51,10 +52,11 @@ with {
 lead = lead_i(note1, vol1) + lead_i(note2, vol2) + lead_i(note3, vol3) + lead_i(note4, vol4) : _ * lead_volume;
 
 // Guitar
-guitar = pm.ks(len, pluck_damping, pulse)
+guitar = sy.combString(f, pluck_release, pluck) : ve.crybaby(pluck_wah) : ve.moog_vcf_2b(0.0, f * 4) : _ * pluck_gain * 2
 with {
-    len = pluck_note : ba.midikey2hz : pm.f2l;
-    pulse = pluck : pm.impulseExcitation * pluck_gain;
+    f = pluck_note : ba.midikey2hz;
+    osc(f) = os.square(f) + os.square(f*2.01);
+    env = en.ar(0.01, pluck_release, pluck);
 };
 
 // Drone
