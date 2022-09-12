@@ -12,7 +12,7 @@ With specific hand positions, you can control a low pass filter, a supersaw
 sound, a guitar sound and more. You can even make the instrument "stick" to a
 scale, making it much easier to control than a Theremin.
 
-![Screenshot](./doc/capture.PNG)
+![Screenshot](./doc/capture.png)
 
 ## Features
 
