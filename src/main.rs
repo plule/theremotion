@@ -41,10 +41,10 @@ fn main() {
     // Start UI
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
-        format!("Leapotron v{}", VERSION).as_str(),
+        format!("Theremotion v{}", VERSION).as_str(),
         native_options,
         Box::new(move |cc| {
-            Box::new(ui::Leapotron::new(
+            Box::new(ui::Theremotion::new(
                 cc,
                 dsp_controls_rx,
                 settings_tx,

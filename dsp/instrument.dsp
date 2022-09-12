@@ -1,4 +1,4 @@
-declare name        "leapotron";
+declare name        "theremotion";
 declare version     "1.0";
 declare author      "Pierre Lulé";
 declare license     "BSD";

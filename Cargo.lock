@@ -1129,26 +1129,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23603c7542c3b4b3b6fd83c7fe267a744f33573ec242ef150f4388e12ae52562"
 
 [[package]]
-name = "leapotron"
-version = "0.1.5-dev"
-dependencies = [
- "cpal",
- "crossbeam-channel",
- "eframe",
- "egui",
- "faust-build",
- "faust-state",
- "faust-types",
- "leaprs",
- "nalgebra",
- "rstest",
- "serde",
- "serde_yaml",
- "staff",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "leaprs"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2083,6 +2063,26 @@ dependencies = [
  "redox_syscall",
  "remove_dir_all",
  "winapi",
+]
+
+[[package]]
+name = "theremotion"
+version = "0.1.5-dev"
+dependencies = [
+ "cpal",
+ "crossbeam-channel",
+ "eframe",
+ "egui",
+ "faust-build",
+ "faust-state",
+ "faust-types",
+ "leaprs",
+ "nalgebra",
+ "rstest",
+ "serde",
+ "serde_yaml",
+ "staff",
+ "tracing-subscriber",
 ]
 
 [[package]]

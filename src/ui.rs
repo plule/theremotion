@@ -10,7 +10,7 @@ use staff::{midi::MidiNote, scale::ScaleIntervals};
 
 use crate::{controls, scales::MoreScales, settings::Settings};
 
-pub struct Leapotron {
+pub struct Theremotion {
     dsp_controls_rx: Receiver<controls::Controls>,
     controls: controls::Controls,
     settings: Settings,
@@ -20,7 +20,7 @@ pub struct Leapotron {
     monitoring: Vec<f32>,
 }
 
-impl Leapotron {
+impl Theremotion {
     /// Called once before the first frame.
     pub fn new(
         cc: &eframe::CreationContext<'_>,
@@ -44,7 +44,7 @@ impl Leapotron {
     }
 }
 
-impl eframe::App for Leapotron {
+impl eframe::App for Theremotion {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
@@ -158,7 +158,7 @@ impl eframe::App for Leapotron {
             monitoring_plot(ui, "monitoring", monitoring);
 
             ui.collapsing("Instructions", |ui| {
-                ui.label("👐 Leapotron is a synthesizer controlled by your hands.");
+                ui.label("👐 Theremotion is a synthesizer controlled by your hands.");
                 ui.label("👉 Move up and down your right hand to control the volume.");
                 ui.label("👈 Move up and down your left hand to control the pitch.");
                 ui.label("👋 Move your hands on the horizontal plane to adapt the timbre.");

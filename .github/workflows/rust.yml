@@ -42,19 +42,19 @@ jobs:
       run: cargo build --release ${{ matrix.cargo-features }}
     - name: Prepare release
       run: |
-        mkdir -p leapotron-${{ matrix.sdk-ver }}
-        cp target/release/leapotron.exe leapotron-${{ matrix.sdk-ver }}
-        cp leap-sdk-redist/LeapSDK/lib/x64/LeapC.dll leapotron-${{ matrix.sdk-ver }}
+        mkdir -p theremotion-${{ matrix.sdk-ver }}
+        cp target/release/theremotion.exe theremotion-${{ matrix.sdk-ver }}
+        cp leap-sdk-redist/LeapSDK/lib/x64/LeapC.dll theremotion-${{ matrix.sdk-ver }}
     - name: Archive Release
       uses: thedoctor0/zip-release@main
       with:
         type: 'zip'
-        filename: 'leapotron-${{ matrix.sdk-ver }}.zip'
-        path: leapotron-${{ matrix.sdk-ver }}
+        filename: 'theremotion-${{ matrix.sdk-ver }}.zip'
+        path: theremotion-${{ matrix.sdk-ver }}
     - uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.sdk-ver }}
-        path: leapotron-${{ matrix.sdk-ver }}.zip
+        path: theremotion-${{ matrix.sdk-ver }}.zip
   release:
     needs:
       - build
@@ -73,6 +73,6 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          orion/leapotron-orion.zip
-          gemini/leapotron-gemini.zip
+          orion/theremotion-orion.zip
+          gemini/theremotion-gemini.zip
           

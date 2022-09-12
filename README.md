@@ -1,3 +1,3 @@
-# Leapotron
+# Theremotion
 
 make noise with leap
