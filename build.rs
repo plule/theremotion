@@ -23,7 +23,7 @@ fn main() {
         println!(r"cargo:rustc-link-lib=static=LeapC");
     }
 
-    if std::env::var("LEAPOTRON_REGEN_DSP").is_ok() {
+    if std::env::var("THEREMOTION_REGEN_DSP").is_ok() {
         build_dsp("dsp/instrument.dsp");
 
         let mut generated = PathBuf::new();

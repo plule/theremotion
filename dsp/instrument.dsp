@@ -55,18 +55,24 @@ lead(pitchBend) = leadVolume * (
     (note4 + pitchBend, vol4 : leadVoice)
 );
 
+feedback(signal)= signal * 0.005;
+
 // Guitar
-guitar(pitchBend) = pm.elecGuitar(length,0.5,mute,strength,gate)
-        : co.compressor_mono(20,-60,0,0.1) * gain
+elecGuitar(stringLength,pluckPosition,mute,gain,trigger) =
+    (pm.elecGuitarModel(stringLength,pluckPosition,mute) : co.compressor_mono(20,-10,0,0.1)) ~
+    (_  : ef.gate_mono(-20, 0.0001, 0.1, 0.02)) * 0.005 + pm.pluckString(stringLength,1,1,1,gain,trigger);
+
+guitar(pitchBend) = elecGuitar(length,0.5,mute,strength,gate)
+        : _ * gain
         : fi.lowpass(1, f * 2)
         : ve.crybaby(wah)
 with {
     gate = button("[0]gate");
     note = hslider("[1]note", 80, 0, 127, 0.001) : si.smoo;
     wah = hslider("[1]wah", 0.5, 0.25, 0.75, 0.001) : si.smoo;
-    gain = hslider("[2]gain", 100, 0, 100, 0.001);
-    mute = hslider("[3]mute", 1, 0, 1, 0.001);
-    strength = hslider("[4]strength", 1, 0, 1, 0.001);
+    gain = hslider("[2]gain", 1, 0, 1, 0.001);
+    mute = hslider("[3]mute", 1, 0.90, 1, 0.001);
+    strength = hslider("[4]strength", 0.5, 0, 1, 0.001);
 
     f = note + pitchBend : ba.midikey2hz;
     length = f : pm.f2l;
