@@ -2067,7 +2067,7 @@ dependencies = [
 
 [[package]]
 name = "theremotion"
-version = "0.1.5-dev"
+version = "0.1.5"
 dependencies = [
  "cpal",
  "crossbeam-channel",
