@@ -14,14 +14,34 @@ mod ui_keyboard;
 #[rustfmt::skip]
 mod dsp;
 
+use clap::Parser;
 use cpal::traits::StreamTrait;
 use faust_state::DspHandle;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// Command line arguments
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    /// Start Theremotion in full screen
+    #[clap(long, value_parser, default_value_t = false)]
+    fullscreen: bool,
+
+    /// Initial X position of the window
+    #[clap(long, value_parser, default_value_t = 0)]
+    window_position_x: i32,
+
+    /// Initial Y position of the window
+    #[clap(long, value_parser, default_value_t = 0)]
+    window_position_y: i32,
+}
+
 fn main() {
     // Log to stdout (if you run with `RUST_LOG=debug`).
     tracing_subscriber::fmt::init();
+
+    let args = Args::parse();
 
     // Init communication channels
     let (settings_tx, settings_rx) = crossbeam_channel::unbounded(); // UI to Leap
@@ -39,7 +59,14 @@ fn main() {
     let _leap_worker = leap::start_leap_worker(state, settings_rx, dsp_controls_tx);
 
     // Start UI
-    let native_options = eframe::NativeOptions::default();
+    let mut native_options = eframe::NativeOptions::default();
+    native_options.initial_window_pos = Some(egui::pos2(
+        args.window_position_x as f32,
+        args.window_position_y as f32,
+    ));
+    native_options.initial_window_size = Some(egui::vec2(800.0, 480.0));
+    native_options.fullscreen = args.fullscreen;
+
     eframe::run_native(
         format!("Theremotion v{}", VERSION).as_str(),
         native_options,
