@@ -4,11 +4,16 @@ use egui::{
     plot::{
         uniform_grid_spacer, HLine, Legend, Line, MarkerShape, PlotPoint, PlotPoints, Points, VLine,
     },
-    RichText,
+    FontFamily, FontId, RichText, TextStyle,
 };
 use staff::{midi::MidiNote, scale::ScaleIntervals};
 
-use crate::{controls, scales::MoreScales, settings::Settings};
+use crate::{
+    controls::{self, Controls},
+    scales::MoreScales,
+    settings::Settings,
+    ui_keyboard::KeyboardEditMode,
+};
 
 pub struct Theremotion {
     dsp_controls_rx: Receiver<controls::Controls>,
@@ -18,6 +23,15 @@ pub struct Theremotion {
     settings_tx: Sender<Settings>,
     monitoring_rx: Receiver<Vec<f32>>,
     monitoring: Vec<f32>,
+    main_tab: MainTab,
+    keyboard_edit_mode: KeyboardEditMode,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum MainTab {
+    ScaleEdit,
+    Play,
+    Instructions,
 }
 
 impl Theremotion {
@@ -29,6 +43,30 @@ impl Theremotion {
         monitoring_rx: Receiver<Vec<f32>>,
     ) -> Self {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
+
+        let mut style = (*cc.egui_ctx.style()).clone();
+        style.text_styles = [
+            (
+                TextStyle::Small,
+                FontId::new(15.0, FontFamily::Proportional),
+            ),
+            (TextStyle::Body, FontId::new(21.0, FontFamily::Proportional)),
+            (
+                TextStyle::Button,
+                FontId::new(40.0, FontFamily::Proportional),
+            ),
+            (
+                TextStyle::Heading,
+                FontId::new(64.0, FontFamily::Proportional),
+            ),
+            (
+                TextStyle::Monospace,
+                FontId::new(21.0, FontFamily::Monospace),
+            ),
+        ]
+        .into();
+        cc.egui_ctx.set_style(style);
+
         let controls = dsp_controls_rx.recv().unwrap();
         let settings = Settings::read();
         settings_tx.send(settings.clone()).unwrap();
@@ -39,6 +77,8 @@ impl Theremotion {
             monitoring_rx,
             monitoring: Vec::default(),
             saved_settings: settings.clone(),
+            main_tab: MainTab::Play,
+            keyboard_edit_mode: KeyboardEditMode::RootNote,
             settings,
         }
     }
@@ -47,7 +87,7 @@ impl Theremotion {
 impl eframe::App for Theremotion {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let Self {
             dsp_controls_rx,
             controls,
@@ -56,6 +96,8 @@ impl eframe::App for Theremotion {
             monitoring,
             monitoring_rx,
             saved_settings,
+            main_tab,
+            keyboard_edit_mode,
         } = self;
 
         // Update the current control state from the DSP
@@ -67,27 +109,156 @@ impl eframe::App for Theremotion {
             *monitoring = new_monitoring;
         }
 
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    if ui.button("Quit").clicked() {
-                        frame.close();
-                    }
+        egui::SidePanel::right("right_panel")
+            .default_width(32.0)
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.selectable_value(main_tab, MainTab::Play, RichText::new("👐").heading());
+                    ui.selectable_value(
+                        main_tab,
+                        MainTab::ScaleEdit,
+                        RichText::new("🎼").heading(),
+                    );
+                    ui.selectable_value(
+                        main_tab,
+                        MainTab::Instructions,
+                        RichText::new("ℹ").heading(),
+                    );
                 });
             });
+        egui::TopBottomPanel::bottom("bottom_panel")
+            .default_height(32.0)
+            .show(ctx, |ui| {
+                if let Some(warning) = &controls.warning {
+                    let warning = format!("⚠ Leap: {}", warning);
+                    ui.label(RichText::new(warning).color(egui::Color32::YELLOW));
+                }
+
+                if let Some(error) = &controls.error {
+                    let error = format!("⚠ Leap: {}", error);
+                    ui.label(RichText::new(error).color(egui::Color32::RED));
+                }
+
+                egui::warn_if_debug_build(ui);
+            });
+        egui::CentralPanel::default().show(ctx, |ui| match main_tab {
+            MainTab::ScaleEdit => {
+                edit_scale_tab(ui, settings, controls, keyboard_edit_mode);
+            }
+            MainTab::Play => {
+                ui.add(crate::ui_keyboard::Keyboard::new(
+                    controls.lead.iter().collect(),
+                    settings,
+                    KeyboardEditMode::Drone,
+                ));
+
+                ui.separator();
+
+                ui.horizontal(|ui| {
+                    autotune_plot(
+                        ui,
+                        320.0,
+                        settings,
+                        controls.autotune,
+                        controls.raw_note,
+                        controls.lead[0].note.value,
+                    );
+
+                    ui.vertical(|ui| {
+                        ui.horizontal(|ui| {
+                            xy_plot(
+                                ui,
+                                150.0,
+                                "lh_hand",
+                                &controls.detune,
+                                &controls.supersaw,
+                                "Detune",
+                                "Supersaw",
+                            );
+                            ui.spacing();
+                            xy_plot(
+                                ui,
+                                150.0,
+                                "rh_hand",
+                                &controls.cutoff_note,
+                                &controls.resonance,
+                                "Cutoff",
+                                "Resonance",
+                            );
+                        });
+                        monitoring_plot(ui, "monitoring", monitoring);
+                    });
+                });
+            }
+            MainTab::Instructions => {
+                instructions_tab(ui);
+            }
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.add(crate::ui_keyboard::Keyboard::new(
-                controls.lead.iter().collect(),
-                settings,
-            )).on_hover_text(
-                "🎼 Left click: Set root. 🎹 Right click: Change scale. ♒ Middle click: Set Drone.",
-            );
+        if saved_settings != settings {
+            settings.save();
+            *saved_settings = settings.clone();
+            settings_tx.send(settings.clone()).unwrap();
+        }
+        ctx.request_repaint();
+    }
+}
 
-            ui.separator();
+fn edit_scale_tab(
+    ui: &mut egui::Ui,
+    settings: &mut Settings,
+    controls: &Controls,
+    keyboard_edit_mode: &mut KeyboardEditMode,
+) {
+    ui.add(crate::ui_keyboard::Keyboard::new(
+        controls.lead.iter().collect(),
+        settings,
+        *keyboard_edit_mode,
+    ));
+
+    ui.separator();
+
+    ui.horizontal(|ui| {
+        ui.selectable_value(
+            keyboard_edit_mode,
+            KeyboardEditMode::RootNote,
+            "✏ Root Note",
+        );
+        ui.selectable_value(keyboard_edit_mode, KeyboardEditMode::Scale, "✏ Scale");
+    });
+
+    ui.separator();
+
+    match keyboard_edit_mode {
+        KeyboardEditMode::RootNote => {
+            ui.horizontal(|ui| {
+                if ui.button(RichText::new("-").heading()).clicked() {
+                    settings.root_note = MidiNote::from_byte(settings.root_note.into_byte() - 12);
+                }
+
+                ui.label(format!("Octave {}", settings.root_note.octave()));
+
+                if ui.button(RichText::new("+").heading()).clicked() {
+                    settings.root_note = MidiNote::from_byte(settings.root_note.into_byte() + 12);
+                }
+            });
 
             ui.horizontal(|ui| {
+                if ui.button(RichText::new("-").heading()).clicked() {
+                    settings.root_note = MidiNote::from_byte(settings.root_note.into_byte() - 1);
+                }
+
+                ui.label(format!("Root Note {}", settings.root_note.pitch()));
+
+                if ui.button(RichText::new("+").heading()).clicked() {
+                    settings.root_note = MidiNote::from_byte(settings.root_note.into_byte() + 1);
+                }
+            });
+        }
+        KeyboardEditMode::Scale => {
+            ui.horizontal_wrapped(|ui| {
+                ui.spacing_mut().button_padding.x = 10.0;
+                ui.spacing_mut().button_padding.y = 10.0;
                 ui.selectable_value(&mut settings.scale, ScaleIntervals::all(), "🎼 Chromatic");
                 ui.selectable_value(&mut settings.scale, ScaleIntervals::major(), "🎼 Major");
                 ui.selectable_value(
@@ -105,90 +276,34 @@ impl eframe::App for Theremotion {
                     ScaleIntervals::natural_minor(),
                     "🎼 Natural Minor",
                 );
-                ui.selectable_value(
-                    &mut settings.scale, ScaleIntervals::dorian(), "🎼 Dorian");
+                ui.selectable_value(&mut settings.scale, ScaleIntervals::dorian(), "🎼 Dorian");
                 ui.selectable_value(&mut settings.scale, ScaleIntervals::blues(), "🎼 Blues");
-                ui.selectable_value(&mut settings.scale, ScaleIntervals::freygish(), "🎼 Freygish");
-                ui.selectable_value(&mut settings.scale, ScaleIntervals::altered_dorian(), "🎼 Altered Dorian");
-            });
-
-            ui.separator();
-
-            ui.horizontal_top(|ui| {
-                let plot_size = (ui.available_width() - 100.0) / 3.0;
-                ui.style_mut().spacing.slider_width = plot_size;
-                autotune_plot(ui, plot_size, settings, controls.autotune, controls.raw_note, controls.lead[0].note.value);
-                ui.add_space(10.0);
-                ui.add_enabled(
-                    false,
-                    egui::Slider::new(&mut controls.lead[0].note.value, settings.note_range_f())
-                        .show_value(false)
-                        .text("Pitch")
-                        .vertical(),
+                ui.selectable_value(
+                    &mut settings.scale,
+                    ScaleIntervals::freygish(),
+                    "🎼 Freygish",
                 );
-                xy_plot(
-                    ui,
-                    plot_size,
-                    "lh_hand",
-                    &controls.detune,
-                    &controls.supersaw,
-                    "Detune",
-                    "Supersaw",
-                );
-                ui.spacing();
-                xy_plot(
-                    ui,
-                    plot_size,
-                    "rh_hand",
-                    &controls.cutoff_note,
-                    &controls.resonance,
-                    "Cutoff",
-                    "Resonance",
-                );
-                ui.add_enabled(
-                    false,
-                    egui::Slider::new(&mut controls.lead_volume.value, controls.lead_volume.input.range.to_owned())
-                        .show_value(false)
-                        .text("Volume")
-                        .vertical(),
+                ui.selectable_value(
+                    &mut settings.scale,
+                    ScaleIntervals::altered_dorian(),
+                    "🎼 Altered Dorian",
                 );
             });
-            ui.separator();
-
-            monitoring_plot(ui, "monitoring", monitoring);
-
-            ui.collapsing("Instructions", |ui| {
-                ui.label("👐 Theremotion is a synthesizer controlled by your hands.");
-                ui.label("👉 Move up and down your right hand to control the volume.");
-                ui.label("👈 Move up and down your left hand to control the pitch.");
-                ui.label("👋 Move your hands on the horizontal plane to adapt the timbre.");
-                ui.label("👌 Pinch with your left hand to stick on a scale.");
-                ui.label("🎸 Pinch with your right hand, and rotate it to play guitar.");
-                ui.label("🎼 Left click on the keyboard to select a root note.");
-                ui.label("🎹 Choose a predefined scale or right click on the keyboard to make a custom scale.");
-                ui.label("♒ Middle click on the keyboard to enable a Drone.");
-            });
-
-            if let Some(warning) = &controls.warning {
-                let warning = format!("⚠ Leap: {}", warning);
-                ui.label(RichText::new(warning).small().color(egui::Color32::YELLOW));
-            }
-
-            if let Some(error) = &controls.error {
-                let error = format!("⚠ Leap: {}", error);
-                ui.label(RichText::new(error).small().color(egui::Color32::RED));
-            }
-
-            egui::warn_if_debug_build(ui);
-        });
-
-        if saved_settings != settings {
-            settings.save();
-            *saved_settings = settings.clone();
-            settings_tx.send(settings.clone()).unwrap();
         }
-        ctx.request_repaint();
+        _ => {}
     }
+}
+
+fn instructions_tab(ui: &mut egui::Ui) {
+    ui.label("👐 Theremotion is a synthesizer controlled by your hands.");
+    ui.label("👉 Move up and down your right hand to control the volume.");
+    ui.label("👈 Move up and down your left hand to control the pitch.");
+    ui.label("👋 Move your hands on the horizontal plane to adapt the timbre.");
+    ui.label("👌 Pinch with your left hand to stick on a scale.");
+    ui.label("🎸 Pinch with your right hand, and rotate it to play guitar.");
+    ui.label("🎼 Left click on the keyboard to select a root note.");
+    ui.label("🎹 Choose a predefined scale or right click on the keyboard to make a custom scale.");
+    ui.label("♒ Middle click on the keyboard to enable a Drone.");
 }
 
 fn autotune_plot(

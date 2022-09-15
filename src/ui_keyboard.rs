@@ -10,11 +10,31 @@ pub struct Keyboard<'a> {
 
     /// Settings
     pub settings: &'a mut Settings,
+
+    /// Edit mode
+    pub edit_mode: KeyboardEditMode,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum KeyboardEditMode {
+    #[default]
+    None,
+    Drone,
+    RootNote,
+    Scale,
 }
 
 impl<'a> Keyboard<'a> {
-    pub fn new(notes: Vec<&'a NoteControl>, settings: &'a mut Settings) -> Self {
-        Self { notes, settings }
+    pub fn new(
+        notes: Vec<&'a NoteControl>,
+        settings: &'a mut Settings,
+        edit_mode: KeyboardEditMode,
+    ) -> Self {
+        Self {
+            notes,
+            settings,
+            edit_mode,
+        }
     }
 
     fn draw_key(&self, ui: &mut egui::Ui, key_dimension: &egui::Vec2, note: &MidiNote) -> Response {
@@ -53,27 +73,34 @@ impl<'a> Keyboard<'a> {
 
     fn add_key(&mut self, ui: &mut egui::Ui, key_dimension: egui::Vec2, note: MidiNote) {
         let response = self.draw_key(ui, &key_dimension, &note);
+
         if response.clicked() {
-            self.settings.root_note = note;
-        }
-        if response.secondary_clicked() {
-            let interval = note - self.settings.root_note;
-            let interval = Interval::new(interval.semitones() % 12);
-            if self.settings.scale.contains(interval) {
-                self.settings.scale.remove(interval);
-            } else {
-                self.settings.scale.push(interval);
-            }
-        }
-        if response.middle_clicked() {
-            self.settings.drone = if let Some(drone) = self.settings.drone {
-                if drone == note {
-                    None
-                } else {
-                    Some(note)
+            match self.edit_mode {
+                KeyboardEditMode::None => {}
+                KeyboardEditMode::Drone => {
+                    self.settings.drone = if let Some(drone) = self.settings.drone {
+                        if drone == note {
+                            None
+                        } else {
+                            Some(note)
+                        }
+                    } else {
+                        Some(note)
+                    }
                 }
-            } else {
-                Some(note)
+                KeyboardEditMode::RootNote => {
+                    self.settings.root_note =
+                        MidiNote::new(note.pitch(), self.settings.root_note.octave());
+                }
+                KeyboardEditMode::Scale => {
+                    let interval = note - self.settings.root_note;
+                    let interval = Interval::new(interval.semitones() % 12);
+                    if self.settings.scale.contains(interval) {
+                        self.settings.scale.remove(interval);
+                    } else {
+                        self.settings.scale.push(interval);
+                    }
+                }
             }
         }
     }
@@ -81,12 +108,15 @@ impl<'a> Keyboard<'a> {
 
 impl<'a> Widget for Keyboard<'a> {
     fn ui(mut self, ui: &mut egui::Ui) -> egui::Response {
-        let key_dimension = egui::vec2(
-            ui.spacing().interact_size.x / 4.0,
-            ui.spacing().interact_size.y,
-        );
+        let start_octave = self.settings.root_note.octave();
+        let displayed_octave_count = self.settings.octave_range + 1;
+
+        let start_note = MidiNote::new(Pitch::C, start_octave).into_byte();
+        let note_range = start_note..=start_note + 12 * displayed_octave_count;
+
+        let key_dimension = egui::vec2(22.0, 40.0);
         let keyboard_size = egui::vec2(
-            (key_dimension.x + 1.0) * 70.0,
+            (key_dimension.x + 1.0) * displayed_octave_count as f32 * 7.0,
             (key_dimension.y + 1.0) * 2.0,
         );
         ui.spacing_mut().item_spacing.x = 1.0;
@@ -99,7 +129,7 @@ impl<'a> Widget for Keyboard<'a> {
                     egui::Sense::focusable_noninteractive(),
                 );
 
-                for byte in 0..=127 {
+                for byte in note_range.clone() {
                     let note = MidiNote::from_byte(byte);
                     match note.pitch() {
                         Pitch::B | Pitch::E => {
@@ -123,7 +153,7 @@ impl<'a> Widget for Keyboard<'a> {
 
             // White keys
             ui.horizontal(|ui| {
-                for byte in 0..=127 {
+                for byte in note_range.clone() {
                     let note = MidiNote::from_byte(byte);
                     match note.pitch() {
                         Pitch::C

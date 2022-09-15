@@ -59,13 +59,16 @@ fn main() {
     let _leap_worker = leap::start_leap_worker(state, settings_rx, dsp_controls_tx);
 
     // Start UI
-    let mut native_options = eframe::NativeOptions::default();
-    native_options.initial_window_pos = Some(egui::pos2(
-        args.window_position_x as f32,
-        args.window_position_y as f32,
-    ));
-    native_options.initial_window_size = Some(egui::vec2(800.0, 480.0));
-    native_options.fullscreen = args.fullscreen;
+    let native_options = eframe::NativeOptions {
+        initial_window_pos: Some(egui::pos2(
+            args.window_position_x as f32,
+            args.window_position_y as f32,
+        )),
+        initial_window_size: Some(egui::vec2(800.0, 480.0)),
+        maximized: args.fullscreen,
+        decorated: !args.fullscreen,
+        ..Default::default()
+    };
 
     eframe::run_native(
         format!("Theremotion v{}", VERSION).as_str(),
