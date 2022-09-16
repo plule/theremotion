@@ -25,8 +25,6 @@ pub struct Theremotion {
     settings: Settings,
     saved_settings: Settings,
     settings_tx: Sender<Settings>,
-    monitoring_rx: Receiver<Vec<f32>>,
-    monitoring: Vec<f32>,
     main_tab: MainTab,
 }
 
@@ -44,7 +42,6 @@ impl Theremotion {
         cc: &eframe::CreationContext<'_>,
         dsp_controls_rx: Receiver<controls::Controls>,
         settings_tx: Sender<Settings>,
-        monitoring_rx: Receiver<Vec<f32>>,
     ) -> Self {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
 
@@ -78,8 +75,6 @@ impl Theremotion {
             dsp_controls_rx,
             settings_tx,
             controls,
-            monitoring_rx,
-            monitoring: Vec::default(),
             saved_settings: settings.clone(),
             main_tab: MainTab::Play,
             settings,
@@ -96,8 +91,6 @@ impl eframe::App for Theremotion {
             controls,
             settings,
             settings_tx,
-            monitoring,
-            monitoring_rx,
             saved_settings,
             main_tab,
         } = self;
@@ -105,10 +98,6 @@ impl eframe::App for Theremotion {
         // Update the current control state from the DSP
         if let Some(new_controls) = dsp_controls_rx.try_iter().last() {
             *controls = new_controls;
-        }
-
-        if let Some(new_monitoring) = monitoring_rx.try_iter().last() {
-            *monitoring = new_monitoring;
         }
 
         egui::SidePanel::right("right_panel")

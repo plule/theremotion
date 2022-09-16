@@ -2,12 +2,11 @@ use std::slice;
 
 use cpal::traits::{DeviceTrait, HostTrait};
 use cpal::{SampleFormat, StreamConfig};
-use crossbeam_channel::Sender;
 use faust_state::DspHandle;
 use faust_types::FaustDsp;
 
 /// Run the DSP thread
-pub fn run<T>(mut dsp: DspHandle<T>, monitoring: Sender<Vec<f32>>) -> cpal::Stream
+pub fn run<T>(mut dsp: DspHandle<T>) -> cpal::Stream
 where
     T: FaustDsp<T = f32> + 'static + Send,
 {
@@ -60,7 +59,6 @@ where
                         *out = *dsp_sample;
                         //*sample = Sample::from(&0.0);
                     }
-                    let _ = monitoring.send(outputs[0].clone());
                 },
                 err_fn,
             )
