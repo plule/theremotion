@@ -21,10 +21,6 @@ scale, making it much easier to control than a Theremin.
 - 👋 Move your hands on the horizontal plane to adapt the timbre.
 - 👌 Pinch with your left hand to stick on a scale.
 - 🎸 Pinch with your right hand, and rotate it to play guitar.
-- 🎼 Left click on the keyboard to select a root note.
-- 🎹 Choose a predefined scale or right click on the keyboard to make a custom
-  scale.
-- ♒ Middle click on the keyboard to enable a Drone.
 - ✌ ☝ Retract your pinky and ring fingers of your left hand, then play with the
   other fingers to play scales
 

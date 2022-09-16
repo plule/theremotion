@@ -4,7 +4,7 @@ use egui::{
     plot::{
         uniform_grid_spacer, HLine, Legend, Line, MarkerShape, PlotPoint, PlotPoints, Points, VLine,
     },
-    FontFamily, FontId, RichText, TextStyle,
+    FontFamily, FontId, Key, RichText, TextStyle,
 };
 use staff::{
     midi::{MidiNote, Octave},
@@ -85,7 +85,7 @@ impl Theremotion {
 impl eframe::App for Theremotion {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let Self {
             dsp_controls_rx,
             controls,
@@ -94,6 +94,10 @@ impl eframe::App for Theremotion {
             saved_settings,
             main_tab,
         } = self;
+
+        if ctx.input().key_down(Key::Escape) {
+            frame.close();
+        }
 
         // Update the current control state from the DSP
         if let Some(new_controls) = dsp_controls_rx.try_iter().last() {
@@ -221,9 +225,7 @@ fn instructions_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settin
     ui.label("👋 Move your hands on the horizontal plane to adapt the timbre.");
     ui.label("👌 Pinch with your left hand to stick on a scale.");
     ui.label("🎸 Pinch with your right hand, and rotate it to play guitar.");
-    ui.label("🎼 Left click on the keyboard to select a root note.");
-    ui.label("🎹 Choose a predefined scale or right click on the keyboard to make a custom scale.");
-    ui.label("♒ Middle click on the keyboard to enable a Drone.");
+    ui.label("✌ ☝ Retract your pinky and ring fingers of your left hand, then play with the other fingers to play scales");
 }
 
 fn scale_edit_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings: &mut Settings) {
@@ -287,7 +289,7 @@ fn root_edit_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings:
         ui.label(RichText::new("Octave").size(30.0));
     });
     ui.horizontal_wrapped(|ui| {
-        for octave in -1..=6 {
+        for octave in 0..=4 {
             let octave = Octave::new_unchecked(octave);
             if ui
                 .selectable_label(
