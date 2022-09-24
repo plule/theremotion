@@ -23,12 +23,13 @@ pub fn start_leap_worker(
         loop {
             controls.warning = None;
             controls.error = None;
-            match connection.poll(1000) {
+            if let Some(new_settings) = settings_rx.try_iter().last() {
+                settings = new_settings;
+            }
+            controls.update_mix(&settings);
+            match connection.poll(100) {
                 Ok(message) => {
                     if let Event::Tracking(e) = message.event() {
-                        if let Some(new_settings) = settings_rx.try_iter().last() {
-                            settings = new_settings;
-                        }
                         let full_scale =
                             crate::music_theory::build_scale(settings.root_note, settings.scale);
 
@@ -127,14 +128,13 @@ pub fn start_leap_worker(
                             controls.lead_volume.set_scaled(position.y(), 300.0..=400.0);
                             controls.resonance.set_scaled(position.z(), 100.0..=-100.0);
                         }
-
-                        controls.send(&mut dsp);
                     }
                 }
                 Err(err) => {
                     controls.error = Some(err.to_string());
                 }
             }
+            controls.send(&mut dsp);
             dsp_controls_tx.send(controls.clone()).unwrap();
         }
     })

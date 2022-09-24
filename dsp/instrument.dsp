@@ -87,7 +87,16 @@ with {
 };
 
 // Mix
-process = hgroup("[2]drone", drone)
-    + (pitchBend : vgroup("[0]lead", lead))
-    + (pitchBend : hgroup("[1]pluck", guitar))
-    : ef.echo(1.0, 0.3, 0.3) <: _, _;
+process = hgroup("[2]drone", drone) * drone_volume
+    + (pitchBend : vgroup("[0]lead", lead)) * lead_volume
+    + (pitchBend : hgroup("[1]pluck", guitar)) * pluck_volume
+    : ef.echo(1.0, 0.3, 0.3)
+    : _ * master_volume
+    <: _, _
+with {
+    mixGroup(x) = vgroup("[3]mix", x);
+    master_volume = mixGroup(hslider("[0]master", 1, 0, 1, 0.001)) : si.smoo;
+    drone_volume = mixGroup(hslider("[1]drone", 1, 0, 1, 0.001)) : si.smoo;
+    lead_volume = mixGroup(hslider("[2]lead", 1, 0, 1, 0.001)) : si.smoo;
+    pluck_volume = mixGroup(hslider("[3]pluck", 1, 0, 1, 0.001)) : si.smoo;
+};

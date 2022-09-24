@@ -1,10 +1,12 @@
+use std::fmt::format;
+
 use crossbeam_channel::{Receiver, Sender};
 
 use egui::{
     plot::{
         uniform_grid_spacer, HLine, Legend, Line, MarkerShape, PlotPoint, PlotPoints, Points, VLine,
     },
-    FontFamily, FontId, Key, RichText, TextStyle,
+    FontFamily, FontId, Key, RichText, Slider, TextStyle,
 };
 use staff::{
     midi::{MidiNote, Octave},
@@ -33,6 +35,7 @@ pub enum MainTab {
     Play,
     RootEdit,
     ScaleEdit,
+    Mix,
     Instructions,
 }
 
@@ -115,6 +118,7 @@ impl eframe::App for Theremotion {
                         MainTab::ScaleEdit,
                         RichText::new("🎼").heading(),
                     );
+                    ui.selectable_value(main_tab, MainTab::Mix, RichText::new("🔊").heading());
                     ui.selectable_value(
                         main_tab,
                         MainTab::Instructions,
@@ -147,6 +151,9 @@ impl eframe::App for Theremotion {
             MainTab::ScaleEdit => {
                 scale_edit_tab(ui, controls, settings);
             }
+            MainTab::Mix => {
+                mix_tab(ui, settings);
+            }
             MainTab::Instructions => {
                 instructions_tab(ui, controls, settings);
             }
@@ -159,6 +166,53 @@ impl eframe::App for Theremotion {
         }
         ctx.request_repaint();
     }
+}
+
+fn mix_tab(ui: &mut egui::Ui, settings: &mut Settings) {
+    ui.vertical_centered_justified(|ui| {
+        ui.heading("Mix");
+    });
+    ui.separator();
+    ui.horizontal(|ui| {
+        ui.style_mut().spacing.slider_width = 300.0;
+        ui.style_mut().spacing.button_padding = egui::vec2(32.0, 32.0);
+        ui.style_mut().spacing.interact_size = egui::vec2(64.0, 64.0);
+        let space = 40.0;
+        ui.group(|ui| {
+            ui.add_space(space);
+            mix_slider(ui, "Lead", &mut settings.lead_volume);
+            ui.add_space(space);
+            mix_slider(ui, "Guitar", &mut settings.guitar_volume);
+            ui.add_space(space);
+            mix_slider(ui, "Drone", &mut settings.drone_volume);
+            ui.add_space(space);
+        });
+        ui.group(|ui| {
+            ui.add_space(space);
+            mix_slider(ui, "Master", &mut settings.master_volume);
+            ui.add_space(space);
+        });
+    });
+}
+
+fn mix_slider(ui: &mut egui::Ui, name: &str, value: &mut f32) {
+    ui.vertical(|ui| {
+        let icon = match &value {
+            value if **value <= 0.0 => "🔇",
+            value if **value <= 0.33 => "🔈",
+            value if **value <= 0.66 => "🔉",
+            _ => "🔊",
+        };
+        ui.add(
+            Slider::new(value, 0.0..=1.0)
+                .vertical()
+                .min_decimals(2)
+                .max_decimals(2)
+                .step_by(0.01)
+                .show_value(false)
+                .text(format!("{} {}", icon, name)),
+        );
+    });
 }
 
 fn play_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings: &mut Settings) {

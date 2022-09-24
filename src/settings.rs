@@ -8,7 +8,7 @@ use staff::{
 };
 
 /// Application settings
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct Settings {
     /// Root note of the keyboard
     pub root_note: MidiNote,
@@ -21,6 +21,12 @@ pub struct Settings {
 
     /// Current drone
     pub drone: Option<MidiNote>,
+
+    /// Mix
+    pub master_volume: f32,
+    pub lead_volume: f32,
+    pub guitar_volume: f32,
+    pub drone_volume: f32,
 }
 
 impl Settings {
@@ -74,6 +80,10 @@ impl Default for Settings {
             octave_range: 3,
             scale: ScaleIntervals::all(),
             drone: None,
+            master_volume: 1.0,
+            lead_volume: 1.0,
+            guitar_volume: 1.0,
+            drone_volume: 1.0,
         }
     }
 }

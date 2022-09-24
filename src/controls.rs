@@ -2,6 +2,8 @@ use std::ops::RangeInclusive;
 
 use faust_state::{Node, RangedInput, StateHandle, WidgetType};
 
+use crate::settings::Settings;
+
 /// Ability to exchange with the DSP state
 pub trait ControlTrait {
     /// Set the current state to the DSP
@@ -40,6 +42,12 @@ pub struct Controls {
     /// Global pitch bend (guitar+lead)
     pub pitch_bend: Control,
 
+    /// Mix
+    pub mix_master_volume: Control,
+    pub mix_drone_volume: Control,
+    pub mix_lead_volume: Control,
+    pub mix_pluck_volume: Control,
+
     /// Raw note for the UI
     pub raw_note: f32,
 
@@ -50,6 +58,15 @@ pub struct Controls {
     pub warning: Option<String>,
     /// Error message
     pub error: Option<String>,
+}
+
+impl Controls {
+    pub fn update_mix(&mut self, settings: &Settings) {
+        self.mix_master_volume.value = settings.master_volume;
+        self.mix_lead_volume.value = settings.lead_volume;
+        self.mix_pluck_volume.value = settings.guitar_volume;
+        self.mix_drone_volume.value = settings.drone_volume;
+    }
 }
 
 impl ControlTrait for Controls {
@@ -70,6 +87,10 @@ impl ControlTrait for Controls {
         self.drone_volume.send(state);
         self.drone_note.send(state);
         self.pitch_bend.send(state);
+        self.mix_master_volume.send(state);
+        self.mix_lead_volume.send(state);
+        self.mix_pluck_volume.send(state);
+        self.mix_drone_volume.send(state);
         state.send();
     }
 }
@@ -101,6 +122,10 @@ impl From<&StateHandle> for Controls {
             drone_volume: state.node_by_path("drone/volume").unwrap().into(),
             drone_note: state.node_by_path("drone/note").unwrap().into(),
             pitch_bend: state.node_by_path("pitchBend").unwrap().into(),
+            mix_master_volume: state.node_by_path("mix/master").unwrap().into(),
+            mix_drone_volume: state.node_by_path("mix/drone").unwrap().into(),
+            mix_lead_volume: state.node_by_path("mix/lead").unwrap().into(),
+            mix_pluck_volume: state.node_by_path("mix/pluck").unwrap().into(),
             raw_note: 0.0,
             autotune: 0,
             warning: None,
