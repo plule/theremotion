@@ -13,6 +13,9 @@ pub struct Settings {
     /// Octave of the root note
     pub octave: i8,
 
+    /// Octave of the guitar sound
+    pub guitar_octave: i8,
+
     /// Pitch of the root note
     pub pitch: Pitch,
 
@@ -84,6 +87,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             octave: 3,
+            guitar_octave: 3,
             pitch: Pitch::C,
             octave_range: 3,
             scale: ScaleIntervals::all(),

@@ -107,7 +107,8 @@ pub fn start_leap_worker(
                                 }
                             }
 
-                            controls.pluck_note.value = note;
+                            let pluck_octave_offset = settings.guitar_octave - settings.octave;
+                            controls.pluck_note.value = note + 12.0 * pluck_octave_offset as f32;
                             controls.supersaw.set_scaled(position.z(), 100.0..=-100.0);
                             controls
                                 .pitch_bend
