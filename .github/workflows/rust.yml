@@ -44,6 +44,7 @@ jobs:
       run: |
         mkdir -p theremotion-${{ matrix.sdk-ver }}
         cp target/release/theremotion.exe theremotion-${{ matrix.sdk-ver }}
+        cp target/release/theremotion.exe theremotion-${{ matrix.sdk-ver }}.exe
         cp leap-sdk-redist/LeapSDK/lib/x64/LeapC.dll theremotion-${{ matrix.sdk-ver }}
     - name: Archive Release
       uses: thedoctor0/zip-release@main
@@ -54,7 +55,9 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.sdk-ver }}
-        path: theremotion-${{ matrix.sdk-ver }}.zip
+        path: |
+          theremotion-${{ matrix.sdk-ver }}.zip
+          theremotion-${{ matrix.sdk-ver }}.exe
   release:
     needs:
       - build
@@ -74,5 +77,7 @@ jobs:
       with:
         files: |
           orion/theremotion-orion.zip
+          orion/theremotion-orion.exe
           gemini/theremotion-gemini.zip
+          gemini/theremotion-gemini.exe
           
