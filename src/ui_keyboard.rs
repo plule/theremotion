@@ -1,5 +1,8 @@
 use egui::{Color32, Response, Widget};
-use staff::{midi::MidiNote, Interval, Pitch};
+use staff::{
+    midi::{MidiNote, Octave},
+    Interval, Pitch,
+};
 
 use crate::{controls::NoteControl, settings::Settings};
 
@@ -89,11 +92,10 @@ impl<'a> Keyboard<'a> {
                     }
                 }
                 KeyboardEditMode::RootNote => {
-                    self.settings.root_note =
-                        MidiNote::new(note.pitch(), self.settings.root_note.octave());
+                    self.settings.pitch = note.pitch();
                 }
                 KeyboardEditMode::Scale => {
-                    let interval = note - self.settings.root_note;
+                    let interval = note - self.settings.root_note();
                     let interval = Interval::new(interval.semitones() % 12);
                     if self.settings.scale.contains(interval) {
                         self.settings.scale.remove(interval);
@@ -108,7 +110,7 @@ impl<'a> Keyboard<'a> {
 
 impl<'a> Widget for Keyboard<'a> {
     fn ui(mut self, ui: &mut egui::Ui) -> egui::Response {
-        let start_octave = self.settings.root_note.octave();
+        let start_octave = Octave::new_unchecked(self.settings.octave.clamp(-1, 8));
         let displayed_octave_count = self.settings.octave_range + 1;
 
         let start_note = MidiNote::new(Pitch::C, start_octave).into_byte();

@@ -6,11 +6,7 @@ use egui::{
     },
     FontFamily, FontId, Key, RichText, Slider, TextStyle,
 };
-use staff::{
-    midi::{MidiNote, Octave},
-    scale::ScaleIntervals,
-    Pitch,
-};
+use staff::{midi::MidiNote, scale::ScaleIntervals, Pitch};
 
 use crate::{
     controls::{self},
@@ -342,16 +338,11 @@ fn root_edit_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings:
     });
     ui.horizontal_wrapped(|ui| {
         for octave in 0..=4 {
-            let octave = Octave::new_unchecked(octave);
-            if ui
-                .selectable_label(
-                    settings.root_note.octave() == octave,
-                    RichText::new(format!("  {}  ", octave)).size(40.0),
-                )
-                .clicked()
-            {
-                settings.root_note = MidiNote::new(settings.root_note.pitch(), octave);
-            };
+            ui.selectable_value(
+                &mut settings.octave,
+                octave,
+                RichText::new(format!("  {}  ", octave)).size(40.0),
+            );
         }
     });
     ui.separator();
@@ -361,15 +352,11 @@ fn root_edit_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings:
     ui.horizontal_wrapped(|ui| {
         for pitch in 0..=11 {
             let pitch = Pitch::from_byte(pitch);
-            if ui
-                .selectable_label(
-                    settings.root_note.pitch() == pitch,
-                    RichText::new(format!("  {}  ", pitch)).size(40.0),
-                )
-                .clicked()
-            {
-                settings.root_note = MidiNote::new(pitch, settings.root_note.octave());
-            };
+            ui.selectable_value(
+                &mut settings.pitch,
+                pitch,
+                RichText::new(format!("  {}  ", pitch)).size(40.0),
+            );
         }
     });
 }
@@ -392,11 +379,7 @@ fn autotune_plot(
     });
     let line = Line::new(PlotPoints::Owned(smooths.collect()));
     // hack: force the include_x/include_y to recenter on root note change
-    let plot_id = format!(
-        "{}{}",
-        settings.root_note.pitch(),
-        settings.root_note.octave()
-    );
+    let plot_id = format!("{}{}", settings.pitch, settings.octave);
     egui::plot::Plot::new(plot_id)
         .allow_boxed_zoom(false)
         .allow_drag(false)

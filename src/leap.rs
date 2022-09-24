@@ -31,7 +31,7 @@ pub fn start_leap_worker(
                 Ok(message) => {
                     if let Event::Tracking(e) = message.event() {
                         let full_scale =
-                            crate::music_theory::build_scale(settings.root_note, settings.scale);
+                            crate::music_theory::build_scale(settings.root_note(), settings.scale);
 
                         if let Some(drone) = settings.drone {
                             controls.drone_note.value = drone.into_byte() as f32;
