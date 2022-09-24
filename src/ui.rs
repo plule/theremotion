@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use crossbeam_channel::{Receiver, Sender};
 
 use egui::{
