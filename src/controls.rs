@@ -103,8 +103,8 @@ impl From<&StateHandle> for Controls {
             cutoff_note: state.node_by_path("lead/cutoffNote").unwrap().into(),
             resonance: state.node_by_path("lead/res").unwrap().into(),
             pluck_lead: (
-                state.node_by_path("pluck/note").unwrap().into(),
-                state.node_by_path("pluck/gate").unwrap().into(),
+                state.node_by_path("pluck/note").unwrap(),
+                state.node_by_path("pluck/gate").unwrap(),
             )
                 .into(),
             strum: [0, 1, 2, 3].map(|i| {
