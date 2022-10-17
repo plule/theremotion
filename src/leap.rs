@@ -49,6 +49,9 @@ pub fn start_leap_worker(
                         let left_hand = hands.iter().find(|h| h.hand_type() == HandType::Left);
                         let right_hand = hands.iter().find(|h| h.hand_type() == HandType::Right);
 
+                        let mut lead_pluck_enabled = true;
+                        let mut lead_strum_enabled = [false, false, false, false];
+
                         if let Some(hand) = left_hand {
                             let position = hand.palm().position();
                             let velocity = hand.palm().velocity();
@@ -71,6 +74,8 @@ pub fn start_leap_worker(
                                     controls.lead[1].volume.value = if thumb { 1.0 } else { 0.0 };
                                     controls.lead[2].volume.value = if index { 1.0 } else { 0.0 };
                                     controls.lead[3].volume.value = if middle { 1.0 } else { 0.0 };
+                                    lead_pluck_enabled = false;
+                                    lead_strum_enabled = [true, thumb, index, middle];
                                 }
                                 _ => {
                                     // Monophonic position
@@ -84,6 +89,8 @@ pub fn start_leap_worker(
                                     for chord in controls.lead.iter_mut().skip(1) {
                                         chord.volume.value = 0.0;
                                     }
+                                    lead_pluck_enabled = true;
+                                    lead_strum_enabled = [false, false, false, false];
                                 }
                             }
 
@@ -101,14 +108,17 @@ pub fn start_leap_worker(
                                 crate::music_theory::auto_chord(note, &full_scale, 3), // middle
                             ];
 
+                            let pluck_offset =
+                                12.0 * (settings.guitar_octave - settings.octave) as f32;
+
                             for (i, note) in chord.iter().enumerate() {
                                 if let Some(note) = note {
                                     controls.lead[i].note.value = *note;
+                                    controls.strum[i].note.value = *note + pluck_offset;
                                 }
                             }
 
-                            let pluck_octave_offset = settings.guitar_octave - settings.octave;
-                            controls.pluck_note.value = note + 12.0 * pluck_octave_offset as f32;
+                            controls.pluck_lead.note.value = note + pluck_offset;
                             controls
                                 .pitch_bend
                                 .set_scaled(velocity.x() + velocity.z(), -300.0..=300.0);
@@ -120,7 +130,13 @@ pub fn start_leap_worker(
                             let palm_normal = Vector3::from(hand.palm().normal().array());
                             let palm_dot = palm_normal.dot(&Vector3::y());
                             if hand.pinch_strength() > 0.9 {
-                                controls.pluck.value = palm_dot > 0.0;
+                                controls.pluck_lead.pluck.value =
+                                    palm_dot > 0.0 && lead_pluck_enabled;
+
+                                for (i, string) in &mut controls.strum.iter_mut().enumerate() {
+                                    string.pluck.value =
+                                        palm_dot > 0.0 + (i as f32) * 0.2 && lead_strum_enabled[i];
+                                }
                             }
                             controls.pluck_mute.set_scaled(palm_dot, -1.0..=0.0);
                             controls.cutoff_note.set_scaled(position.x(), 50.0..=200.0);

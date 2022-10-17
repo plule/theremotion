@@ -21,10 +21,10 @@ pub struct Controls {
     pub cutoff_note: Control,
     /// Filter resonance
     pub resonance: Control,
-    /// Guitar pluck
-    pub pluck: BoolControl,
-    /// Guitare note
-    pub pluck_note: Control,
+    /// Guitar pluck lead note
+    pub pluck_lead: PluckControl,
+    /// Guitar strum
+    pub strum: [PluckControl; 4],
     /// Guitar pluck damping
     pub pluck_mute: Control,
     /// Drone volume
@@ -69,8 +69,10 @@ impl ControlTrait for Controls {
         self.lead_volume.send(state);
         self.cutoff_note.send(state);
         self.resonance.send(state);
-        self.pluck.send(state);
-        self.pluck_note.send(state);
+        self.pluck_lead.send(state);
+        for string in &mut self.strum {
+            string.send(state);
+        }
         self.pluck_mute.send(state);
         self.drone_volume.send(state);
         self.drone_note.send(state);
@@ -100,8 +102,22 @@ impl From<&StateHandle> for Controls {
             lead_volume: state.node_by_path("lead/volume").unwrap().into(),
             cutoff_note: state.node_by_path("lead/cutoffNote").unwrap().into(),
             resonance: state.node_by_path("lead/res").unwrap().into(),
-            pluck: state.node_by_path("pluck/gate").unwrap().into(),
-            pluck_note: state.node_by_path("pluck/note").unwrap().into(),
+            pluck_lead: (
+                state.node_by_path("pluck/note").unwrap().into(),
+                state.node_by_path("pluck/gate").unwrap().into(),
+            )
+                .into(),
+            strum: [0, 1, 2, 3].map(|i| {
+                (
+                    state
+                        .node_by_path(format!("pluck/{}/note", i).as_str())
+                        .unwrap(),
+                    state
+                        .node_by_path(format!("pluck/{}/gate", i).as_str())
+                        .unwrap(),
+                )
+                    .into()
+            }),
             pluck_mute: state.node_by_path("pluck/mute").unwrap().into(),
             drone_volume: state.node_by_path("drone/volume").unwrap().into(),
             drone_note: state.node_by_path("drone/note").unwrap().into(),
@@ -203,6 +219,30 @@ impl From<(&Node, &Node)> for NoteControl {
         Self {
             note: note.into(),
             volume: volume.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PluckControl {
+    /// Control for the pitch of the note
+    pub note: Control,
+
+    /// Control for the pluck impulse
+    pub pluck: BoolControl,
+}
+
+impl ControlTrait for PluckControl {
+    fn send(&mut self, state: &mut StateHandle) {
+        self.note.send(state);
+        self.pluck.send(state);
+    }
+}
+impl From<(&Node, &Node)> for PluckControl {
+    fn from((note, pluck): (&Node, &Node)) -> Self {
+        Self {
+            note: note.into(),
+            pluck: pluck.into(),
         }
     }
 }

@@ -29,16 +29,31 @@ elecGuitar(stringLength,pluckPosition,mute,gain,trigger) =
     (pm.elecGuitarModel(stringLength,pluckPosition,mute) : co.compressor_mono(20,-10,0,0.1)) ~
     (_  : ef.gate_mono(-20, 0.0001, 0.1, 0.02)) * 0.005 + pm.pluckString(stringLength,1,1,1,gain,trigger);
 
-guitar = elecGuitar(length,0.5,mute,0.5,gate)
+guitarString(gate, note, mute, pitchBend) = elecGuitar(length,0.5,mute,0.5,gate)
         : fi.lowpass(1, f * 2)
+with {
+    f = note + pitchBend : ba.midikey2hz;
+    length = f : pm.f2l;
+};
+
+guitarLead(mute, pitchBend) = guitarString(gate, note, mute, pitchBend)
 with {
     gate = button("[0]gate");
     note = hslider("[1]note", 80, 0, 127, 0.001) : si.smoo;
+};
+
+guitarStrumNote(mute, pitchBend) = guitarString(gate, note, mute, pitchBend)
+with {
+    gate = button("[0]gate");
+    note = hslider("[1]note", 80, 0, 127, 0.001) : ba.sAndH(1-gate) : si.smoo;
+};
+
+guitarStrum(mute, pitchBend) = (mute, pitchBend) <: par(i, 4, vgroup("[3]%i", guitarStrumNote)) :> _;
+
+guitar = guitarLead(mute, pitchBend) + guitarStrum(mute, pitchBend)
+with {
     mute = hslider("[2]mute", 1, 0.90, 1, 0.001);
     pitchBend = hslider("[3]pitchBend", 0, -1, 1, 0.001) : si.smoo;
-
-    f = note + pitchBend : ba.midikey2hz;
-    length = f : pm.f2l;
 };
 
 // Drone
