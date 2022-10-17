@@ -14,6 +14,16 @@ env:
   LEAPSDK_LIB_PATH: leap-sdk-redist/LeapSDK/lib/x64
 
 jobs:
+  clippy:
+    name: clippy
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v1
+      - name: Style
+        run: cargo fmt -- --check
+      - name: Clippy
+        run: cargo clippy -- -D warnings
   build:
     strategy:
       matrix:
@@ -23,6 +33,7 @@ jobs:
           - sdk-ver: orion
             cargo-features: --no-default-features
     name: build
+    if: eq(${{ github.repository }}, "plule/theremotion") # no secrets in clones
     runs-on: windows-latest
 
     steps:
@@ -34,10 +45,6 @@ jobs:
         token: ${{ secrets.LEAP_SDK_REDIST_PAT }}
         path: leap-sdk-redist
     - uses: Swatinem/rust-cache@v1
-    - name: Style
-      run: cargo fmt -- --check
-    - name: Clippy
-      run: cargo clippy -- -D warnings
     - name: Build
       run: cargo build --release ${{ matrix.cargo-features }}
     - name: Prepare release
@@ -61,6 +68,7 @@ jobs:
   release:
     needs:
       - build
+      - clippy
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -80,4 +88,16 @@ jobs:
           orion/theremotion-orion.exe
           gemini/theremotion-gemini.zip
           gemini/theremotion-gemini.exe
-          
+
+  dependabot:
+    name: 'Dependabot automerge'
+    needs: [clippy]
+    permissions:
+      pull-requests: write
+      contents: write
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'}} # Detect that the PR author is dependabot
+    steps:
+      - uses: fastify/github-action-merge-dependabot@v3.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
