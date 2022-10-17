@@ -5,55 +5,22 @@ declare license     "BSD";
 
 import("stdfaust.lib");
 
-// Main voice controls
-leadVolume = hslider("[0]vol", 0.0, 0, 1, 0.001) : si.smoo;
-chordGroup(x) = vgroup("[3]chord", x);
-vol1 = chordGroup(hslider("[1]vol1", 1.0, 0, 1, 0.001)) : si.smoo;
-vol2 = chordGroup(hslider("[3]vol2", 0.0, 0, 1, 0.001)) : si.smoo;
-vol3 = chordGroup(hslider("[5]vol3", 0.0, 0, 1, 0.001)) : si.smoo;
-vol4 = chordGroup(hslider("[7]vol4", 0.0, 0, 1, 0.001)) : si.smoo;
-note1 = chordGroup(hslider("[2]note1", 60, 0, 127, 0.001)) : si.smoo;
-note2 = chordGroup(hslider("[4]note2", 60, 0, 127, 0.001)) : si.smoo;
-note3 = chordGroup(hslider("[6]note3", 60, 0, 127, 0.001)) : si.smoo;
-note4 = chordGroup(hslider("[8]note4", 60, 0, 127, 0.001)) : si.smoo;
-
-// Main voice filter
-filterGroup(x) = hgroup("[10]filter", x);
-
-
-// Global
-pitchBend = hslider("[3]pitchBend", 0, -1, 1, 0.001) : si.smoo;
-
 // Lead oscillator
-supersaw(note) = osc(note) + amount * (osc(note + detune) + osc(note - detune))
-with {
-    amount = hslider("[0]amount", 0, 0, 1.0, 0.001) : si.smoo;
-    detune = hslider("[1]detune", 0.001, 0.001, 0.02, 0.001) : si.smoo;
-    osc(note) = os.sawtooth(note : ba.midikey2hz);
+lead(res, cutoffNote) = os.sawtooth(f) * v : ve.moog_vcf_2b(res, cutoffFreq)
+with {    
+    v = hslider("[1]volume", 0.0, 0, 1, 0.001) : si.smoo;
+
+    note = hslider("[0]note", 60, 0, 127, 0.001);
+    f = note : ba.midikey2hz : si.smoo;
+    cutoffFreq = note + cutoffNote : ba.midikey2hz : si.smoo;
 };
 
-leadVoiceFilter(note) = ve.moog_vcf_2b(res, cutoffFreq)
+leadChord = (res, cutoffNote) <: par(i, 4, vgroup("[3]%i", lead)) :> _ * v
 with {
-    res = hslider("[1]res", 0, 0, 0.99, 0.001) : si.smoo;
-    cutoffNote = hslider("[0]cutoffNote", 0, -20, 50, 0.001) : si.smoo;
-    cutoffFreq = (note + cutoffNote) : ba.midikey2hz;
+    v = hslider("[0]volume", 0.0, 0, 1, 0.001) : si.smoo;
+    cutoffNote = hslider("[1]cutoffNote", 0, -20, 50, 0.001) : si.smoo;
+    res = hslider("[2]res", 0, 0, 0.99, 0.001) : si.smoo;
 };
-
-leadVoice(note, volume) = hgroup("[1]supersaw", supersaw(note))
-    : hgroup("[2]filter", leadVoiceFilter(note))
-    : _ * volume / 2
-with {
-    f = note : ba.midikey2hz;
-    saw_osc(detune) = os.sawtooth(f * (1 + detune));
-    supersaw_osc = saw_osc(detune) + saw_osc(-detune);
-};
-
-lead(pitchBend) = leadVolume * (
-    (note1 + pitchBend, vol1 : leadVoice) +
-    (note2 + pitchBend, vol2 : leadVoice) +
-    (note3 + pitchBend, vol3 : leadVoice) +
-    (note4 + pitchBend, vol4 : leadVoice)
-);
 
 feedback(signal)= signal * 0.005;
 
@@ -62,7 +29,7 @@ elecGuitar(stringLength,pluckPosition,mute,gain,trigger) =
     (pm.elecGuitarModel(stringLength,pluckPosition,mute) : co.compressor_mono(20,-10,0,0.1)) ~
     (_  : ef.gate_mono(-20, 0.0001, 0.1, 0.02)) * 0.005 + pm.pluckString(stringLength,1,1,1,gain,trigger);
 
-guitar(pitchBend) = elecGuitar(length,0.5,mute,strength,gate)
+guitar = elecGuitar(length,0.5,mute,strength,gate)
         : _ * gain
         : fi.lowpass(1, f * 2)
         : ve.crybaby(wah)
@@ -73,6 +40,7 @@ with {
     gain = hslider("[2]gain", 1, 0, 1, 0.001);
     mute = hslider("[3]mute", 1, 0.90, 1, 0.001);
     strength = hslider("[4]strength", 0.5, 0, 1, 0.001);
+    pitchBend = hslider("[5]pitchBend", 0, -1, 1, 0.001) : si.smoo;
 
     f = note + pitchBend : ba.midikey2hz;
     length = f : pm.f2l;
@@ -88,8 +56,8 @@ with {
 
 // Mix
 process = hgroup("[2]drone", drone) * drone_volume
-    + (pitchBend : vgroup("[0]lead", lead)) * lead_volume
-    + (pitchBend : hgroup("[1]pluck", guitar)) * pluck_volume
+    + vgroup("[0]lead", leadChord) * lead_volume
+    + hgroup("[1]pluck", guitar) * pluck_volume
     : ef.echo(1.0, 0.3, 0.3)
     : _ * master_volume
     <: _, _

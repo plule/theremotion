@@ -53,7 +53,6 @@ pub fn start_leap_worker(
                             let position = hand.palm().position();
                             let velocity = hand.palm().velocity();
 
-                            controls.detune.set_scaled(position.x(), -200.0..=-50.0);
                             let note_input_range = 100.0..=600.0;
 
                             controls.raw_note = controls::convert_range(
@@ -81,6 +80,7 @@ pub fn start_leap_worker(
                                         &(0.0..=5.0),
                                     )
                                         as usize;
+                                    controls.lead[0].volume.value = 1.0;
                                     for chord in controls.lead.iter_mut().skip(1) {
                                         chord.volume.value = 0.0;
                                     }
@@ -109,7 +109,6 @@ pub fn start_leap_worker(
 
                             let pluck_octave_offset = settings.guitar_octave - settings.octave;
                             controls.pluck_note.value = note + 12.0 * pluck_octave_offset as f32;
-                            controls.supersaw.set_scaled(position.z(), 100.0..=-100.0);
                             controls
                                 .pitch_bend
                                 .set_scaled(velocity.x() + velocity.z(), -300.0..=300.0);

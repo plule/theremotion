@@ -19,12 +19,8 @@ pub struct Controls {
     pub lead_volume: Control,
     /// Filter cutoff
     pub cutoff_note: Control,
-    /// Filter resonnance
+    /// Filter resonance
     pub resonance: Control,
-    /// Supersaw volume
-    pub supersaw: Control,
-    /// Supersaw detune
-    pub detune: Control,
     /// Guitar pluck
     pub pluck: BoolControl,
     /// Guitare note
@@ -77,8 +73,6 @@ impl ControlTrait for Controls {
         self.lead_volume.send(state);
         self.cutoff_note.send(state);
         self.resonance.send(state);
-        self.supersaw.send(state);
-        self.detune.send(state);
         self.pluck.send(state);
         self.pluck_note.send(state);
         self.pluck_gain.send(state);
@@ -98,22 +92,20 @@ impl ControlTrait for Controls {
 impl From<&StateHandle> for Controls {
     fn from(state: &StateHandle) -> Self {
         Self {
-            lead: [1, 2, 3, 4].map(|i| {
+            lead: [0, 1, 2, 3].map(|i| {
                 (
                     state
-                        .node_by_path(format!("lead/chord/note{}", i).as_str())
+                        .node_by_path(format!("lead/{}/note", i).as_str())
                         .unwrap(),
                     state
-                        .node_by_path(format!("lead/chord/vol{}", i).as_str())
+                        .node_by_path(format!("lead/{}/volume", i).as_str())
                         .unwrap(),
                 )
                     .into()
             }),
-            lead_volume: state.node_by_path("lead/vol").unwrap().into(),
-            cutoff_note: state.node_by_path("lead/filter/cutoffNote").unwrap().into(),
-            resonance: state.node_by_path("lead/filter/res").unwrap().into(),
-            supersaw: state.node_by_path("lead/supersaw/amount").unwrap().into(),
-            detune: state.node_by_path("lead/supersaw/detune").unwrap().into(),
+            lead_volume: state.node_by_path("lead/volume").unwrap().into(),
+            cutoff_note: state.node_by_path("lead/cutoffNote").unwrap().into(),
+            resonance: state.node_by_path("lead/res").unwrap().into(),
             pluck: state.node_by_path("pluck/gate").unwrap().into(),
             pluck_note: state.node_by_path("pluck/note").unwrap().into(),
             pluck_gain: state.node_by_path("pluck/gain").unwrap().into(),
@@ -121,7 +113,7 @@ impl From<&StateHandle> for Controls {
             pluck_mute: state.node_by_path("pluck/mute").unwrap().into(),
             drone_volume: state.node_by_path("drone/volume").unwrap().into(),
             drone_note: state.node_by_path("drone/note").unwrap().into(),
-            pitch_bend: state.node_by_path("pitchBend").unwrap().into(),
+            pitch_bend: state.node_by_path("pluck/pitchBend").unwrap().into(),
             mix_master_volume: state.node_by_path("mix/master").unwrap().into(),
             mix_drone_volume: state.node_by_path("mix/drone").unwrap().into(),
             mix_lead_volume: state.node_by_path("mix/lead").unwrap().into(),

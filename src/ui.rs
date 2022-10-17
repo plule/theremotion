@@ -230,29 +230,15 @@ fn play_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings: &mut
             controls.lead[0].note.value,
         );
 
-        ui.vertical(|ui| {
-            ui.horizontal(|ui| {
-                xy_plot(
-                    ui,
-                    150.0,
-                    "lh_hand",
-                    &controls.detune,
-                    &controls.supersaw,
-                    "Detune",
-                    "Supersaw",
-                );
-                ui.spacing();
-                xy_plot(
-                    ui,
-                    150.0,
-                    "rh_hand",
-                    &controls.cutoff_note,
-                    &controls.resonance,
-                    "Cutoff",
-                    "Resonance",
-                );
-            });
-        });
+        xy_plot(
+            ui,
+            150.0,
+            "rh_hand",
+            &controls.cutoff_note,
+            &controls.resonance,
+            "Cutoff",
+            "Resonance",
+        );
     });
 }
 
