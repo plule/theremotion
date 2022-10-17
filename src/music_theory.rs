@@ -23,6 +23,23 @@ fn neighbours(note: f32, scale: &Vec<MidiNote>) -> Option<usize> {
     })
 }
 
+/// Find the neighbour in the scale
+pub fn closest_in_scale(note: f32, scale: &Vec<MidiNote>) -> usize {
+    let mut distance = std::f32::INFINITY;
+    let mut index = 0;
+
+    for (scale_index, scale_note) in scale.iter().enumerate() {
+        let scale_note = scale_note.into_byte() as f32;
+        let scale_distance = (scale_note - note).abs();
+        if scale_distance < distance {
+            distance = scale_distance;
+            index = scale_index;
+        }
+    }
+
+    index
+}
+
 /// From a floating note, a scale and a degree, get the approximate floating note
 ///
 /// Ex, in C major, C degree 2 will E. Note in between the scale will give note in between
