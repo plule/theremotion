@@ -91,7 +91,9 @@ jobs:
 
   dependabot:
     name: 'Dependabot automerge'
-    needs: [clippy]
+    needs:
+      - clippy
+      - build
     permissions:
       pull-requests: write
       contents: write
