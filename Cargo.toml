@@ -22,7 +22,7 @@ nalgebra = "0.31.1"
 staff = { git = "https://github.com/matthunz/staff", branch="main", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
-clap = { version = "3.2.21", features = ["derive"] }
+clap = { version = "4.0.15", features = ["derive"] }
 
 [dev-dependencies]
 rstest = "0.15.0"
