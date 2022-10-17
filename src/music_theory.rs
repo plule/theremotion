@@ -24,7 +24,7 @@ fn neighbours(note: f32, scale: &Vec<MidiNote>) -> Option<usize> {
 }
 
 /// Find the neighbour in the scale
-pub fn closest_in_scale(note: f32, scale: &Vec<MidiNote>) -> usize {
+pub fn closest_in_scale(note: f32, scale: &[MidiNote]) -> usize {
     let mut distance = std::f32::INFINITY;
     let mut index = 0;
 

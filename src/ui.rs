@@ -7,8 +7,7 @@ use egui::{
         uniform_grid_spacer, GridMark, HLine, Legend, Line, MarkerShape, PlotPoint, PlotPoints,
         Points, VLine,
     },
-    text::LayoutJob,
-    FontFamily, FontId, Key, RichText, Slider, TextFormat, TextStyle,
+    FontFamily, FontId, Key, RichText, Slider, TextStyle,
 };
 use staff::{midi::MidiNote, scale::ScaleIntervals, Pitch};
 
