@@ -16,7 +16,7 @@ env:
 jobs:
   clippy:
     name: clippy
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
       - uses: Swatinem/rust-cache@v1
@@ -88,4 +88,16 @@ jobs:
           orion/theremotion-orion.exe
           gemini/theremotion-gemini.zip
           gemini/theremotion-gemini.exe
-          
+
+  dependabot:
+    name: 'Dependabot automerge'
+    needs: [clippy]
+    permissions:
+      pull-requests: write
+      contents: write
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'}} # Detect that the PR author is dependabot
+    steps:
+      - uses: fastify/github-action-merge-dependabot@v3.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
