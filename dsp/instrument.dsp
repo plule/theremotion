@@ -30,15 +30,13 @@ elecGuitar(stringLength,pluckPosition,mute,gain,trigger) =
     (_  : ef.gate_mono(-20, 0.0001, 0.1, 0.02)) * 0.005 + pm.pluckString(stringLength,1,1,1,gain,trigger);
 
 guitar = elecGuitar(length,0.5,mute,strength,gate)
-        : _ * gain
         : fi.lowpass(1, f * 2)
 with {
     gate = button("[0]gate");
     note = hslider("[1]note", 80, 0, 127, 0.001) : si.smoo;
-    gain = hslider("[2]gain", 1, 0, 1, 0.001);
-    mute = hslider("[3]mute", 1, 0.90, 1, 0.001);
-    strength = hslider("[4]strength", 0.5, 0, 1, 0.001);
-    pitchBend = hslider("[5]pitchBend", 0, -1, 1, 0.001) : si.smoo;
+    mute = hslider("[2]mute", 1, 0.90, 1, 0.001);
+    strength = hslider("[3]strength", 0.5, 0, 1, 0.001);
+    pitchBend = hslider("[4]pitchBend", 0, -1, 1, 0.001) : si.smoo;
 
     f = note + pitchBend : ba.midikey2hz;
     length = f : pm.f2l;
