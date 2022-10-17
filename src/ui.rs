@@ -1,4 +1,4 @@
-use std::ops::RangeInclusive;
+use std::{fmt::Display, ops::RangeInclusive};
 
 use crossbeam_channel::{Receiver, Sender};
 
@@ -7,7 +7,8 @@ use egui::{
         uniform_grid_spacer, GridMark, HLine, Legend, Line, MarkerShape, PlotPoint, PlotPoints,
         Points, VLine,
     },
-    FontFamily, FontId, Key, RichText, Slider, TextStyle,
+    text::LayoutJob,
+    FontFamily, FontId, Key, RichText, Slider, TextFormat, TextStyle,
 };
 use staff::{midi::MidiNote, scale::ScaleIntervals, Pitch};
 
@@ -34,6 +35,18 @@ pub enum MainTab {
     ScaleEdit,
     Mix,
     Instructions,
+}
+
+impl Display for MainTab {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MainTab::Play => f.write_str("Play"),
+            MainTab::RootEdit => f.write_str("Root Edit"),
+            MainTab::ScaleEdit => f.write_str("Scale Edit"),
+            MainTab::Mix => f.write_str("Mix"),
+            MainTab::Instructions => f.write_str("Instructions"),
+        }
+    }
 }
 
 impl Theremotion {
@@ -138,21 +151,30 @@ impl eframe::App for Theremotion {
 
                 egui::warn_if_debug_build(ui);
             });
-        egui::CentralPanel::default().show(ctx, |ui| match main_tab {
-            MainTab::Play => {
-                play_tab(ui, controls, settings);
-            }
-            MainTab::RootEdit => {
-                root_edit_tab(ui, controls, settings);
-            }
-            MainTab::ScaleEdit => {
-                scale_edit_tab(ui, controls, settings);
-            }
-            MainTab::Mix => {
-                mix_tab(ui, settings);
-            }
-            MainTab::Instructions => {
-                instructions_tab(ui, controls, settings);
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.vertical_centered_justified(|ui| {
+                let (lh, rh) = controls.has_hands;
+                let lh = if lh { "👈" } else { "⬜" };
+                let rh = if rh { "👉" } else { "⬜" };
+                ui.heading(format!("{lh} {main_tab} {rh}"));
+            });
+            ui.separator();
+            match main_tab {
+                MainTab::Play => {
+                    play_tab(ui, controls, settings);
+                }
+                MainTab::RootEdit => {
+                    root_edit_tab(ui, controls, settings);
+                }
+                MainTab::ScaleEdit => {
+                    scale_edit_tab(ui, controls, settings);
+                }
+                MainTab::Mix => {
+                    mix_tab(ui, settings);
+                }
+                MainTab::Instructions => {
+                    instructions_tab(ui, controls, settings);
+                }
             }
         });
 
@@ -166,10 +188,6 @@ impl eframe::App for Theremotion {
 }
 
 fn mix_tab(ui: &mut egui::Ui, settings: &mut Settings) {
-    ui.vertical_centered_justified(|ui| {
-        ui.heading("Mix");
-    });
-    ui.separator();
     ui.horizontal(|ui| {
         ui.style_mut().spacing.slider_width = 300.0;
         ui.style_mut().spacing.button_padding = egui::vec2(32.0, 32.0);
@@ -213,10 +231,6 @@ fn mix_slider(ui: &mut egui::Ui, name: &str, value: &mut f32) {
 }
 
 fn play_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings: &mut Settings) {
-    ui.vertical_centered_justified(|ui| {
-        ui.heading("Play");
-    });
-    ui.separator();
     ui.add(crate::ui_keyboard::Keyboard::new(
         controls.lead.iter().collect(),
         settings,
@@ -260,10 +274,6 @@ fn play_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings: &mut
 }
 
 fn instructions_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings: &mut Settings) {
-    ui.vertical_centered_justified(|ui| {
-        ui.heading("Instructions");
-    });
-    ui.separator();
     ui.add(crate::ui_keyboard::Keyboard::new(
         controls.lead.iter().collect(),
         settings,
@@ -280,10 +290,6 @@ fn instructions_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settin
 }
 
 fn scale_edit_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings: &mut Settings) {
-    ui.vertical_centered_justified(|ui| {
-        ui.heading("Scale");
-    });
-    ui.separator();
     ui.add(crate::ui_keyboard::Keyboard::new(
         controls.lead.iter().collect(),
         settings,
@@ -326,10 +332,6 @@ fn scale_edit_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings
 }
 
 fn root_edit_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings: &mut Settings) {
-    ui.vertical_centered_justified(|ui| {
-        ui.heading("Root Note");
-    });
-    ui.separator();
     ui.add(crate::ui_keyboard::Keyboard::new(
         controls.lead.iter().collect(),
         settings,
@@ -355,7 +357,6 @@ fn root_edit_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings:
 }
 
 fn octave_selector(ui: &mut egui::Ui, name: &str, octave_value: &mut i8) {
-    //ui.vertical_centered_justified(|ui| {});
     ui.horizontal_wrapped(|ui| {
         ui.label(RichText::new(name).size(40.0));
         for octave in 0..=4 {
@@ -485,7 +486,6 @@ fn tuner(
                 })
                 .collect()
         })
-        //.legend(Legend::default())
         .show_axes([false, true])
         .y_axis_formatter(note_formatter)
         .width(width)

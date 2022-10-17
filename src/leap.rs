@@ -42,12 +42,9 @@ pub fn start_leap_worker(
 
                         let hands = e.hands();
 
-                        if hands.is_empty() {
-                            controls.warning = Some("No hand in view".to_string());
-                        }
-
                         let left_hand = hands.iter().find(|h| h.hand_type() == HandType::Left);
                         let right_hand = hands.iter().find(|h| h.hand_type() == HandType::Right);
+                        controls.has_hands = (left_hand.is_some(), right_hand.is_some());
 
                         let mut lead_pluck_enabled = true;
                         let mut lead_strum_enabled = [false, false, false, false];

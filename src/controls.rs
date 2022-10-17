@@ -50,6 +50,8 @@ pub struct Controls {
     pub warning: Option<String>,
     /// Error message
     pub error: Option<String>,
+
+    pub has_hands: (bool, bool),
 }
 
 impl Controls {
@@ -130,6 +132,7 @@ impl From<&StateHandle> for Controls {
             autotune: 0,
             warning: None,
             error: None,
+            has_hands: (false, false),
         }
     }
 }
