@@ -29,8 +29,6 @@ pub struct Controls {
     pub pluck_gain: Control,
     /// Guitar pluck damping
     pub pluck_mute: Control,
-    /// Wah wah effect
-    pub pluck_wah: Control,
     /// Drone volume
     pub drone_volume: Control,
     /// Drone note
@@ -76,7 +74,6 @@ impl ControlTrait for Controls {
         self.pluck.send(state);
         self.pluck_note.send(state);
         self.pluck_gain.send(state);
-        self.pluck_wah.send(state);
         self.pluck_mute.send(state);
         self.drone_volume.send(state);
         self.drone_note.send(state);
@@ -109,7 +106,6 @@ impl From<&StateHandle> for Controls {
             pluck: state.node_by_path("pluck/gate").unwrap().into(),
             pluck_note: state.node_by_path("pluck/note").unwrap().into(),
             pluck_gain: state.node_by_path("pluck/gain").unwrap().into(),
-            pluck_wah: state.node_by_path("pluck/wah").unwrap().into(),
             pluck_mute: state.node_by_path("pluck/mute").unwrap().into(),
             drone_volume: state.node_by_path("drone/volume").unwrap().into(),
             drone_note: state.node_by_path("drone/note").unwrap().into(),

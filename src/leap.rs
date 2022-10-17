@@ -123,7 +123,6 @@ pub fn start_leap_worker(
                                 controls.pluck.value = palm_dot > 0.0;
                             }
                             controls.pluck_mute.set_scaled(palm_dot, -1.0..=0.0);
-                            controls.pluck_wah.set_scaled(palm_dot, 0.0..=1.0);
                             controls.cutoff_note.set_scaled(position.x(), 50.0..=200.0);
                             controls.lead_volume.set_scaled(position.y(), 300.0..=400.0);
                             controls.resonance.set_scaled(position.z(), 100.0..=-100.0);

@@ -32,11 +32,9 @@ elecGuitar(stringLength,pluckPosition,mute,gain,trigger) =
 guitar = elecGuitar(length,0.5,mute,strength,gate)
         : _ * gain
         : fi.lowpass(1, f * 2)
-        : ve.crybaby(wah)
 with {
     gate = button("[0]gate");
     note = hslider("[1]note", 80, 0, 127, 0.001) : si.smoo;
-    wah = hslider("[1]wah", 0.5, 0.25, 0.75, 0.001) : si.smoo;
     gain = hslider("[2]gain", 1, 0, 1, 0.001);
     mute = hslider("[3]mute", 1, 0.90, 1, 0.001);
     strength = hslider("[4]strength", 0.5, 0, 1, 0.001);
