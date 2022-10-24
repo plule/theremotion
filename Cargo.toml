@@ -13,7 +13,7 @@ gemini = ["leaprs/gemini"]
 egui = "0.19.0"
 eframe = { version = "0.19.0" }
 tracing-subscriber = "0.3"
-cpal = "0.14.0"
+cpal = "0.14.1"
 faust-types = { git = "https://github.com/Frando/rust-faust", branch="main" }
 faust-state = { git = "https://github.com/Frando/rust-faust", branch="main" }
 leaprs = { version = "0.1.0", default-features = false }
