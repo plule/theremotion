@@ -61,35 +61,21 @@ pub fn start_leap_worker(
                                 &settings.note_range_f(),
                             );
 
-                            // Depending on finger position,
-                            // either assign autotuned chord
-                            // or single voice
-                            match hand.get_finger_positions() {
-                                (thumb, index, middle, false, false) => {
-                                    // Chord position
-                                    controls.autotune = 4;
-                                    controls.lead[1].volume.value = if thumb { 1.0 } else { 0.0 };
-                                    controls.lead[2].volume.value = if index { 1.0 } else { 0.0 };
-                                    controls.lead[3].volume.value = if middle { 1.0 } else { 0.0 };
-                                    lead_pluck_enabled = false;
-                                    lead_strum_enabled = [true, thumb, index, middle];
-                                }
-                                _ => {
-                                    // Monophonic position
-                                    controls.autotune = controls::convert_range(
-                                        hand.pinch_strength(),
-                                        0.0..=1.0,
-                                        &(0.0..=5.0),
-                                    )
-                                        as usize;
-                                    controls.lead[0].volume.value = 1.0;
-                                    for chord in controls.lead.iter_mut().skip(1) {
-                                        chord.volume.value = 0.0;
-                                    }
-                                    lead_pluck_enabled = true;
-                                    lead_strum_enabled = [false, false, false, false];
-                                }
-                            }
+                            // Determine the played chord
+                            let z = position.z();
+                            let chord = [true, z < 0.0, z < -50.0, z < -100.0];
+                            let monophonic = chord.iter().filter(|c| **c).count() == 1;
+                            controls.lead.iter_mut().enumerate().for_each(|(i, note)| {
+                                note.volume.value = if chord[i] { 1.0 } else { 0.0 };
+                            });
+                            lead_pluck_enabled = monophonic;
+                            lead_strum_enabled = chord.map(|c| c && !monophonic);
+
+                            controls.autotune = controls::convert_range(
+                                hand.pinch_strength(),
+                                0.0..=1.0,
+                                &(0.0..=5.0),
+                            ) as usize;
 
                             // In any case, assign all the notes
                             let note = crate::music_theory::autotune(
@@ -100,9 +86,9 @@ pub fn start_leap_worker(
 
                             let chord = [
                                 Some(note),
-                                crate::music_theory::auto_chord(note, &full_scale, 2), // thumb
-                                crate::music_theory::auto_chord(note, &full_scale, 6), // index
-                                crate::music_theory::auto_chord(note, &full_scale, 3), // middle
+                                crate::music_theory::auto_chord(note, &full_scale, 2),
+                                crate::music_theory::auto_chord(note, &full_scale, 4),
+                                crate::music_theory::auto_chord(note, &full_scale, 7),
                             ];
 
                             let pluck_offset =
