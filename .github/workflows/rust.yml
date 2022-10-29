@@ -29,9 +29,9 @@ jobs:
       matrix:
         include:
           - sdk-ver: gemini
-            cargo-features: --no-default-features --features gemini
+            cargo-features: --no-default-features --features default-boxed --features gemini
           - sdk-ver: orion
-            cargo-features: --no-default-features
+            cargo-features: --no-default-features --features default-boxed
     name: build
     if: eq(${{ github.repository }}, "plule/theremotion") # no secrets in clones
     runs-on: windows-latest
