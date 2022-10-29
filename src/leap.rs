@@ -26,7 +26,7 @@ pub fn start_leap_worker(
             if let Some(new_settings) = settings_rx.try_iter().last() {
                 settings = new_settings;
             }
-            controls.update_mix(&settings);
+            controls.update_from_settings(&settings);
             match connection.poll(100) {
                 Ok(message) => {
                     if let Event::Tracking(e) = message.event() {

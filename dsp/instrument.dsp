@@ -64,11 +64,20 @@ with {
     osc(note) = os.triangle(ba.midikey2hz(note)) / 5;
 };
 
+echo(s) = s <: ef.echo(10.0, duration, feedback) * mix, s * (1-mix) :> _
+with {
+    mix = hslider("[0]mix", 1.0, 0, 1, 0.001) : si.smoo;
+    duration = hslider("[0]duration[scale:log]", 0.3, 0.01, 10.0, 0.001) : si.smoo;
+    feedback = hslider("[1]feedback", 0.3, 0, 1, 0.001);
+};
+
+fx = vgroup("[0]echo", echo);
+
 // Mix
 process = hgroup("[2]drone", drone) * drone_volume
     + vgroup("[0]lead", leadChord) * lead_volume
     + hgroup("[1]pluck", guitar) * pluck_volume
-    : ef.echo(10.0, 1.0, 0.7)
+    : hgroup("[2]fx", fx)
     : _ * master_volume
     <: _, _
 with {
@@ -78,4 +87,3 @@ with {
     lead_volume = mixGroup(hslider("[2]lead", 1, 0, 1, 0.001)) : si.smoo;
     pluck_volume = mixGroup(hslider("[3]pluck", 1, 0, 1, 0.001)) : si.smoo;
 };
-

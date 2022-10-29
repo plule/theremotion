@@ -28,6 +28,11 @@ pub struct Settings {
     /// Current drone
     pub drone: Option<MidiNote>,
 
+    /// fx
+    pub echo_mix: f32,
+    pub echo_duration: f32,
+    pub echo_feedback: f32,
+
     /// Mix
     pub master_volume: f32,
     pub lead_volume: f32,
@@ -92,6 +97,9 @@ impl Default for Settings {
             octave_range: 3,
             scale: ScaleIntervals::all(),
             drone: None,
+            echo_mix: 1.0,
+            echo_duration: 0.3,
+            echo_feedback: 0.3,
             master_volume: 1.0,
             lead_volume: 1.0,
             guitar_volume: 1.0,

@@ -34,6 +34,11 @@ pub struct Controls {
     /// Global pitch bend (guitar+lead)
     pub pitch_bend: Control,
 
+    /// Fx
+    pub echo_mix: Control,
+    pub echo_duration: Control,
+    pub echo_feedback: Control,
+
     /// Mix
     pub mix_master_volume: Control,
     pub mix_drone_volume: Control,
@@ -55,11 +60,14 @@ pub struct Controls {
 }
 
 impl Controls {
-    pub fn update_mix(&mut self, settings: &Settings) {
+    pub fn update_from_settings(&mut self, settings: &Settings) {
         self.mix_master_volume.value = settings.master_volume;
         self.mix_lead_volume.value = settings.lead_volume;
         self.mix_pluck_volume.value = settings.guitar_volume;
         self.mix_drone_volume.value = settings.drone_volume;
+        self.echo_duration.value = settings.echo_duration;
+        self.echo_feedback.value = settings.echo_feedback;
+        self.echo_mix.value = settings.echo_mix;
     }
 }
 
@@ -83,6 +91,9 @@ impl ControlTrait for Controls {
         self.mix_lead_volume.send(state);
         self.mix_pluck_volume.send(state);
         self.mix_drone_volume.send(state);
+        self.echo_mix.send(state);
+        self.echo_feedback.send(state);
+        self.echo_duration.send(state);
         state.send();
     }
 }
@@ -124,6 +135,9 @@ impl From<&StateHandle> for Controls {
             drone_volume: state.node_by_path("drone/volume").unwrap().into(),
             drone_note: state.node_by_path("drone/note").unwrap().into(),
             pitch_bend: state.node_by_path("pluck/pitchBend").unwrap().into(),
+            echo_mix: state.node_by_path("fx/echo/mix").unwrap().into(),
+            echo_duration: state.node_by_path("fx/echo/duration").unwrap().into(),
+            echo_feedback: state.node_by_path("fx/echo/feedback").unwrap().into(),
             mix_master_volume: state.node_by_path("mix/master").unwrap().into(),
             mix_drone_volume: state.node_by_path("mix/drone").unwrap().into(),
             mix_lead_volume: state.node_by_path("mix/lead").unwrap().into(),

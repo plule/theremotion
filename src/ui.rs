@@ -33,6 +33,7 @@ pub enum MainTab {
     RootEdit,
     ScaleEdit,
     Mix,
+    Settings,
     Instructions,
 }
 
@@ -43,6 +44,7 @@ impl Display for MainTab {
             MainTab::RootEdit => f.write_str("Root Edit"),
             MainTab::ScaleEdit => f.write_str("Scale Edit"),
             MainTab::Mix => f.write_str("Mix"),
+            MainTab::Settings => f.write_str("Settings"),
             MainTab::Instructions => f.write_str("Instructions"),
         }
     }
@@ -128,6 +130,7 @@ impl eframe::App for Theremotion {
                         RichText::new("🎼").heading(),
                     );
                     ui.selectable_value(main_tab, MainTab::Mix, RichText::new("🔊").heading());
+                    ui.selectable_value(main_tab, MainTab::Settings, RichText::new("⛭").heading());
                     ui.selectable_value(
                         main_tab,
                         MainTab::Instructions,
@@ -170,6 +173,30 @@ impl eframe::App for Theremotion {
                 }
                 MainTab::Mix => {
                     mix_tab(ui, settings);
+                }
+                MainTab::Settings => {
+                    ui.group(|ui| {
+                        ui.label("Echo");
+                        ui.add(
+                            Slider::from_control(&controls.echo_mix, &mut settings.echo_mix)
+                                .text("Mix"),
+                        );
+                        ui.add(
+                            Slider::from_control(
+                                &controls.echo_duration,
+                                &mut settings.echo_duration,
+                            )
+                            .logarithmic(true)
+                            .text("Duration"),
+                        );
+                        ui.add(
+                            Slider::from_control(
+                                &controls.echo_feedback,
+                                &mut settings.echo_feedback,
+                            )
+                            .text("Feedback"),
+                        );
+                    });
                 }
                 MainTab::Instructions => {
                     instructions_tab(ui, controls, settings);
@@ -227,6 +254,16 @@ fn mix_slider(ui: &mut egui::Ui, name: &str, value: &mut f32) {
                 .text(format!("{} {}", icon, name)),
         );
     });
+}
+
+trait FromControl<'a> {
+    fn from_control(control: &controls::Control, value: &'a mut f32) -> Self;
+}
+
+impl<'a> FromControl<'a> for Slider<'a> {
+    fn from_control(control: &controls::Control, value: &'a mut f32) -> Slider<'a> {
+        Slider::new(value, control.input.range.clone()).step_by(control.input.step.into())
+    }
 }
 
 fn play_tab(ui: &mut egui::Ui, controls: &mut controls::Controls, settings: &mut Settings) {
