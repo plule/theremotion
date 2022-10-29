@@ -1,6 +1,6 @@
 [package]
 name = "theremotion"
-version = "0.1.12"
+version = "0.1.13-dev"
 authors = ["Pierre Lulé <pierre@lule.fr>"]
 edition = "2021"
 rust-version = "1.60"
