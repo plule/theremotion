@@ -16,6 +16,7 @@ mod dsp;
 
 use clap::Parser;
 use cpal::traits::StreamTrait;
+use default_boxed::DefaultBoxed;
 use faust_state::DspHandle;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -48,7 +49,8 @@ fn main() {
     let (dsp_controls_tx, dsp_controls_rx) = crossbeam_channel::unbounded(); // Leap to UI
 
     // Init DSP
-    let (dsp, state) = DspHandle::<dsp::Instrument>::new();
+    let dsp = dsp::Instrument::default_boxed();
+    let (dsp, state) = DspHandle::<dsp::Instrument>::from_dsp(dsp);
 
     // Init sound output
     let stream = dsp_thread::run(dsp);

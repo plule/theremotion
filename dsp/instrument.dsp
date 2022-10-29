@@ -68,7 +68,7 @@ with {
 process = hgroup("[2]drone", drone) * drone_volume
     + vgroup("[0]lead", leadChord) * lead_volume
     + hgroup("[1]pluck", guitar) * pluck_volume
-    : ef.echo(1.0, 0.3, 0.3)
+    : ef.echo(10.0, 1.0, 0.7)
     : _ * master_volume
     <: _, _
 with {
@@ -78,3 +78,4 @@ with {
     lead_volume = mixGroup(hslider("[2]lead", 1, 0, 1, 0.001)) : si.smoo;
     pluck_volume = mixGroup(hslider("[3]pluck", 1, 0, 1, 0.001)) : si.smoo;
 };
+
