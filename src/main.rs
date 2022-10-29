@@ -8,7 +8,6 @@ mod music_theory;
 mod scales;
 mod settings;
 mod ui;
-mod ui_keyboard;
 
 #[allow(clippy::all)]
 #[rustfmt::skip]
@@ -74,6 +73,6 @@ fn main() {
     eframe::run_native(
         format!("Theremotion v{}", VERSION).as_str(),
         native_options,
-        Box::new(move |cc| Box::new(ui::Theremotion::new(cc, dsp_controls_rx, settings_tx))),
+        Box::new(move |cc| Box::new(ui::App::new(cc, dsp_controls_rx, settings_tx))),
     );
 }
