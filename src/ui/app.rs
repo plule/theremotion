@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use strum::{EnumIter, IntoEnumIterator};
 
 use crossbeam_channel::{Receiver, Sender};
 
@@ -18,7 +18,7 @@ pub struct App {
     main_tab: MainTab,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, EnumIter, Clone, Copy)]
 pub enum MainTab {
     Play,
     RootEdit,
@@ -28,16 +28,43 @@ pub enum MainTab {
     Instructions,
 }
 
-impl Display for MainTab {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl MainTab {
+    pub fn title(&self) -> &str {
         match self {
-            MainTab::Play => f.write_str("Play"),
-            MainTab::RootEdit => f.write_str("Root Edit"),
-            MainTab::ScaleEdit => f.write_str("Scale Edit"),
-            MainTab::Mix => f.write_str("Mix"),
-            MainTab::Settings => f.write_str("Settings"),
-            MainTab::Instructions => f.write_str("Instructions"),
+            MainTab::Play => "Play",
+            MainTab::RootEdit => "Root Edit",
+            MainTab::ScaleEdit => "Scale Edit",
+            MainTab::Mix => "Mix",
+            MainTab::Settings => "Settings",
+            MainTab::Instructions => "Instructions",
         }
+    }
+
+    pub fn icon(&self) -> &str {
+        match self {
+            MainTab::Play => "👐",
+            MainTab::RootEdit => "🎵",
+            MainTab::ScaleEdit => "🎼",
+            MainTab::Mix => "🔊",
+            MainTab::Settings => "⛭",
+            MainTab::Instructions => "ℹ",
+        }
+    }
+
+    pub fn add_widget<'a>(
+        &self,
+        ui: &mut egui::Ui,
+        controls: &'a mut controls::Controls,
+        settings: &'a mut Settings,
+    ) {
+        match self {
+            MainTab::Play => ui.add(super::TabPlay::new(controls, settings)),
+            MainTab::RootEdit => ui.add(super::TabRootEdit::new(controls, settings)),
+            MainTab::ScaleEdit => ui.add(super::TabScaleEdit::new(controls, settings)),
+            MainTab::Mix => ui.add(super::TabMix::new(settings)),
+            MainTab::Settings => ui.add(super::TabSettings::new(controls, settings)),
+            MainTab::Instructions => ui.add(super::TabInstructions::new(controls, settings)),
+        };
     }
 }
 
@@ -113,20 +140,9 @@ impl eframe::App for App {
             .default_width(32.0)
             .show(ctx, |ui| {
                 ui.vertical_centered_justified(|ui| {
-                    ui.selectable_value(main_tab, MainTab::Play, RichText::new("👐").heading());
-                    ui.selectable_value(main_tab, MainTab::RootEdit, RichText::new("🎵").heading());
-                    ui.selectable_value(
-                        main_tab,
-                        MainTab::ScaleEdit,
-                        RichText::new("🎼").heading(),
-                    );
-                    ui.selectable_value(main_tab, MainTab::Mix, RichText::new("🔊").heading());
-                    ui.selectable_value(main_tab, MainTab::Settings, RichText::new("⛭").heading());
-                    ui.selectable_value(
-                        main_tab,
-                        MainTab::Instructions,
-                        RichText::new("ℹ").heading(),
-                    );
+                    for tab in MainTab::iter() {
+                        ui.selectable_value(main_tab, tab, RichText::new(tab.icon()).heading());
+                    }
                 });
             });
         egui::TopBottomPanel::bottom("bottom_panel")
@@ -149,29 +165,11 @@ impl eframe::App for App {
                 let (lh, rh) = controls.has_hands;
                 let lh = if lh { "👈" } else { "⬜" };
                 let rh = if rh { "👉" } else { "⬜" };
-                ui.heading(format!("{lh} {main_tab} {rh}"));
+                let title = main_tab.title();
+                ui.heading(format!("{lh} {title} {rh}"));
             });
             ui.separator();
-            match main_tab {
-                MainTab::Play => {
-                    super::play_tab(ui, controls, settings);
-                }
-                MainTab::RootEdit => {
-                    super::tab_root_edit(ui, controls, settings);
-                }
-                MainTab::ScaleEdit => {
-                    super::tab_scale_edit(ui, controls, settings);
-                }
-                MainTab::Mix => {
-                    super::tab_mix(ui, settings);
-                }
-                MainTab::Settings => {
-                    super::tab_settings(ui, controls, settings);
-                }
-                MainTab::Instructions => {
-                    super::tab_instructions(ui, controls, settings);
-                }
-            }
+            main_tab.add_widget(ui, controls, settings);
         });
 
         if saved_settings != settings {
