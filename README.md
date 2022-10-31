@@ -72,5 +72,5 @@ variable `LEAPSDK_LIB_PATH` to the absolute path of the
 ## License
 
 With the exception of any third-parties (such as the Rust, Faust and Ultraleap
-logos, and the Ultraleap redistributables), Theremotion is distributed under the
-GPLv3 license.
+logos, the Ultraleap redistributables, the Noto Emoji font), Theremotion is
+distributed under the GPLv3 license.

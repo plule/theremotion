@@ -5,18 +5,18 @@ use crate::{controls, scales::MoreScales, settings::Settings};
 
 use super::KeyboardEditMode;
 
-pub struct TabScaleEdit<'a> {
+pub struct TabScale<'a> {
     controls: &'a mut controls::Controls,
     settings: &'a mut Settings,
 }
 
-impl<'a> TabScaleEdit<'a> {
+impl<'a> TabScale<'a> {
     pub fn new(controls: &'a mut controls::Controls, settings: &'a mut Settings) -> Self {
         Self { controls, settings }
     }
 }
 
-impl Widget for TabScaleEdit<'_> {
+impl Widget for TabScale<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let Self { controls, settings } = self;
         ui.vertical(|ui| {

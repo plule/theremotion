@@ -5,18 +5,18 @@ use crate::{controls, settings::Settings};
 
 use super::KeyboardEditMode;
 
-pub struct TabRootEdit<'a> {
+pub struct TabRootNote<'a> {
     controls: &'a mut controls::Controls,
     settings: &'a mut Settings,
 }
 
-impl<'a> TabRootEdit<'a> {
+impl<'a> TabRootNote<'a> {
     pub fn new(controls: &'a mut controls::Controls, settings: &'a mut Settings) -> Self {
         Self { controls, settings }
     }
 }
 
-impl Widget for TabRootEdit<'_> {
+impl Widget for TabRootNote<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.vertical(|ui| {
             ui.add(crate::ui::Keyboard::new(

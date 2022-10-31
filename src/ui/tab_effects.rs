@@ -4,18 +4,18 @@ use crate::{controls, settings::Settings};
 
 use super::FromControl;
 
-pub struct TabSettings<'a> {
+pub struct TabEffects<'a> {
     controls: &'a mut controls::Controls,
     settings: &'a mut Settings,
 }
 
-impl<'a> TabSettings<'a> {
+impl<'a> TabEffects<'a> {
     pub fn new(controls: &'a mut controls::Controls, settings: &'a mut Settings) -> Self {
         Self { controls, settings }
     }
 }
 
-impl Widget for TabSettings<'_> {
+impl Widget for TabEffects<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let Self { controls, settings } = self;
         ui.vertical(|ui| {

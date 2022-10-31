@@ -22,9 +22,9 @@ pub struct App {
 pub enum MainTab {
     Play,
     RootEdit,
-    ScaleEdit,
+    Scale,
     Mix,
-    Settings,
+    Effects,
     Instructions,
 }
 
@@ -32,10 +32,10 @@ impl MainTab {
     pub fn title(&self) -> &str {
         match self {
             MainTab::Play => "Play",
-            MainTab::RootEdit => "Root Edit",
-            MainTab::ScaleEdit => "Scale Edit",
+            MainTab::RootEdit => "Root Note",
+            MainTab::Scale => "Scale",
             MainTab::Mix => "Mix",
-            MainTab::Settings => "Settings",
+            MainTab::Effects => "Effects",
             MainTab::Instructions => "Instructions",
         }
     }
@@ -44,10 +44,10 @@ impl MainTab {
         match self {
             MainTab::Play => "👐",
             MainTab::RootEdit => "🎵",
-            MainTab::ScaleEdit => "🎼",
-            MainTab::Mix => "🔊",
-            MainTab::Settings => "⛭",
-            MainTab::Instructions => "ℹ",
+            MainTab::Scale => "🎼",
+            MainTab::Mix => "🎚️",
+            MainTab::Effects => "🎛️",
+            MainTab::Instructions => "ℹ💾",
         }
     }
 
@@ -59,10 +59,10 @@ impl MainTab {
     ) {
         match self {
             MainTab::Play => ui.add(super::TabPlay::new(controls, settings)),
-            MainTab::RootEdit => ui.add(super::TabRootEdit::new(controls, settings)),
-            MainTab::ScaleEdit => ui.add(super::TabScaleEdit::new(controls, settings)),
+            MainTab::RootEdit => ui.add(super::TabRootNote::new(controls, settings)),
+            MainTab::Scale => ui.add(super::TabScale::new(controls, settings)),
             MainTab::Mix => ui.add(super::TabMix::new(settings)),
-            MainTab::Settings => ui.add(super::TabSettings::new(controls, settings)),
+            MainTab::Effects => ui.add(super::TabEffects::new(controls, settings)),
             MainTab::Instructions => ui.add(super::TabInstructions::new(controls, settings)),
         };
     }
@@ -76,6 +76,19 @@ impl App {
         settings_tx: Sender<Settings>,
     ) -> Self {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
+
+        let mut fonts = egui::FontDefinitions::default();
+        fonts.font_data.insert(
+            "noto_emoji".to_owned(),
+            egui::FontData::from_static(include_bytes!("NotoEmoji-Bold.ttf")),
+        );
+
+        fonts
+            .families
+            .entry(egui::FontFamily::Name("icons".into()))
+            .or_default()
+            .insert(0, "noto_emoji".to_owned());
+        cc.egui_ctx.set_fonts(fonts);
 
         let mut style = (*cc.egui_ctx.style()).clone();
         style.text_styles = [
@@ -141,7 +154,13 @@ impl eframe::App for App {
             .show(ctx, |ui| {
                 ui.vertical_centered_justified(|ui| {
                     for tab in MainTab::iter() {
-                        ui.selectable_value(main_tab, tab, RichText::new(tab.icon()).heading());
+                        ui.selectable_value(
+                            main_tab,
+                            tab,
+                            RichText::new(tab.icon())
+                                .heading()
+                                .family(egui::FontFamily::Name("icons".into())),
+                        );
                     }
                 });
             });
