@@ -122,6 +122,9 @@ impl<'a> Widget for Keyboard<'a> {
             (key_dimension.y + 1.0) * 2.0,
         );
         ui.spacing_mut().item_spacing.x = 1.0;
+        ui.spacing_mut().item_spacing.y = 1.0;
+        ui.spacing_mut().interact_size.x = 1.0;
+        ui.spacing_mut().interact_size.y = 1.0;
         ui.allocate_ui(keyboard_size, |ui| {
             // Black keys
             ui.horizontal(|ui| {

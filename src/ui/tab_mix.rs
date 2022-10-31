@@ -16,23 +16,23 @@ impl Widget for TabMix<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let Self { settings } = self;
         ui.horizontal(|ui| {
-            ui.style_mut().spacing.slider_width = 300.0;
-            ui.style_mut().spacing.button_padding = egui::vec2(32.0, 32.0);
-            ui.style_mut().spacing.interact_size = egui::vec2(64.0, 64.0);
-            let space = 40.0;
             ui.group(|ui| {
-                ui.add_space(space);
-                mix_slider(ui, "Lead", &mut settings.lead_volume);
-                ui.add_space(space);
-                mix_slider(ui, "Guitar", &mut settings.guitar_volume);
-                ui.add_space(space);
-                mix_slider(ui, "Drone", &mut settings.drone_volume);
-                ui.add_space(space);
+                ui.vertical(|ui| {
+                    ui.label("Instruments");
+                    ui.horizontal(|ui| {
+                        mix_slider(ui, "Lead", &mut settings.lead_volume);
+                        mix_slider(ui, "Guitar", &mut settings.guitar_volume);
+                        mix_slider(ui, "Drone", &mut settings.drone_volume);
+                    });
+                })
             });
             ui.group(|ui| {
-                ui.add_space(space);
-                mix_slider(ui, "Master", &mut settings.master_volume);
-                ui.add_space(space);
+                ui.vertical(|ui| {
+                    ui.label(""); // align
+                    ui.horizontal(|ui| {
+                        mix_slider(ui, "Master", &mut settings.master_volume);
+                    });
+                });
             });
         })
         .response
@@ -40,21 +40,19 @@ impl Widget for TabMix<'_> {
 }
 
 fn mix_slider(ui: &mut egui::Ui, name: &str, value: &mut f32) {
-    ui.vertical(|ui| {
-        let icon = match &value {
-            value if **value <= 0.0 => "🔇",
-            value if **value <= 0.33 => "🔈",
-            value if **value <= 0.66 => "🔉",
-            _ => "🔊",
-        };
-        ui.add(
-            Slider::new(value, 0.0..=1.0)
-                .vertical()
-                .min_decimals(2)
-                .max_decimals(2)
-                .step_by(0.01)
-                .show_value(false)
-                .text(format!("{} {}", icon, name)),
-        );
-    });
+    let icon = match &value {
+        value if **value <= 0.0 => "🔇",
+        value if **value <= 0.33 => "🔈",
+        value if **value <= 0.66 => "🔉",
+        _ => "🔊",
+    };
+    ui.add(
+        Slider::new(value, 0.0..=1.0)
+            .vertical()
+            .min_decimals(2)
+            .max_decimals(2)
+            .step_by(0.01)
+            .show_value(false)
+            .text(format!("{} {}", icon, name)),
+    );
 }

@@ -47,7 +47,7 @@ impl MainTab {
             MainTab::Scale => "🎼",
             MainTab::Mix => "🎚️",
             MainTab::Effects => "🎛️",
-            MainTab::Instructions => "ℹ💾",
+            MainTab::Instructions => "ℹ",
         }
     }
 
@@ -111,6 +111,8 @@ impl App {
             ),
         ]
         .into();
+        style.spacing.interact_size = egui::vec2(64.0, 64.0);
+        style.spacing.slider_width = 280.0;
         cc.egui_ctx.set_style(style);
 
         let controls = dsp_controls_rx.recv().unwrap();
@@ -150,7 +152,7 @@ impl eframe::App for App {
         }
 
         egui::SidePanel::right("right_panel")
-            .default_width(32.0)
+            .default_width(24.0)
             .show(ctx, |ui| {
                 ui.vertical_centered_justified(|ui| {
                     for tab in MainTab::iter() {
@@ -158,7 +160,7 @@ impl eframe::App for App {
                             main_tab,
                             tab,
                             RichText::new(tab.icon())
-                                .heading()
+                                .text_style(egui::TextStyle::Button)
                                 .family(egui::FontFamily::Name("icons".into())),
                         );
                     }

@@ -67,7 +67,7 @@ with {
 echo(s) = s <: ef.echo(10.0, duration, feedback) * mix, s * (1-mix) :> _
 with {
     mix = hslider("[0]mix", 1.0, 0, 1, 0.001) : si.smoo;
-    duration = hslider("[0]duration[scale:log]", 0.3, 0.01, 10.0, 0.001) : si.smoo;
+    duration = hslider("[0]duration[scale:log]", 0.3, 0.01, 3.0, 0.001) : si.smoo;
     feedback = hslider("[1]feedback", 0.3, 0, 1, 0.001);
 };
 
