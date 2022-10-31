@@ -34,10 +34,19 @@ pub struct Controls {
     /// Global pitch bend (guitar+lead)
     pub pitch_bend: Control,
 
-    /// Fx
+    /// Echo
     pub echo_mix: Control,
     pub echo_duration: Control,
     pub echo_feedback: Control,
+
+    /// Reverb
+    pub reverb_mix: Control,
+    pub reverb_time: Control,
+    pub reverb_damp: Control,
+    pub reverb_size: Control,
+    pub reverb_early_diff: Control,
+    pub reverb_mod_depth: Control,
+    pub reverb_mod_freq: Control,
 
     /// Mix
     pub mix_master_volume: Control,
@@ -68,6 +77,10 @@ impl Controls {
         self.echo_duration.value = settings.echo_duration;
         self.echo_feedback.value = settings.echo_feedback;
         self.echo_mix.value = settings.echo_mix;
+        self.reverb_mix.value = settings.reverb_mix;
+        self.reverb_time.value = settings.reverb_time;
+        self.reverb_damp.value = settings.reverb_damp;
+        self.reverb_size.value = settings.reverb_size;
     }
 }
 
@@ -94,6 +107,13 @@ impl ControlTrait for Controls {
         self.echo_mix.send(state);
         self.echo_feedback.send(state);
         self.echo_duration.send(state);
+        self.reverb_mix.send(state);
+        self.reverb_time.send(state);
+        self.reverb_damp.send(state);
+        self.reverb_size.send(state);
+        self.reverb_early_diff.send(state);
+        self.reverb_mod_depth.send(state);
+        self.reverb_mod_freq.send(state);
         state.send();
     }
 }
@@ -138,6 +158,13 @@ impl From<&StateHandle> for Controls {
             echo_mix: state.node_by_path("fx/echo/mix").unwrap().into(),
             echo_duration: state.node_by_path("fx/echo/duration").unwrap().into(),
             echo_feedback: state.node_by_path("fx/echo/feedback").unwrap().into(),
+            reverb_mix: state.node_by_path("fx/reverb/mix").unwrap().into(),
+            reverb_time: state.node_by_path("fx/reverb/time").unwrap().into(),
+            reverb_damp: state.node_by_path("fx/reverb/damp").unwrap().into(),
+            reverb_size: state.node_by_path("fx/reverb/size").unwrap().into(),
+            reverb_early_diff: state.node_by_path("fx/reverb/early_diff").unwrap().into(),
+            reverb_mod_depth: state.node_by_path("fx/reverb/mod_depth").unwrap().into(),
+            reverb_mod_freq: state.node_by_path("fx/reverb/mod_freq").unwrap().into(),
             mix_master_volume: state.node_by_path("mix/master").unwrap().into(),
             mix_drone_volume: state.node_by_path("mix/drone").unwrap().into(),
             mix_lead_volume: state.node_by_path("mix/lead").unwrap().into(),

@@ -24,6 +24,24 @@ trait FromControl<'a> {
 
 impl<'a> FromControl<'a> for Slider<'a> {
     fn from_control(control: &controls::Control, value: &'a mut f32) -> Slider<'a> {
-        Slider::new(value, control.input.range.clone()).step_by(control.input.step.into())
+        Slider::new(value, control.input.range.clone())
+            .step_by(control.input.step.into())
+            .vertical()
+            .show_value(false)
+    }
+}
+
+trait NamedGroup {
+    fn named_group(&mut self, name: &str, add_contents: impl FnOnce(&mut egui::Ui));
+}
+
+impl NamedGroup for egui::Ui {
+    fn named_group(&mut self, name: &str, add_contents: impl FnOnce(&mut egui::Ui)) {
+        self.group(|ui| {
+            ui.vertical(|ui| {
+                ui.label(name);
+                ui.horizontal(add_contents);
+            });
+        });
     }
 }

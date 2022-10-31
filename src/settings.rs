@@ -28,10 +28,16 @@ pub struct Settings {
     /// Current drone
     pub drone: Option<MidiNote>,
 
-    /// fx
+    /// echo
     pub echo_mix: f32,
     pub echo_duration: f32,
     pub echo_feedback: f32,
+
+    // reverb
+    pub reverb_mix: f32,
+    pub reverb_time: f32,
+    pub reverb_damp: f32,
+    pub reverb_size: f32,
 
     /// Mix
     pub master_volume: f32,
@@ -100,6 +106,10 @@ impl Default for Settings {
             echo_mix: 1.0,
             echo_duration: 0.3,
             echo_feedback: 0.3,
+            reverb_mix: 0.11,
+            reverb_time: 3.5,
+            reverb_damp: 0.88,
+            reverb_size: 5.0,
             master_volume: 1.0,
             lead_volume: 1.0,
             guitar_volume: 1.0,

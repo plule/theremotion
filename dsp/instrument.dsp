@@ -71,7 +71,18 @@ with {
     feedback = hslider("[1]feedback", 0.3, 0, 1, 0.001);
 };
 
-fx = vgroup("[0]echo", echo);
+reverb(s) = s <: re.jpverb(t60, damp, size, earlyDiff, modDepth, modFreq, 1, 1, 1, 440, 8000) :> _ <: _ * mix, s * (1-mix) :> _
+with {
+    mix = hslider("[0]mix", 0.11, 0, 1, 0.001);
+    t60 = hslider("[1]time", 3.5, 0.1, 60, 0.001);
+    damp = hslider("[2]damp", 0.88, 0, 1, 0.001);
+    size = hslider("[3]size", 5.0, 0.5, 5, 0.001);
+    earlyDiff = hslider("[4]early_diff", 0.75, 0, 1, 0.001);
+    modDepth = hslider("[5]mod_depth", 0.98, 0, 1, 0.001);
+    modFreq = hslider("[6]mod_freq", 0.6, 0, 10, 0.001);
+};
+
+fx = vgroup("[0]echo", echo) : vgroup("[1]reverb", reverb);
 
 // Mix
 process = hgroup("[2]drone", drone) * drone_volume

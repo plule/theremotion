@@ -2,6 +2,8 @@ use egui::{Slider, Widget};
 
 use crate::settings::Settings;
 
+use super::NamedGroup;
+
 pub struct TabMix<'a> {
     settings: &'a mut Settings,
 }
@@ -16,23 +18,13 @@ impl Widget for TabMix<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let Self { settings } = self;
         ui.horizontal(|ui| {
-            ui.group(|ui| {
-                ui.vertical(|ui| {
-                    ui.label("Instruments");
-                    ui.horizontal(|ui| {
-                        mix_slider(ui, "Lead", &mut settings.lead_volume);
-                        mix_slider(ui, "Guitar", &mut settings.guitar_volume);
-                        mix_slider(ui, "Drone", &mut settings.drone_volume);
-                    });
-                })
+            ui.named_group("Instruments", |ui| {
+                mix_slider(ui, "Lead", &mut settings.lead_volume);
+                mix_slider(ui, "Guitar", &mut settings.guitar_volume);
+                mix_slider(ui, "Drone", &mut settings.drone_volume);
             });
-            ui.group(|ui| {
-                ui.vertical(|ui| {
-                    ui.label(""); // align
-                    ui.horizontal(|ui| {
-                        mix_slider(ui, "Master", &mut settings.master_volume);
-                    });
-                });
+            ui.named_group("", |ui| {
+                mix_slider(ui, "Master", &mut settings.master_volume);
             });
         })
         .response
