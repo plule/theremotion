@@ -4,11 +4,12 @@ use crate::settings::{Preset, Settings};
 
 pub struct TabPresets<'a> {
     settings: &'a mut Settings,
+    tabtip: bool,
 }
 
 impl<'a> TabPresets<'a> {
-    pub fn new(settings: &'a mut Settings) -> Self {
-        Self { settings }
+    pub fn new(settings: &'a mut Settings, tabtip: bool) -> Self {
+        Self { settings, tabtip }
     }
 }
 
@@ -16,7 +17,21 @@ impl Widget for TabPresets<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                ui.text_edit_singleline(&mut self.settings.current_preset.name);
+                if ui
+                    .text_edit_singleline(&mut self.settings.current_preset.name)
+                    .clicked()
+                    && self.tabtip
+                {
+                    // hack
+                    // windows touchscreen keyboard does not show up by default
+                    // running tabtip.exe opens it (on the nuc only)
+                    // running tabtip directly trigger a privilege error, but through cmd.exe it works.
+                    std::process::Command::new("cmd.exe")
+                        .arg("/C")
+                        .arg(r"C:\Program Files\Common Files\microsoft shared\ink\TabTip.exe")
+                        .spawn()
+                        .unwrap();
+                }
                 ui.add_enabled_ui(self.settings.can_save_current_preset(), |ui| {
                     if ui.button("💾").clicked() {
                         self.settings.save_current_preset();

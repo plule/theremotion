@@ -13,6 +13,7 @@ pub struct App {
     saved_settings: Settings,
     settings_tx: Sender<Settings>,
     main_tab: MainTab,
+    tabtip: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, EnumIter, Clone, Copy)]
@@ -56,6 +57,7 @@ impl MainTab {
         ui: &mut egui::Ui,
         controls: &'a mut controls::Controls,
         settings: &'a mut Settings,
+        tabtip: bool,
     ) {
         match self {
             MainTab::Play => ui.add(super::TabPlay::new(controls, &mut settings.current_preset)),
@@ -69,7 +71,7 @@ impl MainTab {
                 controls,
                 &mut settings.current_preset,
             )),
-            MainTab::Presets => ui.add(super::TabPresets::new(settings)),
+            MainTab::Presets => ui.add(super::TabPresets::new(settings, tabtip)),
             MainTab::Instructions => ui.add(super::TabInstructions::new()),
         };
     }
@@ -81,6 +83,7 @@ impl App {
         cc: &eframe::CreationContext<'_>,
         dsp_controls_rx: Receiver<controls::Controls>,
         settings_tx: Sender<Settings>,
+        tabtip: bool,
     ) -> Self {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
 
@@ -132,6 +135,7 @@ impl App {
             saved_settings: settings.clone(),
             main_tab: MainTab::Play,
             settings,
+            tabtip,
         }
     }
 }
@@ -147,6 +151,7 @@ impl eframe::App for App {
             settings_tx,
             saved_settings,
             main_tab,
+            tabtip: _,
         } = self;
 
         if ctx.input().key_down(Key::Escape) {
@@ -197,7 +202,7 @@ impl eframe::App for App {
                 ui.heading(format!("{lh} {title} {rh}"));
             });
             ui.separator();
-            main_tab.add_widget(ui, controls, settings);
+            main_tab.add_widget(ui, controls, settings, self.tabtip);
         });
 
         if saved_settings != settings {

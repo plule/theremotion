@@ -35,6 +35,10 @@ struct Args {
     /// Initial Y position of the window
     #[clap(long, value_parser, default_value_t = 0)]
     window_position_y: i32,
+
+    /// Execute tabtip.exe on Windows to prompt the touchscreen keyboard
+    #[clap(long, value_parser, default_value_t = false)]
+    tabtip: bool,
 }
 
 fn main() {
@@ -73,6 +77,6 @@ fn main() {
     eframe::run_native(
         format!("Theremotion v{}", VERSION).as_str(),
         native_options,
-        Box::new(move |cc| Box::new(ui::App::new(cc, dsp_controls_rx, settings_tx))),
+        Box::new(move |cc| Box::new(ui::App::new(cc, dsp_controls_rx, settings_tx, args.tabtip))),
     );
 }
