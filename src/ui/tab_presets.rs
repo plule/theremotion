@@ -1,3 +1,5 @@
+use std::os::windows::process::CommandExt;
+
 use egui::Widget;
 
 use crate::settings::{Preset, Settings};
@@ -29,6 +31,7 @@ impl Widget for TabPresets<'_> {
                     std::process::Command::new("cmd.exe")
                         .arg("/C")
                         .arg(r"C:\Program Files\Common Files\microsoft shared\ink\TabTip.exe")
+                        .creation_flags(0x00000008) // DETACHED_PROCESS
                         .spawn()
                         .unwrap();
                 }
