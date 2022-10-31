@@ -1,27 +1,27 @@
 use egui::Widget;
 
-use crate::{controls, settings::Settings};
+use crate::{controls, settings::Preset};
 
 use super::KeyboardEditMode;
 
 pub struct TabInstructions<'a> {
     controls: &'a mut controls::Controls,
-    settings: &'a mut Settings,
+    preset: &'a mut Preset,
 }
 
 impl<'a> TabInstructions<'a> {
-    pub fn new(controls: &'a mut controls::Controls, settings: &'a mut Settings) -> Self {
-        Self { controls, settings }
+    pub fn new(controls: &'a mut controls::Controls, preset: &'a mut Preset) -> Self {
+        Self { controls, preset }
     }
 }
 
 impl Widget for TabInstructions<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        let Self { controls, settings } = self;
+        let Self { controls, preset } = self;
         ui.vertical(|ui| {
             ui.add(crate::ui::Keyboard::new(
                 controls.lead.iter().collect(),
-                settings,
+                preset,
                 KeyboardEditMode::None,
             ));
             ui.separator();

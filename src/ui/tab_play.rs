@@ -11,18 +11,18 @@ use staff::midi::MidiNote;
 
 use crate::{
     controls::{self},
-    settings::Settings,
+    settings::Preset,
     ui::KeyboardEditMode,
 };
 
 pub struct TabPlay<'a> {
     controls: &'a mut controls::Controls,
-    settings: &'a mut Settings,
+    preset: &'a mut Preset,
 }
 
 impl<'a> TabPlay<'a> {
-    pub fn new(controls: &'a mut controls::Controls, settings: &'a mut Settings) -> Self {
-        Self { controls, settings }
+    pub fn new(controls: &'a mut controls::Controls, preset: &'a mut Preset) -> Self {
+        Self { controls, preset }
     }
 }
 
@@ -31,7 +31,7 @@ impl Widget for TabPlay<'_> {
         ui.vertical(|ui| {
             ui.add(crate::ui::Keyboard::new(
                 self.controls.lead.iter().collect(),
-                self.settings,
+                self.preset,
                 KeyboardEditMode::Drone,
             ));
             ui.separator();
@@ -53,7 +53,7 @@ impl Widget for TabPlay<'_> {
 
 impl<'a> TabPlay<'a> {
     fn autotune_plot(&self, ui: &mut egui::Ui, size: f32) {
-        let note_range = self.settings.note_range();
+        let note_range = self.preset.note_range();
         let smooths =
             (*note_range.start() as usize * 10..*note_range.end() as usize * 10).map(|i| {
                 let x = i as f32 * 0.1;
@@ -62,13 +62,13 @@ impl<'a> TabPlay<'a> {
                     crate::music_theory::autotune(
                         x,
                         self.controls.autotune,
-                        self.settings.scale_notes(),
+                        self.preset.scale_notes(),
                     ),
                 )
             });
         let line = Line::new(PlotPoints::Owned(smooths.collect()));
         // hack: force the include_x/include_y to recenter on root note change
-        let plot_id = format!("{}{}", self.settings.pitch, self.settings.octave);
+        let plot_id = format!("{}{}", self.preset.pitch, self.preset.octave);
         egui::plot::Plot::new(plot_id)
             .allow_boxed_zoom(false)
             .allow_drag(false)
@@ -99,7 +99,7 @@ impl<'a> TabPlay<'a> {
     }
 
     fn tuner(&self, ui: &mut egui::Ui, width: f32, height: f32, plot_name: &str) {
-        let scale = self.settings.scale_notes();
+        let scale = self.preset.scale_notes();
         let note_raw = self.controls.raw_note;
         let note_tuned = self.controls.lead[0].note.value;
         let closest = crate::music_theory::closest_in_scale(note_raw, &scale);

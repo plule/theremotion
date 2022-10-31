@@ -4,10 +4,7 @@ use crossbeam_channel::{Receiver, Sender};
 
 use egui::{FontFamily, FontId, Key, RichText, TextStyle};
 
-use crate::{
-    controls::{self},
-    settings::Settings,
-};
+use crate::{controls, settings::Settings};
 
 pub struct App {
     dsp_controls_rx: Receiver<controls::Controls>,
@@ -58,12 +55,21 @@ impl MainTab {
         settings: &'a mut Settings,
     ) {
         match self {
-            MainTab::Play => ui.add(super::TabPlay::new(controls, settings)),
-            MainTab::RootEdit => ui.add(super::TabRootNote::new(controls, settings)),
-            MainTab::Scale => ui.add(super::TabScale::new(controls, settings)),
-            MainTab::Mix => ui.add(super::TabMix::new(settings)),
-            MainTab::Effects => ui.add(super::TabEffects::new(controls, settings)),
-            MainTab::Instructions => ui.add(super::TabInstructions::new(controls, settings)),
+            MainTab::Play => ui.add(super::TabPlay::new(controls, &mut settings.current_preset)),
+            MainTab::RootEdit => ui.add(super::TabRootNote::new(
+                controls,
+                &mut settings.current_preset,
+            )),
+            MainTab::Scale => ui.add(super::TabScale::new(controls, &mut settings.current_preset)),
+            MainTab::Mix => ui.add(super::TabMix::new(&mut settings.current_preset)),
+            MainTab::Effects => ui.add(super::TabEffects::new(
+                controls,
+                &mut settings.current_preset,
+            )),
+            MainTab::Instructions => ui.add(super::TabInstructions::new(
+                controls,
+                &mut settings.current_preset,
+            )),
         };
     }
 }

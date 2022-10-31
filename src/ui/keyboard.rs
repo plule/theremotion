@@ -4,15 +4,15 @@ use staff::{
     Interval, Pitch,
 };
 
-use crate::{controls::NoteControl, settings::Settings};
+use crate::{controls::NoteControl, settings::Preset};
 
 /// Display a keyboard with a floating point note
 pub struct Keyboard<'a> {
     /// Currently played midi note
     pub notes: Vec<&'a NoteControl>,
 
-    /// Settings
-    pub settings: &'a mut Settings,
+    /// Settings preset
+    pub preset: &'a mut Preset,
 
     /// Edit mode
     pub edit_mode: KeyboardEditMode,
@@ -30,18 +30,18 @@ pub enum KeyboardEditMode {
 impl<'a> Keyboard<'a> {
     pub fn new(
         notes: Vec<&'a NoteControl>,
-        settings: &'a mut Settings,
+        settings: &'a mut Preset,
         edit_mode: KeyboardEditMode,
     ) -> Self {
         Self {
             notes,
-            settings,
+            preset: settings,
             edit_mode,
         }
     }
 
     fn draw_key(&self, ui: &mut egui::Ui, key_dimension: &egui::Vec2, note: &MidiNote) -> Response {
-        let scale = self.settings.scale_notes();
+        let scale = self.preset.scale_notes();
         let note_byte = note.into_byte();
 
         let note_float = note_byte as f32;
@@ -51,7 +51,7 @@ impl<'a> Keyboard<'a> {
             let note_distance = (note_float - played_note.note.value).abs().clamp(0.0, 1.0);
             red = red.max(((1.0 - note_distance) * 255.0 * played_note.volume.value) as u8);
         }
-        let green = if matches!(self.settings.drone, Some(drone) if drone == *note) {
+        let green = if matches!(self.preset.drone, Some(drone) if drone == *note) {
             255
         } else {
             0
@@ -81,7 +81,7 @@ impl<'a> Keyboard<'a> {
             match self.edit_mode {
                 KeyboardEditMode::None => {}
                 KeyboardEditMode::Drone => {
-                    self.settings.drone = if let Some(drone) = self.settings.drone {
+                    self.preset.drone = if let Some(drone) = self.preset.drone {
                         if drone == note {
                             None
                         } else {
@@ -92,15 +92,15 @@ impl<'a> Keyboard<'a> {
                     }
                 }
                 KeyboardEditMode::RootNote => {
-                    self.settings.pitch = note.pitch();
+                    self.preset.pitch = note.pitch();
                 }
                 KeyboardEditMode::Scale => {
-                    let interval = note - self.settings.root_note();
+                    let interval = note - self.preset.root_note();
                     let interval = Interval::new(interval.semitones() % 12);
-                    if self.settings.scale.contains(interval) {
-                        self.settings.scale.remove(interval);
+                    if self.preset.scale.contains(interval) {
+                        self.preset.scale.remove(interval);
                     } else {
-                        self.settings.scale.push(interval);
+                        self.preset.scale.push(interval);
                     }
                 }
             }
@@ -110,8 +110,8 @@ impl<'a> Keyboard<'a> {
 
 impl<'a> Widget for Keyboard<'a> {
     fn ui(mut self, ui: &mut egui::Ui) -> egui::Response {
-        let start_octave = Octave::new_unchecked(self.settings.octave.clamp(-1, 8));
-        let displayed_octave_count = self.settings.octave_range + 1;
+        let start_octave = Octave::new_unchecked(self.preset.octave.clamp(-1, 8));
+        let displayed_octave_count = self.preset.octave_range + 1;
 
         let start_note = MidiNote::new(Pitch::C, start_octave).into_byte();
         let note_range = start_note..=start_note + 12 * displayed_octave_count;

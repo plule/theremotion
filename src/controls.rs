@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 use faust_state::{Node, RangedInput, StateHandle, WidgetType};
 
-use crate::settings::Settings;
+use crate::settings::Preset;
 
 /// Ability to exchange with the DSP state
 pub trait ControlTrait {
@@ -69,18 +69,18 @@ pub struct Controls {
 }
 
 impl Controls {
-    pub fn update_from_settings(&mut self, settings: &Settings) {
-        self.mix_master_volume.value = settings.master_volume;
-        self.mix_lead_volume.value = settings.lead_volume;
-        self.mix_pluck_volume.value = settings.guitar_volume;
-        self.mix_drone_volume.value = settings.drone_volume;
-        self.echo_duration.value = settings.echo_duration;
-        self.echo_feedback.value = settings.echo_feedback;
-        self.echo_mix.value = settings.echo_mix;
-        self.reverb_mix.value = settings.reverb_mix;
-        self.reverb_time.value = settings.reverb_time;
-        self.reverb_damp.value = settings.reverb_damp;
-        self.reverb_size.value = settings.reverb_size;
+    pub fn update_from_preset(&mut self, preset: &Preset) {
+        self.mix_master_volume.value = preset.mix.master;
+        self.mix_lead_volume.value = preset.mix.lead;
+        self.mix_pluck_volume.value = preset.mix.guitar;
+        self.mix_drone_volume.value = preset.mix.drone;
+        self.echo_duration.value = preset.fx.echo.duration;
+        self.echo_feedback.value = preset.fx.echo.feedback;
+        self.echo_mix.value = preset.fx.echo.mix;
+        self.reverb_mix.value = preset.fx.reverb.mix;
+        self.reverb_time.value = preset.fx.reverb.time;
+        self.reverb_damp.value = preset.fx.reverb.damp;
+        self.reverb_size.value = preset.fx.reverb.size;
     }
 }
 

@@ -26,14 +26,15 @@ pub fn start_leap_worker(
             if let Some(new_settings) = settings_rx.try_iter().last() {
                 settings = new_settings;
             }
-            controls.update_from_settings(&settings);
+            let preset = &settings.current_preset;
+            controls.update_from_preset(preset);
             match connection.poll(100) {
                 Ok(message) => {
                     if let Event::Tracking(e) = message.event() {
                         let full_scale =
-                            crate::music_theory::build_scale(settings.root_note(), settings.scale);
+                            crate::music_theory::build_scale(preset.root_note(), preset.scale);
 
-                        if let Some(drone) = settings.drone {
+                        if let Some(drone) = preset.drone {
                             controls.drone_note.value = drone.into_byte() as f32;
                             controls.drone_volume.value = 0.2;
                         } else {
@@ -58,7 +59,7 @@ pub fn start_leap_worker(
                             controls.raw_note = controls::convert_range(
                                 position.y(),
                                 note_input_range.to_owned(),
-                                &settings.note_range_f(),
+                                &preset.note_range_f(),
                             );
 
                             // Determine the played chord
@@ -81,7 +82,7 @@ pub fn start_leap_worker(
                             let note = crate::music_theory::autotune(
                                 controls.raw_note,
                                 controls.autotune,
-                                settings.scale_notes(),
+                                preset.scale_notes(),
                             );
 
                             let chord = [
@@ -91,8 +92,7 @@ pub fn start_leap_worker(
                                 crate::music_theory::auto_chord(note, &full_scale, 7),
                             ];
 
-                            let pluck_offset =
-                                12.0 * (settings.guitar_octave - settings.octave) as f32;
+                            let pluck_offset = 12.0 * (preset.guitar_octave - preset.octave) as f32;
 
                             for (i, note) in chord.iter().enumerate() {
                                 if let Some(note) = note {

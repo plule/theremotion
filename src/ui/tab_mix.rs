@@ -1,30 +1,30 @@
 use egui::{Slider, Widget};
 
-use crate::settings::Settings;
+use crate::settings::Preset;
 
 use super::NamedGroup;
 
 pub struct TabMix<'a> {
-    settings: &'a mut Settings,
+    preset: &'a mut Preset,
 }
 
 impl<'a> TabMix<'a> {
-    pub fn new(settings: &'a mut Settings) -> Self {
-        Self { settings }
+    pub fn new(preset: &'a mut Preset) -> Self {
+        Self { preset }
     }
 }
 
 impl Widget for TabMix<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        let Self { settings } = self;
+        let Self { preset } = self;
         ui.horizontal(|ui| {
             ui.named_group("Instruments", |ui| {
-                mix_slider(ui, "Lead", &mut settings.lead_volume);
-                mix_slider(ui, "Guitar", &mut settings.guitar_volume);
-                mix_slider(ui, "Drone", &mut settings.drone_volume);
+                mix_slider(ui, "Lead", &mut preset.mix.lead);
+                mix_slider(ui, "Guitar", &mut preset.mix.guitar);
+                mix_slider(ui, "Drone", &mut preset.mix.drone);
             });
             ui.named_group("", |ui| {
-                mix_slider(ui, "Master", &mut settings.master_volume);
+                mix_slider(ui, "Master", &mut preset.mix.master);
             });
         })
         .response

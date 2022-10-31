@@ -1,5 +1,6 @@
 use std::ops::RangeInclusive;
 
+use eframe::epaint::ahash::HashMap;
 use serde::{Deserialize, Serialize};
 use staff::{
     midi::{MidiNote, Octave},
@@ -8,8 +9,20 @@ use staff::{
 };
 
 /// Application settings
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct Settings {
+    /// Current sound settings
+    #[serde(default)]
+    pub current_preset: Preset,
+
+    /// Saved presets
+    #[serde(default)]
+    pub presets: HashMap<String, Preset>,
+}
+
+/// Sound preset
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub struct Preset {
     /// Octave of the root note
     pub octave: i8,
 
@@ -26,24 +39,45 @@ pub struct Settings {
     pub scale: ScaleIntervals,
 
     /// Current drone
+    #[serde(default)]
     pub drone: Option<MidiNote>,
 
-    /// echo
-    pub echo_mix: f32,
-    pub echo_duration: f32,
-    pub echo_feedback: f32,
+    #[serde(default)]
+    pub mix: MixSettings,
 
-    // reverb
-    pub reverb_mix: f32,
-    pub reverb_time: f32,
-    pub reverb_damp: f32,
-    pub reverb_size: f32,
+    #[serde(default)]
+    pub fx: FxSettings,
+}
 
-    /// Mix
-    pub master_volume: f32,
-    pub lead_volume: f32,
-    pub guitar_volume: f32,
-    pub drone_volume: f32,
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub struct MixSettings {
+    pub master: f32,
+    pub lead: f32,
+    pub guitar: f32,
+    pub drone: f32,
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct FxSettings {
+    #[serde(default)]
+    pub echo: EchoSettings,
+    #[serde(default)]
+    pub reverb: ReverbSettings,
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub struct EchoSettings {
+    pub mix: f32,
+    pub duration: f32,
+    pub feedback: f32,
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub struct ReverbSettings {
+    pub mix: f32,
+    pub time: f32,
+    pub damp: f32,
+    pub size: f32,
 }
 
 impl Settings {
@@ -67,7 +101,9 @@ impl Settings {
             .unwrap();
         serde_yaml::to_writer(f, &self).unwrap();
     }
+}
 
+impl Preset {
     pub fn root_note(&self) -> MidiNote {
         MidiNote::new(self.pitch, Octave::new_unchecked(self.octave.clamp(-1, 8)))
     }
@@ -94,7 +130,7 @@ impl Settings {
     }
 }
 
-impl Default for Settings {
+impl Default for Preset {
     fn default() -> Self {
         Self {
             octave: 3,
@@ -103,17 +139,40 @@ impl Default for Settings {
             octave_range: 3,
             scale: ScaleIntervals::all(),
             drone: None,
-            echo_mix: 1.0,
-            echo_duration: 0.3,
-            echo_feedback: 0.3,
-            reverb_mix: 0.11,
-            reverb_time: 3.5,
-            reverb_damp: 0.88,
-            reverb_size: 5.0,
-            master_volume: 1.0,
-            lead_volume: 1.0,
-            guitar_volume: 1.0,
-            drone_volume: 1.0,
+            mix: Default::default(),
+            fx: Default::default(),
+        }
+    }
+}
+
+impl Default for MixSettings {
+    fn default() -> Self {
+        Self {
+            master: 1.0,
+            lead: 1.0,
+            guitar: 1.0,
+            drone: 1.0,
+        }
+    }
+}
+
+impl Default for EchoSettings {
+    fn default() -> Self {
+        Self {
+            mix: 1.0,
+            duration: 0.3,
+            feedback: 0.3,
+        }
+    }
+}
+
+impl Default for ReverbSettings {
+    fn default() -> Self {
+        Self {
+            mix: 0.11,
+            time: 3.5,
+            damp: 0.88,
+            size: 5.0,
         }
     }
 }
