@@ -1,0 +1,122 @@
+current_preset:
+  name: Shine on You Crazy Diamond
+  octave: 2
+  guitar_octave: 2
+  pitch: G
+  octave_range: 3
+  scale:
+    bits: 1453
+    _marker: null
+  drone: 43
+  mix:
+    master: 1.0
+    lead: 1.0
+    guitar: 1.0
+    drone: 1.0
+  fx:
+    echo:
+      mix: 0.0
+      duration: 0.3
+      feedback: 0.3
+    reverb:
+      mix: 0.15
+      time: 7.0000005
+      damp: 0.92
+      size: 2.45
+presets:
+- name: Mystic Freygish
+  octave: 2
+  guitar_octave: 3
+  pitch: D
+  octave_range: 3
+  scale:
+    bits: 1459
+    _marker: null
+  drone: 50
+  mix:
+    master: 1.0
+    lead: 1.0
+    guitar: 1.0
+    drone: 1.0
+  fx:
+    echo:
+      mix: 1.0
+      duration: 0.3
+      feedback: 0.46
+    reverb:
+      mix: 0.27
+      time: 13.500001
+      damp: 0.88
+      size: 5.0
+- name: Shine on You Crazy Diamond
+  octave: 2
+  guitar_octave: 2
+  pitch: G
+  octave_range: 3
+  scale:
+    bits: 1453
+    _marker: null
+  drone: 43
+  mix:
+    master: 1.0
+    lead: 1.0
+    guitar: 1.0
+    drone: 1.0
+  fx:
+    echo:
+      mix: 0.0
+      duration: 0.3
+      feedback: 0.3
+    reverb:
+      mix: 0.15
+      time: 7.0000005
+      damp: 0.92
+      size: 2.45
+- name: Becalmed
+  octave: 1
+  guitar_octave: 1
+  pitch: A
+  octave_range: 3
+  scale:
+    bits: 2741
+    _marker: null
+  drone: 52
+  mix:
+    master: 1.0
+    lead: 1.0
+    guitar: 1.0
+    drone: 1.0
+  fx:
+    echo:
+      mix: 1.0
+      duration: 0.3
+      feedback: 0.3
+    reverb:
+      mix: 0.07
+      time: 7.0000005
+      damp: 0.92
+      size: 2.45
+- name: Stitcher's Sorrow
+  octave: 3
+  guitar_octave: 2
+  pitch: CSharp
+  octave_range: 3
+  scale:
+    bits: 1453
+    _marker: null
+  drone: 49
+  mix:
+    master: 1.0
+    lead: 1.0
+    guitar: 1.0
+    drone: 1.0
+  fx:
+    echo:
+      mix: 1.0
+      duration: 0.43
+      feedback: 0.29000002
+    reverb:
+      mix: 0.0
+      time: 7.0000005
+      damp: 0.92
+      size: 2.45

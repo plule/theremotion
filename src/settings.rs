@@ -1,6 +1,5 @@
 use std::ops::RangeInclusive;
 
-use eframe::epaint::ahash::HashMap;
 use serde::{Deserialize, Serialize};
 use staff::{
     midi::{MidiNote, Octave},
@@ -17,12 +16,15 @@ pub struct Settings {
 
     /// Saved presets
     #[serde(default)]
-    pub presets: HashMap<String, Preset>,
+    pub presets: Vec<Preset>,
 }
 
 /// Sound preset
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct Preset {
+    /// Name of the preset
+    pub name: String,
+
     /// Octave of the root note
     pub octave: i8,
 
@@ -101,6 +103,18 @@ impl Settings {
             .unwrap();
         serde_yaml::to_writer(f, &self).unwrap();
     }
+
+    pub fn can_save_current_preset(&self) -> bool {
+        !self.presets.contains(&self.current_preset)
+    }
+
+    pub fn save_current_preset(&mut self) {
+        self.presets.push(self.current_preset.clone());
+    }
+
+    pub fn delete_preset(&mut self, name: &String) {
+        self.presets.retain_mut(|preset| preset.name != *name);
+    }
 }
 
 impl Preset {
@@ -133,6 +147,7 @@ impl Preset {
 impl Default for Preset {
     fn default() -> Self {
         Self {
+            name: "Default".to_string(),
             octave: 3,
             guitar_octave: 3,
             pitch: Pitch::C,

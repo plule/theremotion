@@ -4,6 +4,7 @@ mod tab_effects;
 mod tab_instructions;
 mod tab_mix;
 mod tab_play;
+mod tab_presets;
 mod tab_root_note;
 mod tab_scale;
 pub use app::*;
@@ -13,6 +14,7 @@ pub use tab_effects::*;
 pub use tab_instructions::*;
 pub use tab_mix::*;
 pub use tab_play::*;
+pub use tab_presets::*;
 pub use tab_root_note::*;
 pub use tab_scale::*;
 

@@ -22,6 +22,7 @@ pub enum MainTab {
     Scale,
     Mix,
     Effects,
+    Presets,
     Instructions,
 }
 
@@ -33,6 +34,7 @@ impl MainTab {
             MainTab::Scale => "Scale",
             MainTab::Mix => "Mix",
             MainTab::Effects => "Effects",
+            MainTab::Presets => "Presets",
             MainTab::Instructions => "Instructions",
         }
     }
@@ -44,6 +46,7 @@ impl MainTab {
             MainTab::Scale => "🎼",
             MainTab::Mix => "🎚️",
             MainTab::Effects => "🎛️",
+            MainTab::Presets => "💾",
             MainTab::Instructions => "ℹ",
         }
     }
@@ -66,10 +69,8 @@ impl MainTab {
                 controls,
                 &mut settings.current_preset,
             )),
-            MainTab::Instructions => ui.add(super::TabInstructions::new(
-                controls,
-                &mut settings.current_preset,
-            )),
+            MainTab::Presets => ui.add(super::TabPresets::new(settings)),
+            MainTab::Instructions => ui.add(super::TabInstructions::new()),
         };
     }
 }
