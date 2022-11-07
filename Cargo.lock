@@ -2217,7 +2217,7 @@ dependencies = [
 [[package]]
 name = "staff"
 version = "0.3.0"
-source = "git+https://github.com/matthunz/staff?branch=main#263b61503055e57aa45f9fc22b6bfc5576bad4b5"
+source = "git+https://github.com/matthunz/staff?branch=main#73e3b827f3aa037fb2e74b89a3378c176c386af6"
 dependencies = [
  "num-traits",
  "serde",
