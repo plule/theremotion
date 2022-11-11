@@ -1,6 +1,6 @@
 use std::os::windows::process::CommandExt;
 
-use egui::Widget;
+use egui::{ScrollArea, Widget};
 
 use crate::settings::{Preset, Settings};
 
@@ -43,7 +43,7 @@ impl Widget for TabPresets<'_> {
             });
 
             ui.separator();
-            ui.horizontal_wrapped(|ui| {
+            ScrollArea::vertical().show(ui, |ui| {
                 ui.selectable_value(
                     &mut self.settings.current_preset,
                     Preset::default(),
@@ -51,20 +51,23 @@ impl Widget for TabPresets<'_> {
                 );
                 let mut delete = None;
                 for preset in &self.settings.presets {
-                    ui.selectable_value(
-                        &mut self.settings.current_preset,
-                        preset.clone(),
-                        preset.name.clone(),
-                    );
-                    if &self.settings.current_preset == preset && ui.button("🗑").clicked() {
-                        delete = Some(preset.name.clone());
-                    }
+                    ui.horizontal(|ui| {
+                        if ui.button("🗑").clicked() {
+                            delete = Some(preset.name.clone());
+                        }
+                        ui.selectable_value(
+                            &mut self.settings.current_preset,
+                            preset.clone(),
+                            preset.name.clone(),
+                        );
+                        ui.add_space(ui.available_width());
+                    });
                 }
 
                 if let Some(delete) = delete {
                     self.settings.delete_preset(&delete);
                 }
-            })
+            });
         })
         .response
     }

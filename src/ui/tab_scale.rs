@@ -1,4 +1,4 @@
-use egui::Widget;
+use egui::{ScrollArea, Widget};
 use staff::scale::ScaleIntervals;
 
 use crate::{controls, scales::MoreScales, settings::Preset};
@@ -26,34 +26,23 @@ impl Widget for TabScale<'_> {
                 KeyboardEditMode::Scale,
             ));
             ui.separator();
-            ui.horizontal_wrapped(|ui| {
-                ui.spacing_mut().button_padding.x = 10.0;
-                ui.spacing_mut().button_padding.y = 10.0;
-                ui.selectable_value(&mut preset.scale, ScaleIntervals::all(), "🎼 Chromatic");
-                ui.selectable_value(&mut preset.scale, ScaleIntervals::major(), "🎼 Major");
-                ui.selectable_value(
-                    &mut preset.scale,
-                    ScaleIntervals::melodic_minor(),
-                    "🎼 Melodic Minor",
-                );
-                ui.selectable_value(
-                    &mut preset.scale,
-                    ScaleIntervals::harmonic_minor(),
-                    "🎼 Harmonic Minor",
-                );
-                ui.selectable_value(
-                    &mut preset.scale,
-                    ScaleIntervals::natural_minor(),
-                    "🎼 Natural Minor",
-                );
-                ui.selectable_value(&mut preset.scale, ScaleIntervals::dorian(), "🎼 Dorian");
-                ui.selectable_value(&mut preset.scale, ScaleIntervals::blues(), "🎼 Blues");
-                ui.selectable_value(&mut preset.scale, ScaleIntervals::freygish(), "🎼 Freygish");
-                ui.selectable_value(
-                    &mut preset.scale,
-                    ScaleIntervals::altered_dorian(),
-                    "🎼 Altered Dorian",
-                );
+            ScrollArea::vertical().show(ui, |ui| {
+                for (name, scale) in [
+                    ("Chromatic", ScaleIntervals::all()),
+                    ("Major", ScaleIntervals::major()),
+                    ("Melodic Minor", ScaleIntervals::melodic_minor()),
+                    ("Harmonic Minor", ScaleIntervals::harmonic_minor()),
+                    ("Natural Minor", ScaleIntervals::natural_minor()),
+                    ("Dorian", ScaleIntervals::dorian()),
+                    ("Blues", ScaleIntervals::blues()),
+                    ("Freygish", ScaleIntervals::freygish()),
+                    ("Altered Dorian", ScaleIntervals::altered_dorian()),
+                ] {
+                    ui.horizontal(|ui| {
+                        ui.selectable_value(&mut preset.scale, scale, format!("🎼 {}", name));
+                        ui.add_space(ui.available_width());
+                    });
+                }
             });
         })
         .response

@@ -123,6 +123,8 @@ impl App {
         .into();
         style.spacing.interact_size = egui::vec2(64.0, 64.0);
         style.spacing.slider_width = 280.0;
+        style.spacing.button_padding.x = 10.0;
+        style.spacing.button_padding.y = 10.0;
         cc.egui_ctx.set_style(style);
 
         let controls = dsp_controls_rx.recv().unwrap();
