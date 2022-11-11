@@ -64,13 +64,23 @@ pub fn start_leap_worker(
 
                             // Determine the played chord
                             let z = position.z();
-                            let chord = [true, z < 0.0, z < -50.0, z < -100.0];
-                            let monophonic = chord.iter().filter(|c| **c).count() == 1;
-                            controls.lead.iter_mut().enumerate().for_each(|(i, note)| {
-                                note.volume.value = if chord[i] { 1.0 } else { 0.0 };
-                            });
-                            lead_pluck_enabled = monophonic;
-                            lead_strum_enabled = chord.map(|c| c && !monophonic);
+                            controls.lead[0].volume.value = 1.0;
+                            controls
+                                .lead
+                                .iter_mut()
+                                .enumerate()
+                                .skip(1)
+                                .for_each(|(i, note)| {
+                                    let from = 100.0 - 50.0 * i as f32;
+                                    let to = 50.0 - 50.0 * i as f32;
+                                    note.volume.set_scaled(z, from..=to);
+                                });
+                            lead_pluck_enabled =
+                                controls.lead.iter().skip(1).all(|c| c.volume.value < 0.5);
+                            lead_strum_enabled = controls
+                                .lead
+                                .clone()
+                                .map(|c| c.volume.value >= 0.5 && !lead_pluck_enabled);
 
                             controls.autotune = controls::convert_range(
                                 hand.pinch_strength(),
