@@ -1,13 +1,11 @@
 current_preset:
-  name: Shine on You Crazy Diamond
+  name: Mystic Freygish
   octave: 2
-  guitar_octave: 2
-  pitch: G
+  guitar_octave: 3
+  pitch: D
   octave_range: 3
-  scale:
-    bits: 1453
-    _marker: null
-  drone: 43
+  scale: 1459
+  drone: 50
   mix:
     master: 1.0
     lead: 1.0
@@ -15,23 +13,21 @@ current_preset:
     drone: 1.0
   fx:
     echo:
-      mix: 0.0
+      mix: 1.0
       duration: 0.3
-      feedback: 0.3
+      feedback: 0.46
     reverb:
-      mix: 0.15
-      time: 7.0000005
-      damp: 0.92
-      size: 2.45
+      mix: 0.27
+      time: 13.500001
+      damp: 0.88
+      size: 5.0
 presets:
 - name: Mystic Freygish
   octave: 2
   guitar_octave: 3
   pitch: D
   octave_range: 3
-  scale:
-    bits: 1459
-    _marker: null
+  scale: 1459
   drone: 50
   mix:
     master: 1.0
@@ -53,9 +49,7 @@ presets:
   guitar_octave: 2
   pitch: G
   octave_range: 3
-  scale:
-    bits: 1453
-    _marker: null
+  scale: 1453
   drone: 43
   mix:
     master: 1.0
@@ -77,9 +71,7 @@ presets:
   guitar_octave: 1
   pitch: A
   octave_range: 3
-  scale:
-    bits: 2741
-    _marker: null
+  scale: 2741
   drone: 52
   mix:
     master: 1.0
@@ -101,9 +93,7 @@ presets:
   guitar_octave: 2
   pitch: CSharp
   octave_range: 3
-  scale:
-    bits: 1453
-    _marker: null
+  scale: 1453
   drone: 49
   mix:
     master: 1.0
