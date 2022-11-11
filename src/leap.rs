@@ -133,7 +133,10 @@ pub fn start_leap_worker(
                 }
             }
             controls.send(&mut dsp);
-            dsp_controls_tx.send(controls.clone()).unwrap();
+            let stopped = dsp_controls_tx.send(controls.clone()).is_err();
+            if stopped {
+                return;
+            }
         }
     })
 }
