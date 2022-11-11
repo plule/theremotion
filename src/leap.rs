@@ -150,19 +150,3 @@ pub fn start_leap_worker(
         }
     })
 }
-
-trait FingerPositions {
-    fn get_finger_positions(&self) -> (bool, bool, bool, bool, bool);
-}
-
-impl FingerPositions for Hand<'_> {
-    fn get_finger_positions(&self) -> (bool, bool, bool, bool, bool) {
-        (
-            self.thumb().is_extended(),
-            self.index().is_extended(),
-            self.middle().is_extended(),
-            self.ring().is_extended(),
-            self.pinky().is_extended(),
-        )
-    }
-}
