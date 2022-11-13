@@ -2343,7 +2343,7 @@ dependencies = [
 
 [[package]]
 name = "theremotion"
-version = "0.1.17"
+version = "0.1.18-dev"
 dependencies = [
  "clap",
  "cpal",
