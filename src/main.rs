@@ -25,20 +25,49 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 #[clap(author, version, about, long_about = None)]
 struct Args {
     /// Start Theremotion in full screen
-    #[clap(long, value_parser, default_value_t = false)]
+    #[clap(
+        long,
+        value_parser,
+        default_value_t = false,
+        env = "THEREMOTION_FULLSCREEN"
+    )]
     fullscreen: bool,
 
     /// Initial X position of the window
-    #[clap(long, value_parser, default_value_t = 0)]
+    #[clap(
+        long,
+        value_parser,
+        default_value_t = 0,
+        env = "THEREMOTION_WINDOWS_POSITION_X"
+    )]
     window_position_x: i32,
 
     /// Initial Y position of the window
-    #[clap(long, value_parser, default_value_t = 0)]
+    #[clap(
+        long,
+        value_parser,
+        default_value_t = 0,
+        env = "THEREMOTION_WINDOWS_POSITION_Y"
+    )]
     window_position_y: i32,
 
     /// Execute tabtip.exe on Windows to prompt the touchscreen keyboard
-    #[clap(long, value_parser, default_value_t = false)]
+    #[clap(
+        long,
+        value_parser,
+        default_value_t = false,
+        env = "THEREMOTION_TABTIP"
+    )]
     tabtip: bool,
+
+    /// Set the process as high priority
+    #[clap(
+        long,
+        value_parser,
+        default_value_t = false,
+        env = "THEREMOTION_HIGH_PRIORITY"
+    )]
+    high_priority: bool,
 }
 
 fn main() {
@@ -46,6 +75,16 @@ fn main() {
     tracing_subscriber::fmt::init();
 
     let args = Args::parse();
+
+    if args.high_priority {
+        unsafe {
+            let process = windows::Win32::System::Threading::GetCurrentProcess();
+            windows::Win32::System::Threading::SetPriorityClass(
+                process,
+                windows::Win32::System::Threading::REALTIME_PRIORITY_CLASS,
+            );
+        }
+    }
 
     // Init communication channels
     let (settings_tx, settings_rx) = crossbeam_channel::unbounded(); // UI to Leap

@@ -23,9 +23,10 @@ nalgebra = "0.31"
 staff = { git = "https://github.com/matthunz/staff", branch="main", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"
-clap = { version = "4", features = ["derive"] }
+clap = { version = "4", features = ["derive", "env"] }
 default-boxed = "0.2"
 strum = { version = "0.24", features = ["strum_macros", "derive"] }
+windows = { version = "0.43.0", features = ["Win32_System_Threading", "Win32_Foundation"] }
 
 [dev-dependencies]
 rstest = "0.15"
