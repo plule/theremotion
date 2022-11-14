@@ -2344,7 +2344,7 @@ dependencies = [
 
 [[package]]
 name = "theremotion"
-version = "0.1.18-dev"
+version = "0.1.18"
 dependencies = [
  "clap",
  "cpal",
