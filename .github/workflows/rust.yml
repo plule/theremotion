@@ -80,14 +80,8 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         generateReleaseNotes: true
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          orion/theremotion-orion.zip
-          orion/theremotion-orion.exe
-          gemini/theremotion-gemini.zip
-          gemini/theremotion-gemini.exe
+        artifacts: orion/theremotion-orion.zip,orion/theremotion-orion.exe,gemini/theremotion-gemini.zip,gemini/theremotion-gemini.exe
+        draft: true
 
   dependabot:
     name: 'Dependabot automerge'
