@@ -3,7 +3,13 @@ use std::path::PathBuf;
 use faust_build::build_dsp;
 
 fn main() {
-    println!("cargo:rerun-if-changed=dsp");
+    #[cfg(feature = "leap")]
+    setup_leapsdk_link();
+    dsp_regen();
+}
+
+#[cfg(feature = "leap")]
+fn setup_leapsdk_link() {
     println!(r"cargo:rerun-if-env-changed=LEAPSDK_LIB_PATH");
 
     let leapsdk_path = std::env::var("LEAPSDK_LIB_PATH")
@@ -22,7 +28,10 @@ fn main() {
         println!(r"cargo:rustc-link-search={}", path_str);
         println!(r"cargo:rustc-link-lib=static=LeapC");
     }
+}
 
+fn dsp_regen() {
+    println!("cargo:rerun-if-changed=dsp");
     if std::env::var("THEREMOTION_REGEN_DSP").is_ok() {
         build_dsp("dsp/instrument.dsp");
 

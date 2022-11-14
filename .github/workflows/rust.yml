@@ -14,8 +14,8 @@ env:
   LEAPSDK_LIB_PATH: leap-sdk-redist/LeapSDK/lib/x64
 
 jobs:
-  clippy:
-    name: clippy
+  tests:
+    name: tests
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
@@ -24,6 +24,8 @@ jobs:
         run: cargo fmt -- --check
       - name: Clippy
         run: cargo clippy -- -D warnings
+      - name: Tests
+        run: cargo test --no-default-features --features default-boxed
   build:
     strategy:
       matrix:
@@ -66,7 +68,7 @@ jobs:
   release:
     needs:
       - build
-      - clippy
+      - tests
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -90,8 +92,8 @@ jobs:
   dependabot:
     name: 'Dependabot automerge'
     needs:
-      - clippy
       - build
+      - tests
     permissions:
       pull-requests: write
       contents: write

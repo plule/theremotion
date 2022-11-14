@@ -1,8 +1,10 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
+#![cfg_attr(not(feature = "leap"), allow(dead_code))] // When building without leap support for tests, allow dead code
 
 mod controls;
 mod dsp_thread;
+#[cfg(feature = "leap")]
 mod leap;
 mod music_theory;
 mod scales;
@@ -118,4 +120,24 @@ fn main() {
         native_options,
         Box::new(move |cc| Box::new(ui::App::new(cc, dsp_controls_rx, settings_tx, args.tabtip))),
     );
+}
+
+/// Fake leap module to be able to run tests without having the Leap SDK
+#[cfg(not(feature = "leap"))]
+mod leap {
+    use std::thread;
+
+    use crossbeam_channel::{Receiver, Sender};
+    use faust_state::StateHandle;
+
+    use crate::{controls, settings::Settings};
+
+    /// Start the leap motion thread
+    pub fn start_leap_worker(
+        mut _dsp: StateHandle,
+        _settings_rx: Receiver<Settings>,
+        _dsp_controls_tx: Sender<controls::Controls>,
+    ) -> thread::JoinHandle<()> {
+        unimplemented!()
+    }
 }
