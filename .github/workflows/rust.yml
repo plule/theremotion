@@ -29,9 +29,7 @@ jobs:
       matrix:
         include:
           - sdk-ver: gemini
-            cargo-features: --no-default-features --features default-boxed --features gemini
           - sdk-ver: orion
-            cargo-features: --no-default-features --features default-boxed
     name: build
     if: eq(${{ github.repository }}, "plule/theremotion") # no secrets in clones
     runs-on: windows-latest
@@ -46,7 +44,7 @@ jobs:
         path: leap-sdk-redist
     - uses: Swatinem/rust-cache@v1
     - name: Build
-      run: cargo build --release ${{ matrix.cargo-features }}
+      run: cargo build --release
     - name: Prepare release
       run: |
         mkdir -p theremotion-${{ matrix.sdk-ver }}

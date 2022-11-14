@@ -6,8 +6,7 @@ edition = "2021"
 rust-version = "1.60"
 
 [features]
-default = ["gemini", "default-boxed"]
-gemini = ["leaprs/gemini"]
+default = ["default-boxed"]
 default-boxed = []
 
 [dependencies]
