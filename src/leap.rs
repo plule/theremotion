@@ -34,13 +34,6 @@ pub fn start_leap_worker(
                         let full_scale =
                             crate::music_theory::build_scale(preset.root_note(), preset.scale);
 
-                        if let Some(drone) = preset.drone {
-                            controls.drone_note.value = drone.into_byte() as f32;
-                            controls.drone_volume.value = 0.2;
-                        } else {
-                            controls.drone_volume.value = 0.0;
-                        }
-
                         let hands = e.hands();
 
                         let left_hand = hands.iter().find(|h| h.hand_type() == HandType::Left);

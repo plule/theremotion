@@ -5,12 +5,17 @@ current_preset:
   pitch: D
   octave_range: 3
   scale: 1459
-  drone: 50
+  drone:
+    notes:
+    - 50
+    - null
+    - null
+    - null
   mix:
     master: 1.0
     lead: 1.0
     guitar: 1.0
-    drone: 1.0
+    drone: 0.4
   fx:
     echo:
       mix: 1.0
@@ -28,12 +33,17 @@ presets:
   pitch: D
   octave_range: 3
   scale: 1459
-  drone: 50
+  drone:
+    notes:
+    - 50
+    - null
+    - null
+    - null
   mix:
     master: 1.0
     lead: 1.0
     guitar: 1.0
-    drone: 1.0
+    drone: 0.4
   fx:
     echo:
       mix: 1.0
@@ -50,12 +60,17 @@ presets:
   pitch: G
   octave_range: 3
   scale: 1453
-  drone: 43
+  drone:
+    notes:
+    - 43
+    - null
+    - null
+    - null
   mix:
     master: 1.0
     lead: 1.0
     guitar: 1.0
-    drone: 1.0
+    drone: 0.4
   fx:
     echo:
       mix: 0.0
@@ -72,12 +87,17 @@ presets:
   pitch: A
   octave_range: 3
   scale: 2741
-  drone: 52
+  drone:
+    notes:
+    - 52
+    - null
+    - null
+    - null
   mix:
     master: 1.0
     lead: 1.0
     guitar: 1.0
-    drone: 1.0
+    drone: 0.4
   fx:
     echo:
       mix: 1.0
@@ -94,12 +114,17 @@ presets:
   pitch: CSharp
   octave_range: 3
   scale: 1453
-  drone: 49
+  drone:
+    notes:
+    - 49
+    - null
+    - null
+    - null
   mix:
     master: 1.0
     lead: 1.0
     guitar: 1.0
-    drone: 1.0
+    drone: 0.4
   fx:
     echo:
       mix: 1.0

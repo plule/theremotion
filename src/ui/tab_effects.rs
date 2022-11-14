@@ -54,6 +54,13 @@ impl Widget for TabEffects<'_> {
                         .text("Size"),
                 );
             });
+
+            ui.named_group("Drone", |ui| {
+                ui.add(
+                    Slider::from_control(&controls.drone_detune, &mut preset.drone.detune)
+                        .text("Detune"),
+                );
+            });
         })
         .response
     }

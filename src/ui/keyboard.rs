@@ -51,7 +51,13 @@ impl<'a> Keyboard<'a> {
             let note_distance = (note_float - played_note.note.value).abs().clamp(0.0, 1.0);
             red = red.max(((1.0 - note_distance) * 255.0 * played_note.volume.value) as u8);
         }
-        let green = if matches!(self.preset.drone, Some(drone) if drone == *note) {
+        let green = if self
+            .preset
+            .drone
+            .notes
+            .iter()
+            .any(|drone_note| drone_note.iter().any(|drone_note| note == drone_note))
+        {
             255
         } else {
             0
@@ -81,14 +87,16 @@ impl<'a> Keyboard<'a> {
             match self.edit_mode {
                 KeyboardEditMode::None => {}
                 KeyboardEditMode::Drone => {
-                    self.preset.drone = if let Some(drone) = self.preset.drone {
-                        if drone == note {
-                            None
-                        } else {
-                            Some(note)
-                        }
+                    let drone_notes = &mut self.preset.drone.notes;
+                    if let Some(existing_drone) = drone_notes
+                        .iter_mut()
+                        .find(|n| n.iter().find(|n| **n == note).is_some())
+                    {
+                        *existing_drone = None;
                     } else {
-                        Some(note)
+                        if let Some(empty_slot) = drone_notes.iter_mut().find(|n| n.is_none()) {
+                            *empty_slot = Some(note);
+                        }
                     }
                 }
                 KeyboardEditMode::RootNote => {

@@ -25,10 +25,10 @@ pub struct Controls {
     pub strum: [PluckControl; 4],
     /// Guitar pluck damping
     pub pluck_mute: Control,
-    /// Drone volume
-    pub drone_volume: Control,
-    /// Drone note
-    pub drone_note: Control,
+    /// Drone detune
+    pub drone_detune: Control,
+    /// Drone notes
+    pub drone_notes: [NoteControl; 4],
     /// Global pitch bend (guitar+lead)
     pub pitch_bend: Control,
 
@@ -79,23 +79,33 @@ impl Controls {
         self.reverb_time.value = preset.fx.reverb.time;
         self.reverb_damp.value = preset.fx.reverb.damp;
         self.reverb_size.value = preset.fx.reverb.size;
+        self.drone_detune.value = preset.drone.detune;
+        preset
+            .drone
+            .notes
+            .iter()
+            .zip(&mut self.drone_notes)
+            .for_each(|(note, control)| {
+                if let Some(note) = note {
+                    control.volume.value = 1.0;
+                    control.note.value = note.into_byte() as f32;
+                } else {
+                    control.volume.value = 0.0;
+                }
+            });
     }
 }
 
 impl ControlTrait for Controls {
     fn send(&mut self, state: &mut StateHandle) {
-        for note in &mut self.lead {
-            note.send(state);
-        }
+        self.lead.iter_mut().for_each(|n| n.send(state));
         self.lead_volume.send(state);
         self.cutoff_note.send(state);
         self.resonance.send(state);
-        for string in &mut self.strum {
-            string.send(state);
-        }
+        self.strum.iter_mut().for_each(|n| n.send(state));
         self.pluck_mute.send(state);
-        self.drone_volume.send(state);
-        self.drone_note.send(state);
+        self.drone_detune.send(state);
+        self.drone_notes.iter_mut().for_each(|n| n.send(state));
         self.pitch_bend.send(state);
         self.mix_master_volume.send(state);
         self.mix_lead_volume.send(state);
@@ -144,8 +154,18 @@ impl From<&StateHandle> for Controls {
                     .into()
             }),
             pluck_mute: state.node_by_path("pluck/mute").unwrap().into(),
-            drone_volume: state.node_by_path("drone/volume").unwrap().into(),
-            drone_note: state.node_by_path("drone/note").unwrap().into(),
+            drone_detune: state.node_by_path("drone/detune").unwrap().into(),
+            drone_notes: [0, 1, 2, 3].map(|i| {
+                (
+                    state
+                        .node_by_path(format!("drone/{}/note", i).as_str())
+                        .unwrap(),
+                    state
+                        .node_by_path(format!("drone/{}/volume", i).as_str())
+                        .unwrap(),
+                )
+                    .into()
+            }),
             pitch_bend: state.node_by_path("pluck/pitchBend").unwrap().into(),
             echo_mix: state.node_by_path("fx/echo/mix").unwrap().into(),
             echo_duration: state.node_by_path("fx/echo/duration").unwrap().into(),

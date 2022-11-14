@@ -42,7 +42,7 @@ pub struct Preset {
 
     /// Current drone
     #[serde(default)]
-    pub drone: Option<MidiNote>,
+    pub drone: DroneSettings,
 
     #[serde(default)]
     pub mix: MixSettings,
@@ -80,6 +80,21 @@ pub struct ReverbSettings {
     pub time: f32,
     pub damp: f32,
     pub size: f32,
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub struct DroneSettings {
+    pub notes: [Option<MidiNote>; 4],
+    pub detune: f32,
+}
+
+impl Default for DroneSettings {
+    fn default() -> Self {
+        Self {
+            notes: Default::default(),
+            detune: 0.1,
+        }
+    }
 }
 
 impl Settings {
@@ -153,7 +168,7 @@ impl Default for Preset {
             pitch: Pitch::C,
             octave_range: 3,
             scale: ScaleIntervals::all(),
-            drone: None,
+            drone: Default::default(),
             mix: Default::default(),
             fx: Default::default(),
         }
@@ -166,7 +181,7 @@ impl Default for MixSettings {
             master: 1.0,
             lead: 1.0,
             guitar: 1.0,
-            drone: 1.0,
+            drone: 0.4,
         }
     }
 }

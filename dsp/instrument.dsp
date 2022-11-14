@@ -47,11 +47,16 @@ with {
 };
 
 // Drone
-drone = (osc(note) + osc(note+12.10) + osc(note-12.11) + osc(note + 7.12)) * volume
+droneNote(detune) = osc(note) + osc(note+detune) + osc(note-detune) : _ * volume
 with {
     volume = hslider("[0]volume", 0, 0, 1, 0.001) : si.smoo;
     note = hslider("[1]note", 60, 0, 127, 0.001) : si.smoo;
     osc(note) = os.triangle(ba.midikey2hz(note)) / 5;
+};
+
+drone = detune <: par(i, 4, vgroup("[1]%i", droneNote)) :> _
+with {
+    detune = hslider("[0]detune", 0.1, 0, 0.3, 0.001);
 };
 
 echo(s) = s <: ef.echo(10.0, duration, feedback) * mix, s * (1-mix) :> _
