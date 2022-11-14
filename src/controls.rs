@@ -21,8 +21,6 @@ pub struct Controls {
     pub cutoff_note: Control,
     /// Filter resonance
     pub resonance: Control,
-    /// Guitar pluck lead note
-    pub pluck_lead: PluckControl,
     /// Guitar strum
     pub strum: [PluckControl; 4],
     /// Guitar pluck damping
@@ -92,7 +90,6 @@ impl ControlTrait for Controls {
         self.lead_volume.send(state);
         self.cutoff_note.send(state);
         self.resonance.send(state);
-        self.pluck_lead.send(state);
         for string in &mut self.strum {
             string.send(state);
         }
@@ -135,11 +132,6 @@ impl From<&StateHandle> for Controls {
             lead_volume: state.node_by_path("lead/volume").unwrap().into(),
             cutoff_note: state.node_by_path("lead/cutoffNote").unwrap().into(),
             resonance: state.node_by_path("lead/res").unwrap().into(),
-            pluck_lead: (
-                state.node_by_path("pluck/note").unwrap(),
-                state.node_by_path("pluck/gate").unwrap(),
-            )
-                .into(),
             strum: [0, 1, 2, 3].map(|i| {
                 (
                     state

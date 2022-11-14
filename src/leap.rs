@@ -47,8 +47,7 @@ pub fn start_leap_worker(
                         let right_hand = hands.iter().find(|h| h.hand_type() == HandType::Right);
                         controls.has_hands = (left_hand.is_some(), right_hand.is_some());
 
-                        let mut lead_pluck_enabled = true;
-                        let mut lead_strum_enabled = [false, false, false, false];
+                        let mut strums_enabled = [false, false, false, false];
 
                         if let Some(hand) = left_hand {
                             let position = hand.palm().position();
@@ -75,12 +74,8 @@ pub fn start_leap_worker(
                                     let to = 50.0 - 50.0 * i as f32;
                                     note.volume.set_scaled(z, from..=to);
                                 });
-                            lead_pluck_enabled =
-                                controls.lead.iter().skip(1).all(|c| c.volume.value < 0.5);
-                            lead_strum_enabled = controls
-                                .lead
-                                .clone()
-                                .map(|c| c.volume.value >= 0.5 && !lead_pluck_enabled);
+
+                            strums_enabled = controls.lead.clone().map(|c| c.volume.value >= 0.5);
 
                             controls.autotune = controls::convert_range(
                                 hand.pinch_strength(),
@@ -111,7 +106,6 @@ pub fn start_leap_worker(
                                 }
                             }
 
-                            controls.pluck_lead.note.value = note + pluck_offset;
                             controls
                                 .pitch_bend
                                 .set_scaled(velocity.x() + velocity.z(), -300.0..=300.0);
@@ -123,12 +117,9 @@ pub fn start_leap_worker(
                             let palm_normal = Vector3::from(hand.palm().normal().array());
                             let palm_dot = palm_normal.dot(&Vector3::y());
                             if hand.pinch_strength() > 0.9 {
-                                controls.pluck_lead.pluck.value =
-                                    palm_dot > 0.0 && lead_pluck_enabled;
-
                                 for (i, string) in &mut controls.strum.iter_mut().enumerate() {
                                     string.pluck.value =
-                                        palm_dot > 0.0 + (i as f32) * 0.2 && lead_strum_enabled[i];
+                                        palm_dot > 0.0 + (i as f32) * 0.2 && strums_enabled[i];
                                 }
                             }
                             controls.pluck_mute.set_scaled(palm_dot, -1.0..=0.0);
