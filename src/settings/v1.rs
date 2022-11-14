@@ -97,41 +97,6 @@ impl Default for DroneSettings {
     }
 }
 
-impl Settings {
-    pub fn try_read() -> Option<Self> {
-        let f = std::fs::File::open("settings.yaml").ok()?;
-        let settings: Settings = serde_yaml::from_reader(f).ok()?;
-        Some(settings)
-    }
-
-    pub fn read() -> Self {
-        Self::try_read().unwrap_or_default()
-    }
-
-    pub fn save(&self) {
-        let f = std::fs::OpenOptions::new()
-            .write(true)
-            .truncate(true)
-            .create(true)
-            .open("settings.yaml")
-            .ok()
-            .unwrap();
-        serde_yaml::to_writer(f, &self).unwrap();
-    }
-
-    pub fn can_save_current_preset(&self) -> bool {
-        !self.presets.contains(&self.current_preset)
-    }
-
-    pub fn save_current_preset(&mut self) {
-        self.presets.push(self.current_preset.clone());
-    }
-
-    pub fn delete_preset(&mut self, name: &String) {
-        self.presets.retain_mut(|preset| preset.name != *name);
-    }
-}
-
 impl Preset {
     pub fn root_note(&self) -> MidiNote {
         MidiNote::new(self.pitch, Octave::new_unchecked(self.octave.clamp(-1, 8)))

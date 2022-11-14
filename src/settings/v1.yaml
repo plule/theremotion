@@ -1,0 +1,59 @@
+!V1
+current_preset:
+  name: Current
+  octave: 2
+  guitar_octave: 3
+  pitch: D
+  octave_range: 3
+  scale: 1459
+  drone:
+    notes:
+    - 50
+    - null
+    - null
+    - null
+    detune: 0.1
+  mix:
+    master: 1.0
+    lead: 1.0
+    guitar: 1.0
+    drone: 0.4
+  fx:
+    echo:
+      mix: 1.0
+      duration: 0.3
+      feedback: 0.46
+    reverb:
+      mix: 0.27
+      time: 13.500001
+      damp: 0.88
+      size: 5.0
+presets:
+- name: First
+  octave: 2
+  guitar_octave: 3
+  pitch: D
+  octave_range: 3
+  scale: 1459
+  drone:
+    notes:
+    - 50
+    - null
+    - null
+    - null
+    detune: 0.1
+  mix:
+    master: 1.0
+    lead: 1.0
+    guitar: 1.0
+    drone: 0.4
+  fx:
+    echo:
+      mix: 1.0
+      duration: 0.3
+      feedback: 0.46
+    reverb:
+      mix: 0.27
+      time: 13.500001
+      damp: 0.88
+      size: 5.0

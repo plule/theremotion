@@ -1,3 +1,4 @@
+!V1
 current_preset:
   name: Mystic Freygish
   octave: 2
@@ -11,6 +12,7 @@ current_preset:
     - null
     - null
     - null
+    detune: 0.1
   mix:
     master: 1.0
     lead: 1.0
@@ -39,6 +41,7 @@ presets:
     - null
     - null
     - null
+    detune: 0.1
   mix:
     master: 1.0
     lead: 1.0
@@ -66,6 +69,7 @@ presets:
     - null
     - null
     - null
+    detune: 0.1
   mix:
     master: 1.0
     lead: 1.0
@@ -93,6 +97,7 @@ presets:
     - null
     - null
     - null
+    detune: 0.1
   mix:
     master: 1.0
     lead: 1.0
@@ -120,6 +125,7 @@ presets:
     - null
     - null
     - null
+    detune: 0.1
   mix:
     master: 1.0
     lead: 1.0
