@@ -101,7 +101,7 @@ fn main() {
     stream.play().expect("Failed to play stream");
 
     // Init leap thread
-    let _leap_worker = leap::start_leap_worker(state, settings_rx, dsp_controls_tx);
+    let leap_worker = leap::start_leap_worker(state, settings_rx, dsp_controls_tx);
 
     // Start UI
     let native_options = eframe::NativeOptions {
@@ -120,6 +120,10 @@ fn main() {
         native_options,
         Box::new(move |cc| Box::new(ui::App::new(cc, dsp_controls_rx, settings_tx, args.tabtip))),
     );
+
+    leap_worker
+        .join()
+        .expect("Error when stopping the leap worker");
 }
 
 /// Fake leap module to be able to run tests without having the Leap SDK
