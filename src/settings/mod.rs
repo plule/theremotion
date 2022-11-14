@@ -5,6 +5,7 @@ pub type Settings = v1::Settings;
 pub type Preset = v1::Preset;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
 enum Version {
     V1(v1::Settings),
 }
@@ -63,6 +64,7 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use rstest::rstest;
+    use staff::midi::MidiNote;
 
     use super::*;
 
@@ -73,9 +75,12 @@ mod tests {
         assert_eq!("Current", settings.current_preset.name);
         assert_eq!(1, settings.presets.len());
         assert_eq!(
-            Some(staff::midi::MidiNote::from_byte(50)),
-            settings.presets[0].drone.notes[0]
+            Some(MidiNote::from_byte(50)),
+            settings.current_preset.drone.notes[0]
         );
-        assert_eq!(None, settings.presets[0].drone.notes[1]);
+        assert_eq!(None, settings.current_preset.drone.notes[1]);
+        assert_eq!(0.1, settings.current_preset.mix.drone);
+        assert_eq!(0.9, settings.current_preset.fx.echo.mix);
+        assert_eq!(0.8, settings.current_preset.fx.reverb.mix);
     }
 }

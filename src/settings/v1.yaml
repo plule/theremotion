@@ -17,14 +17,14 @@ current_preset:
     master: 1.0
     lead: 1.0
     guitar: 1.0
-    drone: 0.4
+    drone: 0.1
   fx:
     echo:
-      mix: 1.0
+      mix: 0.9
       duration: 0.3
       feedback: 0.46
     reverb:
-      mix: 0.27
+      mix: 0.8
       time: 13.500001
       damp: 0.88
       size: 5.0
