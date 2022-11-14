@@ -725,7 +725,7 @@ dependencies = [
 [[package]]
 name = "faust-build"
 version = "0.1.0"
-source = "git+https://github.com/plule/rust-faust?branch=default_boxed#18ed80eb61bf3a68155505ecf78bc1859e81f708"
+source = "git+https://github.com/Frando/rust-faust?branch=main#b46467eeb78ca1194641ced20c92b498e29183c2"
 dependencies = [
  "heck 0.3.3",
  "tempfile",
@@ -734,7 +734,7 @@ dependencies = [
 [[package]]
 name = "faust-state"
 version = "0.1.0"
-source = "git+https://github.com/plule/rust-faust?branch=default_boxed#18ed80eb61bf3a68155505ecf78bc1859e81f708"
+source = "git+https://github.com/Frando/rust-faust?branch=main#b46467eeb78ca1194641ced20c92b498e29183c2"
 dependencies = [
  "faust-types",
  "rtrb",
@@ -743,7 +743,7 @@ dependencies = [
 [[package]]
 name = "faust-types"
 version = "0.1.0"
-source = "git+https://github.com/plule/rust-faust?branch=default_boxed#18ed80eb61bf3a68155505ecf78bc1859e81f708"
+source = "git+https://github.com/Frando/rust-faust?branch=main#b46467eeb78ca1194641ced20c92b498e29183c2"
 dependencies = [
  "jack",
  "libm",
@@ -2216,8 +2216,9 @@ dependencies = [
 
 [[package]]
 name = "staff"
-version = "0.3.0"
-source = "git+https://github.com/matthunz/staff?branch=main#26b28895649cf93ae745c2f5e3c32f4298e53fb7"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35305540feac989aa683ba0d279bf1bd62b48fc4db025841643176526a073ed9"
 dependencies = [
  "num-traits",
  "serde",
