@@ -87,16 +87,15 @@ impl<'a> Keyboard<'a> {
             match self.edit_mode {
                 KeyboardEditMode::None => {}
                 KeyboardEditMode::Drone => {
+                    // Toggle the selected note
                     let drone_notes = &mut self.preset.drone.notes;
                     if let Some(existing_drone) = drone_notes
                         .iter_mut()
-                        .find(|n| n.iter().find(|n| **n == note).is_some())
+                        .find(|n| n.iter().any(|n| *n == note))
                     {
                         *existing_drone = None;
-                    } else {
-                        if let Some(empty_slot) = drone_notes.iter_mut().find(|n| n.is_none()) {
-                            *empty_slot = Some(note);
-                        }
+                    } else if let Some(empty_slot) = drone_notes.iter_mut().find(|n| n.is_none()) {
+                        *empty_slot = Some(note);
                     }
                 }
                 KeyboardEditMode::RootNote => {
