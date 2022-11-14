@@ -9,6 +9,7 @@ use staff::{
 
 /// Application settings
 #[derive(Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(deny_unknown_fields)]
 pub struct Settings {
     /// Current sound settings
     #[serde(default)]
@@ -21,6 +22,7 @@ pub struct Settings {
 
 /// Sound preset
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct Preset {
     /// Name of the preset
     pub name: String,
@@ -52,14 +54,20 @@ pub struct Preset {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct MixSettings {
+    #[serde(default)]
     pub master: f32,
+    #[serde(default)]
     pub lead: f32,
+    #[serde(default)]
     pub guitar: f32,
+    #[serde(default)]
     pub drone: f32,
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(deny_unknown_fields)]
 pub struct FxSettings {
     #[serde(default)]
     pub echo: EchoSettings,
@@ -68,21 +76,31 @@ pub struct FxSettings {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct EchoSettings {
+    #[serde(default)]
     pub mix: f32,
+    #[serde(default)]
     pub duration: f32,
+    #[serde(default)]
     pub feedback: f32,
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct ReverbSettings {
+    #[serde(default)]
     pub mix: f32,
+    #[serde(default)]
     pub time: f32,
+    #[serde(default)]
     pub damp: f32,
+    #[serde(default)]
     pub size: f32,
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct DroneSettings {
     pub notes: [Option<MidiNote>; 4],
     pub detune: f32,
