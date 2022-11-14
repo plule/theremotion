@@ -6,7 +6,8 @@ edition = "2021"
 rust-version = "1.60"
 
 [features]
-default = ["default-boxed"]
+default = ["default-boxed", "leap"]
+leap = ["leaprs"]
 default-boxed = []
 
 [dependencies]
@@ -16,7 +17,7 @@ tracing-subscriber = "0.3"
 cpal = "0.14"
 faust-types = { git = "https://github.com/Frando/rust-faust", branch="main" }
 faust-state = { git = "https://github.com/Frando/rust-faust", branch="main" }
-leaprs = { version = "0.1", default-features = false }
+leaprs = { version = "0.1", default-features = false, optional = true }
 crossbeam-channel = "0.5"
 nalgebra = "0.31"
 staff = { version = "0.4", features = ["serde"] }
