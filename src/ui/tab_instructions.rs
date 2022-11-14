@@ -14,10 +14,11 @@ impl Widget for TabInstructions {
             ui.label("👐 Theremotion is a synthesizer controlled by your hands.");
             ui.label("👉 Move up and down your right hand to control the volume.");
             ui.label("👈 Move up and down your left hand to control the pitch.");
-            ui.label("👋 Move your hands on the horizontal plane to adapt the timbre.");
+            ui.label("👋 Move your right hand on the horizontal plane to control the filter.");
+            ui.label("👋 Advance left hand on the horizontal plane to play a chord.");
             ui.label("👌 Pinch with your left hand to stick on a scale.");
             ui.label("🎸 Pinch with your right hand, and rotate it to play guitar.");
-            ui.label("✌ ☝ Retract your pinky and ring fingers of your left hand, then play with the other fingers to play scales");
-        }).response
+        })
+        .response
     }
 }
