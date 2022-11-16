@@ -12,7 +12,7 @@ With specific hand positions, you can control a low pass filter, a supersaw
 sound, a guitar sound and more. You can even make the instrument "stick" to a
 scale, making it much easier to control than a Theremin.
 
-![Screenshot](./doc/capture.png)
+![Screenshot](./site/doc/capture.png)
 
 ## Features
 
@@ -42,7 +42,7 @@ Extract the archive, and run the executable.
 
 ## Tools
 
-[![Leap Motion Controller](doc/ultraleap.png)](https://www.ultraleap.com/product/leap-motion-controller/) [![Faust](doc/faust.png)]((https://faust.grame.fr/)) [![Rust](doc/rust.png)](https://www.rust-lang.org)
+[![Leap Motion Controller](site/doc/ultraleap.png)](https://www.ultraleap.com/product/leap-motion-controller/) [![Faust](site/doc/faust.png)]((https://faust.grame.fr/)) [![Rust](site/doc/rust.png)](https://www.rust-lang.org)
 
 The hand tracking is provided by Ultraleap's [Leap Motion Controller](https://www.ultraleap.com/product/leap-motion-controller/).
 
