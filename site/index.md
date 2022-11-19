@@ -30,15 +30,12 @@ In order to play with Theremotion you need a [Leap Motion
 Controller](https://www.ultraleap.com/product/leap-motion-controller/) and a
 compatible Windows PC.
 
-First of all, install the latest version of [Ultraleap's tracking
+First of all, install the Gemini version of [Ultraleap's tracking
 software](https://developer.leapmotion.com/tracking-software-download).
-Theremotion was made for the Gemini software version. The previous version
-(Orion) is also supported, though the hand tracking is not as good.
 
-Next, download the latest Theremotion version from the [Github release
-page](https://github.com/plule/theremotion/releases).
-
-Extract the archive, and run the executable.
+Lastly, download and install Theremotion from the link at the top of the page.
+For alternative downloads, refer to the [latest release
+page](https://github.com/plule/theremotion/releases/latest/).
 
 ## Tools
 

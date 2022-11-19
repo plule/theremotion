@@ -14,31 +14,10 @@ scale, making it much easier to control than a Theremin.
 
 ![Screenshot](./site/doc/capture.png)
 
-## Features
+## Instructions
 
-- 👐 Theremotion is a synthesizer controlled by your hands.
-- 👉 Move up and down your right hand to control the volume.
-- 👈 Move up and down your left hand to control the pitch.
-- 👋 Move your right hand on the horizontal plane to control the filter.
-- 👋 Advance left hand on the horizontal plane to play a chord.
-- 👌 Pinch with your left hand to stick on a scale.
-- 🎸 Pinch with your right hand, and rotate it to play guitar.
-
-## Installation
-
-In order to play with Theremotion you need a [Leap Motion
-Controller](https://www.ultraleap.com/product/leap-motion-controller/) and a
-compatible Windows PC.
-
-First of all, install the latest version of [Ultraleap's tracking
-software](https://developer.leapmotion.com/tracking-software-download).
-Theremotion was made for the Gemini software version. The previous version
-(Orion) is also supported, though the hand tracking is not as good.
-
-Next, download the latest Theremotion version from the [Github release
-page](https://github.com/plule/theremotion/releases).
-
-Extract the archive, and run the executable.
+Head over to the [Theremotion website](plule.github.io/theremotion/) for
+instructions on usage and installation.
 
 ## Tools
 
@@ -50,7 +29,7 @@ The sound generation is created with Grame's [Faust](https://faust.grame.fr/).
 
 The program is built with [Rust](https://www.rust-lang.org).
 
-## Building Theremotion
+## Development
 
 In order to build Theremotion, you need to install
 [Rust](https://www.rust-lang.org) and [Ultraleap's tracking
