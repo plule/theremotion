@@ -49,13 +49,12 @@ jobs:
       run: echo "WIX_EXTRA_ARGS=--install-version 0.0.0" >> $env:GITHUB_ENV
       if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
     - name: Make installer
-      run: cargo wix --nocapture --no-build ${{ env.WIX_EXTRA_ARGS }}
+      run: cargo wix --nocapture --no-build --output . ${{ env.WIX_EXTRA_ARGS }}
     - name: Prepare artifacts
       run: |
         mkdir -p theremotion
         cp leap-sdk-redist/LeapSDK/lib/x64/LeapC.dll theremotion
         cp target/release/theremotion.exe theremotion
-        cp target/wix/theremotion-*.msi .
     - name: Archive portable version
       uses: thedoctor0/zip-release@main
       with:
