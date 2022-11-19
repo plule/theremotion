@@ -4,6 +4,12 @@ version = "1.0.2-dev"
 authors = ["Pierre Lulé <pierre@lule.fr>"]
 edition = "2021"
 rust-version = "1.60"
+license = "GPL-3.0-or-later"
+readme = "README.md"
+repository = "https://github.com/plule/theremotion"
+homepage = "https://plule.github.io/theremotion"
+documentation = "https://plule.github.io/theremotion"
+description = "Theremotion is a synthesizer inspired by the Theremin controlled by a Leap Motion"
 
 [features]
 default = ["default-boxed", "leap"]
@@ -27,12 +33,19 @@ clap = { version = "4", features = ["derive", "env"] }
 default-boxed = "0.2"
 strum = { version = "0.24", features = ["strum_macros", "derive"] }
 windows = { version = "0.43.0", features = ["Win32_System_Threading", "Win32_Foundation"] }
-directories = "4.0.1"
+directories = "4"
 anyhow = "1"
 log = "0.4"
+image = "0.24"
 
 [dev-dependencies]
 rstest = "0.15"
 
 [build-dependencies]
 faust-build = { git = "https://github.com/Frando/rust-faust", branch="main" }
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"
+
+[package.metadata.winres]
+ProductName = "Theremotion"

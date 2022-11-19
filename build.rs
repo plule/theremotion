@@ -6,6 +6,9 @@ fn main() {
     #[cfg(feature = "leap")]
     setup_leapsdk_link();
     dsp_regen();
+
+    #[cfg(windows)]
+    add_resources()
 }
 
 #[cfg(feature = "leap")]
@@ -45,4 +48,11 @@ fn dsp_regen() {
 
         std::fs::copy(generated, dst).unwrap();
     }
+}
+
+#[cfg(windows)]
+fn add_resources() {
+    let mut res = winres::WindowsResource::new();
+    res.set_icon("assets/icon.ico");
+    res.compile().unwrap();
 }
