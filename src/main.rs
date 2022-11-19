@@ -21,6 +21,7 @@ use default_boxed::DefaultBoxed;
 use faust_state::DspHandle;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+const ICON: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/icon"));
 
 /// Command line arguments
 #[derive(Parser, Debug)]
@@ -112,6 +113,11 @@ fn main() {
         initial_window_size: Some(egui::vec2(800.0, 480.0)),
         maximized: args.fullscreen,
         decorated: !args.fullscreen,
+        icon_data: Some(eframe::IconData {
+            rgba: ICON.to_vec(),
+            width: 128,
+            height: 128,
+        }),
         ..Default::default()
     };
 
