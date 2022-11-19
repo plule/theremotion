@@ -2593,7 +2593,7 @@ dependencies = [
 
 [[package]]
 name = "theremotion"
-version = "1.0.3-dev"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "clap",
