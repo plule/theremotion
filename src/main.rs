@@ -21,7 +21,7 @@ use default_boxed::DefaultBoxed;
 use faust_state::DspHandle;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-const ICON: &[u8] = include_bytes!("../assets/icon.png");
+const ICON: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/icon"));
 
 /// Command line arguments
 #[derive(Parser, Debug)]
@@ -113,7 +113,11 @@ fn main() {
         initial_window_size: Some(egui::vec2(800.0, 480.0)),
         maximized: args.fullscreen,
         decorated: !args.fullscreen,
-        icon_data: icon(),
+        icon_data: Some(eframe::IconData {
+            rgba: ICON.to_vec(),
+            width: 128,
+            height: 128,
+        }),
         ..Default::default()
     };
 
@@ -126,19 +130,6 @@ fn main() {
     leap_worker
         .join()
         .expect("Error when stopping the leap worker");
-}
-
-fn icon() -> Option<eframe::IconData> {
-    let image = image::load_from_memory_with_format(ICON, image::ImageFormat::Png)
-        .ok()?
-        .into_rgba8();
-    let (width, height) = image.dimensions();
-    let rgba = image.into_raw();
-    Some(eframe::IconData {
-        rgba,
-        width,
-        height,
-    })
 }
 
 /// Fake leap module to be able to run tests without having the Leap SDK

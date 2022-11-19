@@ -36,13 +36,13 @@ windows = { version = "0.43.0", features = ["Win32_System_Threading", "Win32_Fou
 directories = "4"
 anyhow = "1"
 log = "0.4"
-image = "0.24"
 
 [dev-dependencies]
 rstest = "0.15"
 
 [build-dependencies]
 faust-build = { git = "https://github.com/Frando/rust-faust", branch="main" }
+image = "0.24"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"
