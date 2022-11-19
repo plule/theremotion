@@ -12,6 +12,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   LEAPSDK_LIB_PATH: leap-sdk-redist/LeapSDK/lib/x64
+  WIX_EXTRA_ARGS: ""
 
 jobs:
   tests:
@@ -27,11 +28,6 @@ jobs:
       - name: Tests
         run: cargo test --no-default-features --features default-boxed
   build:
-    strategy:
-      matrix:
-        include:
-          - sdk-ver: gemini
-          - sdk-ver: orion
     name: build
     if: eq(${{ github.repository }}, "plule/theremotion") # no secrets in clones
     runs-on: windows-latest
@@ -40,31 +36,39 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/checkout@v3
       with:
-        ref: ${{ matrix.sdk-ver }}
+        ref: gemini
         repository: plule/leap-sdk-redist
         token: ${{ secrets.LEAP_SDK_REDIST_PAT }}
         path: leap-sdk-redist
     - uses: Swatinem/rust-cache@v2
+    - name: Install cargo wix
+      run: cargo install cargo-wix
     - name: Build
       run: cargo build --release
-    - name: Prepare release
+    - name: Outside of a release, override the version
+      run: echo "WIX_EXTRA_ARGS=--install-version 0.0.0" >> $env:GITHUB_ENV
+      if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+    - name: Make installer
+      run: cargo wix --nocapture --no-build ${{ env.WIX_EXTRA_ARGS }}
+    - name: Prepare artifacts
       run: |
-        mkdir -p theremotion-${{ matrix.sdk-ver }}
-        cp target/release/theremotion.exe theremotion-${{ matrix.sdk-ver }}
-        cp target/release/theremotion.exe theremotion-${{ matrix.sdk-ver }}.exe
-        cp leap-sdk-redist/LeapSDK/lib/x64/LeapC.dll theremotion-${{ matrix.sdk-ver }}
-    - name: Archive Release
+        mkdir -p theremotion
+        cp leap-sdk-redist/LeapSDK/lib/x64/LeapC.dll theremotion
+        cp target/release/theremotion.exe theremotion
+        cp target/wix/theremotion-*.msi .
+    - name: Archive portable version
       uses: thedoctor0/zip-release@main
       with:
         type: 'zip'
-        filename: 'theremotion-${{ matrix.sdk-ver }}.zip'
-        path: theremotion-${{ matrix.sdk-ver }}
-    - uses: actions/upload-artifact@v3
+        filename: 'theremotion.zip'
+        path: theremotion
+    - name: Store portable version and installer
+      uses: actions/upload-artifact@v3
       with:
-        name: ${{ matrix.sdk-ver }}
+        name: dist
         path: |
-          theremotion-${{ matrix.sdk-ver }}.zip
-          theremotion-${{ matrix.sdk-ver }}.exe
+          theremotion.zip
+          theremotion-*.msi
   release:
     needs:
       - build
@@ -80,7 +84,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         generateReleaseNotes: true
-        artifacts: orion/theremotion-orion.zip,orion/theremotion-orion.exe,gemini/theremotion-gemini.zip,gemini/theremotion-gemini.exe
+        artifacts: dist/theremotion.zip,dist/theremotion-*.msi
         draft: true
 
   dependabot:
