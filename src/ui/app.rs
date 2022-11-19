@@ -208,7 +208,9 @@ impl eframe::App for App {
         });
 
         if saved_settings != settings {
-            settings.save();
+            if let Err(err) = settings.save() {
+                log::error!("{}", err);
+            }
             *saved_settings = settings.clone();
             settings_tx.send(settings.clone()).unwrap();
         }
