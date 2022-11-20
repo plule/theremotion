@@ -5,17 +5,14 @@ declare license     "BSD";
 
 import("stdfaust.lib");
 
-// Precompute midi note to frequency
-midikey2hz(mk) = ba.tabulate(0, ba.midikey2hz, 2048, 0, 127, mk).val;
-
 // Lead oscillator
 lead(res, cutoffNote) = os.sawtooth(f) * v : ve.moog_vcf_2b(res, cutoffFreq)
 with {    
     v = hslider("[1]volume", 0.0, 0, 1, 0.001) : si.smoo;
 
     note = hslider("[0]note", 60, 0, 127, 0.001);
-    f = note : midikey2hz : si.smoo;
-    cutoffFreq = note + cutoffNote : midikey2hz : si.smoo;
+    f = note : ba.midikey2hz : si.smoo;
+    cutoffFreq = note + cutoffNote : ba.midikey2hz : si.smoo;
 };
 
 leadChord = (res, cutoffNote) <: par(i, 4, vgroup("[3]%i", lead)) :> _ * v
@@ -35,7 +32,7 @@ elecGuitar(stringLength,pluckPosition,mute,gain,trigger) =
 guitarStrumNote(mute, pitchBend) = elecGuitar(length,0.5,mute,0.5,gate)
     : fi.lowpass(1, f * 2)
 with {
-    f = note + pitchBend : midikey2hz;
+    f = note + pitchBend : ba.midikey2hz;
     length = f : pm.f2l;
     gate = button("[0]gate");
     note = hslider("[1]note", 80, 0, 127, 0.001) : si.smoo;
@@ -54,7 +51,7 @@ droneNote(detune) = osc(note) + osc(note+detune) + osc(note-detune) : _ * volume
 with {
     volume = hslider("[0]volume", 0, 0, 1, 0.001) : si.smoo;
     note = hslider("[1]note", 60, 0, 127, 0.001) : si.smoo;
-    osc(note) = os.triangle(midikey2hz(note)) / 5;
+    osc(note) = os.triangle(ba.midikey2hz(note)) / 5;
 };
 
 drone = detune <: par(i, 4, vgroup("[1]%i", droneNote)) :> _
