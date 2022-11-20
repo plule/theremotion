@@ -16,7 +16,7 @@ scale, making it much easier to control than a Theremin.
 
 ## Instructions
 
-Head over to the [Theremotion website](plule.github.io/theremotion/) for
+Head over to the [Theremotion website](https://plule.github.io/theremotion/) for
 instructions on usage and installation.
 
 ## Tools
