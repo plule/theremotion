@@ -54,17 +54,11 @@ impl Widget for TabPlay<'_> {
 impl<'a> TabPlay<'a> {
     fn autotune_plot(&self, ui: &mut egui::Ui, size: f32) {
         let note_range = self.preset.note_range();
+        let scale_window = self.preset.restricted_scale_floating_window();
         let smooths =
             (*note_range.start() as usize * 10..*note_range.end() as usize * 10).map(|i| {
                 let x = i as f32 * 0.1;
-                PlotPoint::new(
-                    x,
-                    crate::music_theory::autotune(
-                        x,
-                        self.controls.autotune,
-                        self.preset.scale_notes(),
-                    ),
-                )
+                PlotPoint::new(x, scale_window.autotune(x, self.controls.autotune))
             });
         let line = Line::new(PlotPoints::Owned(smooths.collect()));
         // hack: force the include_x/include_y to recenter on root note change
@@ -99,14 +93,11 @@ impl<'a> TabPlay<'a> {
     }
 
     fn tuner(&self, ui: &mut egui::Ui, width: f32, height: f32, plot_name: &str) {
-        let scale = self.preset.scale_notes();
+        let scale = self.preset.restricted_scale();
+        let scale_window = self.preset.restricted_scale_floating_window();
         let note_raw = self.controls.raw_note;
         let note_tuned = self.controls.lead[0].note.value;
-        let closest = crate::music_theory::closest_in_scale(note_raw, &scale);
-        let closest = scale
-            .get(closest)
-            .map(|closest| closest.into_byte() as f32)
-            .unwrap_or_else(|| note_raw.round());
+        let closest = scale_window.closest_in_scale(note_raw);
 
         // hack: force the include_x/include_y to recenter on root note change
         let plot_id = format!("{plot_name}{closest}");

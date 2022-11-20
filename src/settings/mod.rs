@@ -8,6 +8,8 @@ use staff::{
     Interval,
 };
 
+use crate::scale_windows::ScaleWindows;
+
 pub type Settings = v1::Settings;
 pub type Preset = v1::Preset;
 
@@ -101,15 +103,29 @@ impl Preset {
         (*range.start() as f32)..=(*range.end() as f32)
     }
 
-    /// List all the existing notes of the current
-    pub fn scale_notes(&self) -> Vec<MidiNote> {
-        self.note_range()
-            .map(MidiNote::from_byte)
-            .filter(|note| {
-                let interval = Interval::new((*note - self.root_note()).semitones() % 12);
-                self.scale.contains(interval)
-            })
-            .collect()
+    /// List all the notes of the current scale for the selected number of octaves
+    pub fn restricted_scale(&self) -> Vec<MidiNote> {
+        self.scale_notes(self.note_range())
+    }
+
+    /// List all the notes of the current scale for the whole keyboard
+    pub fn full_scale(&self) -> Vec<MidiNote> {
+        self.scale_notes(0..=127)
+    }
+
+    /// Build the scale two by two floating window for the full keyboard
+    pub fn full_scale_floating_window(&self) -> ScaleWindows {
+        ScaleWindows::from_notes(self.full_scale())
+    }
+
+    /// Build the scale two by two floating window for the selected number of octaves
+    pub fn restricted_scale_floating_window(&self) -> ScaleWindows {
+        ScaleWindows::from_notes(self.restricted_scale())
+    }
+
+    /// List all the notes in the current scale for the given range
+    fn scale_notes(&self, range: RangeInclusive<u8>) -> Vec<MidiNote> {
+        crate::scale_windows::build_scale_notes(self.root_note(), self.scale, range)
     }
 }
 
