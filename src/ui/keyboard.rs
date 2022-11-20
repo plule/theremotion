@@ -41,7 +41,7 @@ impl<'a> Keyboard<'a> {
     }
 
     fn draw_key(&self, ui: &mut egui::Ui, key_dimension: &egui::Vec2, note: &MidiNote) -> Response {
-        let scale = self.preset.scale_notes();
+        let scale = self.preset.restricted_scale();
         let note_byte = note.into_byte();
 
         let note_float = note_byte as f32;

@@ -31,9 +31,8 @@ pub fn start_leap_worker(
             match connection.poll(100) {
                 Ok(message) => {
                     if let Event::Tracking(e) = message.event() {
-                        let full_scale =
-                            crate::music_theory::build_scale(preset.root_note(), preset.scale);
-
+                        let full_scale_window = preset.full_scale_floating_window();
+                        let restricted_scale_window = preset.restricted_scale_floating_window();
                         let hands = e.hands();
 
                         let left_hand = hands.iter().find(|h| h.hand_type() == HandType::Left);
@@ -77,18 +76,10 @@ pub fn start_leap_worker(
                             ) as usize;
 
                             // In any case, assign all the notes
-                            let note = crate::music_theory::autotune(
-                                controls.raw_note,
-                                controls.autotune,
-                                preset.scale_notes(),
-                            );
+                            let note = restricted_scale_window
+                                .autotune(controls.raw_note, controls.autotune);
 
-                            let chord = [
-                                Some(note),
-                                crate::music_theory::auto_chord(note, &full_scale, 2),
-                                crate::music_theory::auto_chord(note, &full_scale, 4),
-                                crate::music_theory::auto_chord(note, &full_scale, 7),
-                            ];
+                            let chord = full_scale_window.autochord(note, &[0, 2, 4, 7]);
 
                             let pluck_offset = 12.0 * (preset.guitar_octave - preset.octave) as f32;
 

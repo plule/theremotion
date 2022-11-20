@@ -6,7 +6,7 @@ mod controls;
 mod dsp_thread;
 #[cfg(feature = "leap")]
 mod leap;
-mod music_theory;
+mod scale_windows;
 mod scales;
 mod settings;
 mod ui;
