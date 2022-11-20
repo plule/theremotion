@@ -2,8 +2,8 @@ use std::ops::RangeInclusive;
 
 use egui::{
     plot::{
-        uniform_grid_spacer, GridMark, HLine, Legend, Line, MarkerShape, PlotPoint, PlotPoints,
-        Points, VLine,
+        uniform_grid_spacer, Bar, BarChart, GridMark, HLine, Legend, Line, MarkerShape, PlotPoint,
+        PlotPoints, Points, VLine,
     },
     Widget,
 };
@@ -36,15 +36,14 @@ impl Widget for TabPlay<'_> {
             ));
             ui.separator();
             ui.horizontal(|ui| {
-                self.autotune_plot(ui, 250.0);
-
-                ui.add_space(10.0);
-
-                self.tuner(ui, 100.0, 250.0, "tuner");
-
-                ui.add_space(10.0);
-
-                self.filter_plot(ui, 250.0, "rh_hand");
+                let height = 250.0;
+                self.tuner(ui, 75.0, height, "tuner");
+                ui.add_space(4.0);
+                self.autotune_plot(ui, height);
+                ui.add_space(8.0);
+                self.filter_plot(ui, height, "filter");
+                ui.add_space(4.0);
+                self.volume(ui, 75.0, height, "volume");
             });
         })
         .response
@@ -89,6 +88,25 @@ impl<'a> TabPlay<'a> {
                     .shape(MarkerShape::Plus)
                     .radius(6.0),
                 );
+            });
+    }
+
+    fn volume(&self, ui: &mut egui::Ui, width: f32, height: f32, plot_name: &str) {
+        let volume = self.controls.lead_volume.value;
+        egui::plot::Plot::new(plot_name)
+            .allow_boxed_zoom(false)
+            .allow_drag(false)
+            .allow_scroll(false)
+            .allow_zoom(false)
+            .include_y(0.0)
+            .include_y(1.0)
+            .include_x(-1.0)
+            .include_x(1.0)
+            .show_axes([false, false])
+            .width(width)
+            .height(height)
+            .show(ui, |plot_ui| {
+                plot_ui.bar_chart(BarChart::new(vec![Bar::new(0.0, volume.into())]).width(2.0));
             });
     }
 
