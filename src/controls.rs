@@ -204,7 +204,10 @@ pub struct Control {
 
 impl ControlTrait for Control {
     fn send(&mut self, state: &mut StateHandle) {
-        state.set_by_path(&self.path, self.value).unwrap();
+        let range = &self.input.range;
+        state
+            .set_by_path(&self.path, self.value.clamp(*range.start(), *range.end()))
+            .unwrap();
     }
 }
 
@@ -323,7 +326,6 @@ pub fn convert_range(
         let in_max = *input_range.end();
         let out_min = *output_range.start();
         let out_max = *output_range.end();
-        ((((value - in_min) * (out_max - out_min)) / (in_max - in_min)) + out_min)
-            .clamp(out_min, out_max)
+        (((value - in_min) * (out_max - out_min)) / (in_max - in_min)) + out_min
     }
 }
