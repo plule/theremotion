@@ -2474,9 +2474,9 @@ dependencies = [
 
 [[package]]
 name = "staff"
-version = "0.4.0"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35305540feac989aa683ba0d279bf1bd62b48fc4db025841643176526a073ed9"
+checksum = "11492d9e0ae61e8d32f6be28d8bc58d52496333d54c1b081b1806b652447421d"
 dependencies = [
  "num-traits",
  "serde",
