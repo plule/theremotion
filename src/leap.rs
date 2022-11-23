@@ -3,7 +3,7 @@ use std::thread;
 use crossbeam_channel::{Receiver, Sender};
 use faust_state::StateHandle;
 use leaprs::*;
-use nalgebra::Vector3;
+use nalgebra::{Vector2, Vector3};
 
 use crate::{controls, controls::ControlTrait, settings::Settings};
 
@@ -45,16 +45,14 @@ pub fn start_leap_worker(
                             let position = hand.palm().position();
                             let velocity = hand.palm().velocity();
 
-                            let note_input_range = 100.0..=600.0;
-
-                            controls.raw_note = controls::convert_range(
-                                position.y(),
-                                note_input_range.to_owned(),
-                                &preset.note_range_f(),
-                            );
+                            let antenna_coord = Vector2::new(-400.0, -200.0);
+                            let pitch_coord = Vector2::new(position.x(), position.z());
+                            let dist = (pitch_coord - antenna_coord).norm();
+                            controls.raw_note =
+                                controls::convert_range(dist, 500.0..=0.0, &preset.note_range_f());
 
                             // Determine the played chord
-                            let z = position.z();
+                            let y = position.y();
                             controls.lead[0].volume.value = 1.0;
                             controls
                                 .lead
@@ -62,9 +60,9 @@ pub fn start_leap_worker(
                                 .enumerate()
                                 .skip(1)
                                 .for_each(|(i, note)| {
-                                    let from = 100.0 - 50.0 * i as f32;
-                                    let to = 50.0 - 50.0 * i as f32;
-                                    note.volume.set_scaled(z, from..=to);
+                                    let from = 300.0 + 50.0 * i as f32;
+                                    let to = 350.0 + 50.0 * i as f32;
+                                    note.volume.set_scaled(y, from..=to);
                                 });
 
                             strums_enabled = controls.lead.clone().map(|c| c.volume.value >= 0.5);
