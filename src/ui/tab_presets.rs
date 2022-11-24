@@ -6,12 +6,11 @@ use crate::settings::{Preset, Settings};
 
 pub struct TabPresets<'a> {
     settings: &'a mut Settings,
-    tabtip: bool,
 }
 
 impl<'a> TabPresets<'a> {
-    pub fn new(settings: &'a mut Settings, tabtip: bool) -> Self {
-        Self { settings, tabtip }
+    pub fn new(settings: &'a mut Settings) -> Self {
+        Self { settings }
     }
 }
 
@@ -22,7 +21,7 @@ impl Widget for TabPresets<'_> {
                 if ui
                     .text_edit_singleline(&mut self.settings.current_preset.name)
                     .clicked()
-                    && self.tabtip
+                    && self.settings.system.tabtip
                 {
                     // hack
                     // windows touchscreen keyboard does not show up by default

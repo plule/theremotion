@@ -16,7 +16,6 @@ mod ui;
 #[rustfmt::skip]
 mod dsp;
 
-use clap::Parser;
 use cpal::traits::StreamTrait;
 use default_boxed::DefaultBoxed;
 use faust_state::DspHandle;
@@ -25,63 +24,14 @@ use settings::Settings;
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 const ICON: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/icon"));
 
-/// Command line arguments
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-struct Args {
-    /// Start Theremotion in full screen
-    #[clap(
-        long,
-        value_parser,
-        default_value_t = false,
-        env = "THEREMOTION_FULLSCREEN"
-    )]
-    fullscreen: bool,
-
-    /// Initial X position of the window
-    #[clap(
-        long,
-        value_parser,
-        default_value_t = 0,
-        env = "THEREMOTION_WINDOWS_POSITION_X"
-    )]
-    window_position_x: i32,
-
-    /// Initial Y position of the window
-    #[clap(
-        long,
-        value_parser,
-        default_value_t = 0,
-        env = "THEREMOTION_WINDOWS_POSITION_Y"
-    )]
-    window_position_y: i32,
-
-    /// Execute tabtip.exe on Windows to prompt the touchscreen keyboard
-    #[clap(
-        long,
-        value_parser,
-        default_value_t = false,
-        env = "THEREMOTION_TABTIP"
-    )]
-    tabtip: bool,
-
-    /// Set the process as high priority
-    #[clap(
-        long,
-        value_parser,
-        default_value_t = false,
-        env = "THEREMOTION_HIGH_PRIORITY"
-    )]
-    high_priority: bool,
-}
-
 fn main() {
     // Log to stdout (if you run with `RUST_LOG=debug`).
     tracing_subscriber::fmt::init();
 
-    let args = Args::parse();
+    // Read application settings
+    let settings = Settings::read();
 
-    if args.high_priority {
+    if settings.system.high_priority_process {
         unsafe {
             let process = windows::Win32::System::Threading::GetCurrentProcess();
             windows::Win32::System::Threading::SetPriorityClass(
@@ -90,9 +40,6 @@ fn main() {
             );
         }
     }
-
-    // Read application settings
-    let settings = Settings::read();
 
     // Init communication channels
     let (settings_tx, settings_rx) = crossbeam_channel::unbounded(); // Settings update to leap thread
@@ -123,13 +70,9 @@ fn main() {
 
     // Start UI
     let native_options = eframe::NativeOptions {
-        initial_window_pos: Some(egui::pos2(
-            args.window_position_x as f32,
-            args.window_position_y as f32,
-        )),
         initial_window_size: Some(egui::vec2(800.0, 480.0)),
-        maximized: args.fullscreen,
-        decorated: !args.fullscreen,
+        maximized: settings.system.fullscreen,
+        decorated: !settings.system.fullscreen,
         icon_data: Some(eframe::IconData {
             rgba: ICON.to_vec(),
             width: 128,
@@ -149,7 +92,6 @@ fn main() {
                 settings_tx,
                 controls.clone(),
                 settings,
-                args.tabtip,
             ))
         }),
     );

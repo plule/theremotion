@@ -16,7 +16,6 @@ pub struct App {
     settings_tx: Sender<Settings>,
     dsp_tx: Sender<ParameterUpdate>,
     main_tab: MainTab,
-    tabtip: bool,
     error: Option<String>,
     lead_volume: f32,
     lead_chord_notes: [f32; 4],
@@ -36,7 +35,7 @@ pub enum MainTab {
     Mix,
     Effects,
     Presets,
-    Instructions,
+    Settings,
 }
 
 impl MainTab {
@@ -48,7 +47,7 @@ impl MainTab {
             MainTab::Mix => "Mix",
             MainTab::Effects => "Effects",
             MainTab::Presets => "Presets",
-            MainTab::Instructions => "Instructions",
+            MainTab::Settings => "Settings",
         }
     }
 
@@ -60,7 +59,7 @@ impl MainTab {
             MainTab::Mix => "🎚️",
             MainTab::Effects => "🎛️",
             MainTab::Presets => "💾",
-            MainTab::Instructions => "ℹ",
+            MainTab::Settings => "⚙️",
         }
     }
 }
@@ -74,7 +73,6 @@ impl App {
         settings_tx: Sender<Settings>,
         controls: Controls,
         settings: Settings,
-        tabtip: bool,
     ) -> Self {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
 
@@ -125,7 +123,6 @@ impl App {
             saved_settings: settings.clone(),
             main_tab: MainTab::Play,
             settings,
-            tabtip,
             error: None,
             lead_volume: controls.lead_volume.input.init,
             lead_chord_notes: controls.lead.clone().map(|n| n.note.input.init),
@@ -167,8 +164,8 @@ impl App {
                 &self.controls,
                 &mut self.settings.current_preset,
             )),
-            MainTab::Presets => ui.add(super::TabPresets::new(&mut self.settings, self.tabtip)),
-            MainTab::Instructions => ui.add(super::TabInstructions::new()),
+            MainTab::Presets => ui.add(super::TabPresets::new(&mut self.settings)),
+            MainTab::Settings => ui.add(super::TabSettings::new(&mut self.settings)),
         };
     }
 
