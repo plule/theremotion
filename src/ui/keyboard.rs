@@ -4,12 +4,14 @@ use staff::{
     Interval, Pitch,
 };
 
-use crate::{controls::NoteControl, settings::Preset};
+use crate::settings::Preset;
 
 /// Display a keyboard with a floating point note
 pub struct Keyboard<'a> {
     /// Currently played midi note
-    pub notes: Vec<&'a NoteControl>,
+    pub chord_notes: &'a [f32; 4],
+
+    pub chord_volumes: &'a [f32; 4],
 
     /// Settings preset
     pub preset: &'a mut Preset,
@@ -29,12 +31,14 @@ pub enum KeyboardEditMode {
 
 impl<'a> Keyboard<'a> {
     pub fn new(
-        notes: Vec<&'a NoteControl>,
+        chord_notes: &'a [f32; 4],
+        chord_volumes: &'a [f32; 4],
         settings: &'a mut Preset,
         edit_mode: KeyboardEditMode,
     ) -> Self {
         Self {
-            notes,
+            chord_notes,
+            chord_volumes,
             preset: settings,
             edit_mode,
         }
@@ -47,9 +51,9 @@ impl<'a> Keyboard<'a> {
         let note_float = note_byte as f32;
         let mut red = 0;
 
-        for played_note in &self.notes {
-            let note_distance = (note_float - played_note.note.value).abs().clamp(0.0, 1.0);
-            red = red.max(((1.0 - note_distance) * 255.0 * played_note.volume.value) as u8);
+        for (played_note, played_volume) in self.chord_notes.iter().zip(self.chord_volumes) {
+            let note_distance = (note_float - played_note).abs().clamp(0.0, 1.0);
+            red = red.max(((1.0 - note_distance) * 255.0 * played_volume) as u8);
         }
         let green = if self
             .preset

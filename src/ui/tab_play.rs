@@ -16,13 +16,41 @@ use crate::{
 };
 
 pub struct TabPlay<'a> {
-    controls: &'a mut controls::Controls,
+    controls: &'a controls::Controls,
     preset: &'a mut Preset,
+    lead_volume: f32,
+    lead_chord_notes: &'a [f32; 4],
+    lead_chord_volumes: &'a [f32; 4],
+    raw_note: f32,
+    filter_cutoff: f32,
+    filter_resonance: f32,
+    autotune_amount: usize,
 }
 
 impl<'a> TabPlay<'a> {
-    pub fn new(controls: &'a mut controls::Controls, preset: &'a mut Preset) -> Self {
-        Self { controls, preset }
+    #[allow(clippy::too_many_arguments)] // could review this...
+    pub fn new(
+        controls: &'a controls::Controls,
+        preset: &'a mut Preset,
+        lead_volume: f32,
+        lead_chord_notes: &'a [f32; 4],
+        lead_chord_volumes: &'a [f32; 4],
+        raw_note: f32,
+        filter_cutoff: f32,
+        filter_resonance: f32,
+        autotune_amount: usize,
+    ) -> Self {
+        Self {
+            controls,
+            preset,
+            lead_volume,
+            lead_chord_notes,
+            lead_chord_volumes,
+            raw_note,
+            filter_cutoff,
+            filter_resonance,
+            autotune_amount,
+        }
     }
 }
 
@@ -30,7 +58,8 @@ impl Widget for TabPlay<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.vertical(|ui| {
             ui.add(crate::ui::Keyboard::new(
-                self.controls.lead.iter().collect(),
+                self.lead_chord_notes,
+                self.lead_chord_volumes,
                 self.preset,
                 KeyboardEditMode::Drone,
             ));
@@ -57,7 +86,7 @@ impl<'a> TabPlay<'a> {
         let smooths =
             (*note_range.start() as usize * 10..*note_range.end() as usize * 10).map(|i| {
                 let x = i as f32 * 0.1;
-                PlotPoint::new(x, scale_window.autotune(x, self.controls.autotune))
+                PlotPoint::new(x, scale_window.autotune(x, self.autotune_amount))
             });
         let line = Line::new(PlotPoints::Owned(smooths.collect()));
         // hack: force the include_x/include_y to recenter on root note change
@@ -82,8 +111,8 @@ impl<'a> TabPlay<'a> {
                 plot_ui.line(line);
                 plot_ui.points(
                     Points::new(PlotPoints::Owned(vec![PlotPoint::new(
-                        self.controls.raw_note,
-                        self.controls.lead[0].note.value,
+                        self.raw_note,
+                        self.lead_chord_notes[0],
                     )]))
                     .shape(MarkerShape::Plus)
                     .radius(6.0),
@@ -92,7 +121,6 @@ impl<'a> TabPlay<'a> {
     }
 
     fn volume(&self, ui: &mut egui::Ui, width: f32, height: f32, plot_name: &str) {
-        let volume = self.controls.lead_volume.value;
         egui::plot::Plot::new(plot_name)
             .allow_boxed_zoom(false)
             .allow_drag(false)
@@ -106,15 +134,17 @@ impl<'a> TabPlay<'a> {
             .width(width)
             .height(height)
             .show(ui, |plot_ui| {
-                plot_ui.bar_chart(BarChart::new(vec![Bar::new(0.0, volume.into())]).width(2.0));
+                plot_ui.bar_chart(
+                    BarChart::new(vec![Bar::new(0.0, self.lead_volume.into())]).width(2.0),
+                );
             });
     }
 
     fn tuner(&self, ui: &mut egui::Ui, width: f32, height: f32, plot_name: &str) {
         let scale = self.preset.restricted_scale();
         let scale_window = self.preset.restricted_scale_floating_window();
-        let note_raw = self.controls.raw_note;
-        let note_tuned = self.controls.lead[0].note.value;
+        let note_raw = self.raw_note;
+        let note_tuned = self.lead_chord_notes[0];
         let closest = scale_window.closest_in_scale(note_raw);
 
         // hack: force the include_x/include_y to recenter on root note change
@@ -168,8 +198,8 @@ impl<'a> TabPlay<'a> {
             .width(size)
             .height(size)
             .show(ui, |plot_ui| {
-                plot_ui.vline(VLine::new(cutoff.value).name("Cutoff"));
-                plot_ui.hline(HLine::new(resonance.value).name("Resonance"));
+                plot_ui.vline(VLine::new(self.filter_cutoff).name("Cutoff"));
+                plot_ui.hline(HLine::new(self.filter_resonance).name("Resonance"));
             });
     }
 }

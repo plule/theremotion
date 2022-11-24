@@ -2,13 +2,16 @@ mod v1;
 use std::{ops::RangeInclusive, path::PathBuf};
 
 use anyhow::{Context, Ok, Result};
+use crossbeam_channel::Sender;
 use serde::{Deserialize, Serialize};
 use staff::{
     midi::{MidiNote, Octave},
     Interval,
 };
 
-use crate::scale_windows::ScaleWindows;
+use crate::{controls::Controls, dsp_thread::ParameterUpdate, scale_windows::ScaleWindows};
+
+use self::v1::{DroneSettings, EchoSettings, FxSettings, MixSettings, ReverbSettings};
 
 pub type Settings = v1::Settings;
 pub type Preset = v1::Preset;
@@ -126,6 +129,66 @@ impl Preset {
     /// List all the notes in the current scale for the given range
     fn scale_notes(&self, range: RangeInclusive<u8>) -> Vec<MidiNote> {
         crate::scale_windows::build_scale_notes(self.root_note(), self.scale, range)
+    }
+
+    /// Send the relevant preset data to the DSP
+    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<ParameterUpdate>) -> Result<()> {
+        self.drone.send_to_dsp(controls, tx)?;
+        self.mix.send_to_dsp(controls, tx)?;
+        self.fx.send_to_dsp(controls, tx)?;
+        Ok(())
+    }
+}
+
+impl DroneSettings {
+    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<ParameterUpdate>) -> Result<()> {
+        controls.drone_detune.send(tx, self.detune)?;
+        for (control, drone) in controls.drone_notes.iter().zip(self.notes) {
+            if let Some(drone) = drone {
+                control.note.send(tx, drone.into_byte() as f32)?;
+                control.volume.send(tx, 1.0)?;
+            } else {
+                control.volume.send(tx, 0.0)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl MixSettings {
+    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<ParameterUpdate>) -> Result<()> {
+        controls.mix_drone_volume.send(tx, self.drone)?;
+        controls.mix_lead_volume.send(tx, self.lead)?;
+        controls.mix_master_volume.send(tx, self.master)?;
+        controls.mix_pluck_volume.send(tx, self.guitar)?;
+        Ok(())
+    }
+}
+
+impl EchoSettings {
+    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<ParameterUpdate>) -> Result<()> {
+        controls.echo_duration.send(tx, self.duration)?;
+        controls.echo_feedback.send(tx, self.feedback)?;
+        controls.echo_mix.send(tx, self.mix)?;
+        Ok(())
+    }
+}
+
+impl ReverbSettings {
+    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<ParameterUpdate>) -> Result<()> {
+        controls.reverb_damp.send(tx, self.damp)?;
+        controls.reverb_mix.send(tx, self.mix)?;
+        controls.reverb_size.send(tx, self.size)?;
+        controls.reverb_time.send(tx, self.time)?;
+        Ok(())
+    }
+}
+
+impl FxSettings {
+    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<ParameterUpdate>) -> Result<()> {
+        self.echo.send_to_dsp(controls, tx)?;
+        self.reverb.send_to_dsp(controls, tx)?;
+        Ok(())
     }
 }
 

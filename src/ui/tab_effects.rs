@@ -5,12 +5,12 @@ use crate::{controls, settings::Preset};
 use super::{FromControl, NamedGroup};
 
 pub struct TabEffects<'a> {
-    controls: &'a mut controls::Controls,
+    controls: &'a controls::Controls,
     preset: &'a mut Preset,
 }
 
 impl<'a> TabEffects<'a> {
-    pub fn new(controls: &'a mut controls::Controls, preset: &'a mut Preset) -> Self {
+    pub fn new(controls: &'a controls::Controls, preset: &'a mut Preset) -> Self {
         Self { controls, preset }
     }
 }

@@ -1,28 +1,37 @@
 use egui::{ScrollArea, Widget};
 use staff::scale::ScaleIntervals;
 
-use crate::{controls, scales::MoreScales, settings::Preset};
+use crate::{scales::MoreScales, settings::Preset};
 
 use super::KeyboardEditMode;
 
 pub struct TabScale<'a> {
-    controls: &'a mut controls::Controls,
     preset: &'a mut Preset,
+    lead_chord_notes: &'a [f32; 4],
+    lead_chord_volumes: &'a [f32; 4],
 }
 
 impl<'a> TabScale<'a> {
-    pub fn new(controls: &'a mut controls::Controls, preset: &'a mut Preset) -> Self {
-        Self { controls, preset }
+    pub fn new(
+        preset: &'a mut Preset,
+        lead_chord_notes: &'a [f32; 4],
+        lead_chord_volumes: &'a [f32; 4],
+    ) -> Self {
+        Self {
+            preset,
+            lead_chord_notes,
+            lead_chord_volumes,
+        }
     }
 }
 
 impl Widget for TabScale<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
-        let Self { controls, preset } = self;
         ui.vertical(|ui| {
             ui.add(crate::ui::Keyboard::new(
-                controls.lead.iter().collect(),
-                preset,
+                self.lead_chord_notes,
+                self.lead_chord_volumes,
+                self.preset,
                 KeyboardEditMode::Scale,
             ));
             ui.separator();
@@ -39,7 +48,7 @@ impl Widget for TabScale<'_> {
                     ("Altered Dorian", ScaleIntervals::altered_dorian()),
                 ] {
                     ui.horizontal(|ui| {
-                        ui.selectable_value(&mut preset.scale, scale, format!("🎼 {}", name));
+                        ui.selectable_value(&mut self.preset.scale, scale, format!("🎼 {}", name));
                         ui.add_space(ui.available_width());
                     });
                 }
