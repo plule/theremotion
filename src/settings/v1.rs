@@ -12,6 +12,10 @@ pub struct Settings {
     /// Saved presets
     #[serde(default)]
     pub presets: Vec<Preset>,
+
+    /// System settings
+    #[serde(default)]
+    pub system: System,
 }
 
 /// Sound preset
@@ -155,4 +159,20 @@ impl Default for DroneSettings {
             detune: 0.1,
         }
     }
+}
+
+#[derive(Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct System {
+    /// Start theremotion in full screen
+    #[serde(default)]
+    pub fullscreen: bool,
+
+    /// Run tabtip.exe on text input
+    #[serde(default)]
+    pub tabtip: bool,
+
+    /// Bump up the process priority
+    #[serde(default)]
+    pub high_priority_process: bool,
 }
