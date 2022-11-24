@@ -161,7 +161,7 @@ impl Default for DroneSettings {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct System {
     /// Start theremotion in full screen
@@ -175,14 +175,4 @@ pub struct System {
     /// Bump up the process priority
     #[serde(default)]
     pub high_priority_process: bool,
-}
-
-impl Default for System {
-    fn default() -> Self {
-        Self {
-            fullscreen: false,
-            tabtip: false,
-            high_priority_process: false,
-        }
-    }
 }
