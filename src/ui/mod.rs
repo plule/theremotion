@@ -20,6 +20,19 @@ pub use tab_scale::*;
 
 use crate::controls;
 
+/// Message to update externally the UI
+pub enum UiUpdate {
+    Error(String),
+    ErrorReset,
+    LeadVolume(f32),
+    LeadChordNotes([f32; 4]),
+    LeadChordVolumes([f32; 4]),
+    RawNote(f32),
+    Filter(f32, f32),
+    AutotuneAmount(usize),
+    HasHands((bool, bool)),
+}
+
 trait FromControl<'a> {
     fn from_control(control: &controls::Control, value: &'a mut f32) -> Self;
 }

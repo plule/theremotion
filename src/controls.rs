@@ -1,14 +1,10 @@
 use std::ops::RangeInclusive;
 
+use anyhow::Result;
+use crossbeam_channel::{SendError, Sender};
 use faust_state::{Node, RangedInput, StateHandle, WidgetType};
 
-use crate::settings::Preset;
-
-/// Ability to exchange with the DSP state
-pub trait ControlTrait {
-    /// Set the current state to the DSP
-    fn send(&mut self, state: &mut StateHandle);
-}
+use crate::dsp_thread::ParameterUpdate;
 
 /// DSP controls
 #[derive(Debug, Clone)]
@@ -51,78 +47,6 @@ pub struct Controls {
     pub mix_drone_volume: Control,
     pub mix_lead_volume: Control,
     pub mix_pluck_volume: Control,
-
-    /// Raw note for the UI
-    pub raw_note: f32,
-
-    /// Autotune amount for the UI
-    pub autotune: usize,
-
-    /// Warning message
-    pub warning: Option<String>,
-    /// Error message
-    pub error: Option<String>,
-
-    pub has_hands: (bool, bool),
-}
-
-impl Controls {
-    pub fn update_from_preset(&mut self, preset: &Preset) {
-        self.mix_master_volume.value = preset.mix.master;
-        self.mix_lead_volume.value = preset.mix.lead;
-        self.mix_pluck_volume.value = preset.mix.guitar;
-        self.mix_drone_volume.value = preset.mix.drone;
-        self.echo_duration.value = preset.fx.echo.duration;
-        self.echo_feedback.value = preset.fx.echo.feedback;
-        self.echo_mix.value = preset.fx.echo.mix;
-        self.reverb_mix.value = preset.fx.reverb.mix;
-        self.reverb_time.value = preset.fx.reverb.time;
-        self.reverb_damp.value = preset.fx.reverb.damp;
-        self.reverb_size.value = preset.fx.reverb.size;
-        self.drone_detune.value = preset.drone.detune;
-        preset
-            .drone
-            .notes
-            .iter()
-            .zip(&mut self.drone_notes)
-            .for_each(|(note, control)| {
-                if let Some(note) = note {
-                    control.volume.value = 1.0;
-                    control.note.value = note.into_byte() as f32;
-                } else {
-                    control.volume.value = 0.0;
-                }
-            });
-    }
-}
-
-impl ControlTrait for Controls {
-    fn send(&mut self, state: &mut StateHandle) {
-        self.lead.iter_mut().for_each(|n| n.send(state));
-        self.lead_volume.send(state);
-        self.cutoff_note.send(state);
-        self.resonance.send(state);
-        self.strum.iter_mut().for_each(|n| n.send(state));
-        self.pluck_mute.send(state);
-        self.drone_detune.send(state);
-        self.drone_notes.iter_mut().for_each(|n| n.send(state));
-        self.pitch_bend.send(state);
-        self.mix_master_volume.send(state);
-        self.mix_lead_volume.send(state);
-        self.mix_pluck_volume.send(state);
-        self.mix_drone_volume.send(state);
-        self.echo_mix.send(state);
-        self.echo_feedback.send(state);
-        self.echo_duration.send(state);
-        self.reverb_mix.send(state);
-        self.reverb_time.send(state);
-        self.reverb_damp.send(state);
-        self.reverb_size.send(state);
-        self.reverb_early_diff.send(state);
-        self.reverb_mod_depth.send(state);
-        self.reverb_mod_freq.send(state);
-        state.send();
-    }
 }
 
 impl From<&StateHandle> for Controls {
@@ -130,131 +54,121 @@ impl From<&StateHandle> for Controls {
         Self {
             lead: [0, 1, 2, 3].map(|i| {
                 (
-                    state
-                        .node_by_path(format!("lead/{}/note", i).as_str())
-                        .unwrap(),
-                    state
-                        .node_by_path(format!("lead/{}/volume", i).as_str())
-                        .unwrap(),
+                    state.by_path(format!("lead/{}/note", i).as_str()),
+                    state.by_path(format!("lead/{}/volume", i).as_str()),
                 )
                     .into()
             }),
-            lead_volume: state.node_by_path("lead/volume").unwrap().into(),
-            cutoff_note: state.node_by_path("lead/cutoffNote").unwrap().into(),
-            resonance: state.node_by_path("lead/res").unwrap().into(),
+            lead_volume: state.by_path("lead/volume").into(),
+            cutoff_note: state.by_path("lead/cutoffNote").into(),
+            resonance: state.by_path("lead/res").into(),
             strum: [0, 1, 2, 3].map(|i| {
                 (
-                    state
-                        .node_by_path(format!("pluck/{}/note", i).as_str())
-                        .unwrap(),
-                    state
-                        .node_by_path(format!("pluck/{}/gate", i).as_str())
-                        .unwrap(),
+                    state.by_path(format!("pluck/{}/note", i).as_str()),
+                    state.by_path(format!("pluck/{}/gate", i).as_str()),
                 )
                     .into()
             }),
-            pluck_mute: state.node_by_path("pluck/mute").unwrap().into(),
-            drone_detune: state.node_by_path("drone/detune").unwrap().into(),
+            pluck_mute: state.by_path("pluck/mute").into(),
+            drone_detune: state.by_path("drone/detune").into(),
             drone_notes: [0, 1, 2, 3].map(|i| {
                 (
-                    state
-                        .node_by_path(format!("drone/{}/note", i).as_str())
-                        .unwrap(),
-                    state
-                        .node_by_path(format!("drone/{}/volume", i).as_str())
-                        .unwrap(),
+                    state.by_path(format!("drone/{}/note", i).as_str()),
+                    state.by_path(format!("drone/{}/volume", i).as_str()),
                 )
                     .into()
             }),
-            pitch_bend: state.node_by_path("pluck/pitchBend").unwrap().into(),
-            echo_mix: state.node_by_path("fx/echo/mix").unwrap().into(),
-            echo_duration: state.node_by_path("fx/echo/duration").unwrap().into(),
-            echo_feedback: state.node_by_path("fx/echo/feedback").unwrap().into(),
-            reverb_mix: state.node_by_path("fx/reverb/mix").unwrap().into(),
-            reverb_time: state.node_by_path("fx/reverb/time").unwrap().into(),
-            reverb_damp: state.node_by_path("fx/reverb/damp").unwrap().into(),
-            reverb_size: state.node_by_path("fx/reverb/size").unwrap().into(),
-            reverb_early_diff: state.node_by_path("fx/reverb/early_diff").unwrap().into(),
-            reverb_mod_depth: state.node_by_path("fx/reverb/mod_depth").unwrap().into(),
-            reverb_mod_freq: state.node_by_path("fx/reverb/mod_freq").unwrap().into(),
-            mix_master_volume: state.node_by_path("mix/master").unwrap().into(),
-            mix_drone_volume: state.node_by_path("mix/drone").unwrap().into(),
-            mix_lead_volume: state.node_by_path("mix/lead").unwrap().into(),
-            mix_pluck_volume: state.node_by_path("mix/pluck").unwrap().into(),
-            raw_note: 0.0,
-            autotune: 0,
-            warning: None,
-            error: None,
-            has_hands: (false, false),
+            pitch_bend: state.by_path("pluck/pitchBend").into(),
+            echo_mix: state.by_path("fx/echo/mix").into(),
+            echo_duration: state.by_path("fx/echo/duration").into(),
+            echo_feedback: state.by_path("fx/echo/feedback").into(),
+            reverb_mix: state.by_path("fx/reverb/mix").into(),
+            reverb_time: state.by_path("fx/reverb/time").into(),
+            reverb_damp: state.by_path("fx/reverb/damp").into(),
+            reverb_size: state.by_path("fx/reverb/size").into(),
+            reverb_early_diff: state.by_path("fx/reverb/early_diff").into(),
+            reverb_mod_depth: state.by_path("fx/reverb/mod_depth").into(),
+            reverb_mod_freq: state.by_path("fx/reverb/mod_freq").into(),
+            mix_master_volume: state.by_path("mix/master").into(),
+            mix_drone_volume: state.by_path("mix/drone").into(),
+            mix_lead_volume: state.by_path("mix/lead").into(),
+            mix_pluck_volume: state.by_path("mix/pluck").into(),
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct Control {
-    /// Current value of the control in the DSP
-    pub value: f32,
-
     /// DSP metadata
     pub input: RangedInput,
 
-    /// Name for the DSP
+    /// Parameter path in the DSP
     pub path: String,
-}
 
-impl ControlTrait for Control {
-    fn send(&mut self, state: &mut StateHandle) {
-        let range = &self.input.range;
-        state
-            .set_by_path(&self.path, self.value.clamp(*range.start(), *range.end()))
-            .unwrap();
-    }
+    /// Parameter index in the DSP
+    pub idx: i32,
 }
 
 impl Control {
-    pub fn set_scaled(&mut self, value: f32, value_range: RangeInclusive<f32>) {
-        self.value = convert_range(value, value_range, &self.input.range);
+    pub fn send(
+        &self,
+        dsp_tx: &Sender<ParameterUpdate>,
+        value: f32,
+    ) -> Result<(), SendError<ParameterUpdate>> {
+        let range = &self.input.range;
+        let value = value.clamp(*range.start(), *range.end());
+        dsp_tx.send(ParameterUpdate::new(self.idx, value))
+    }
+
+    pub fn get_scaled(&self, value: f32, value_range: RangeInclusive<f32>) -> f32 {
+        convert_range(value, value_range, &self.input.range)
     }
 }
 
-impl From<&Node> for Control {
-    fn from(node: &Node) -> Self {
-        let input = match node.widget_type() {
+impl From<NodeIndex<'_>> for Control {
+    fn from(nodeindex: NodeIndex<'_>) -> Self {
+        let input = match nodeindex.1.widget_type() {
             WidgetType::VerticalSlider(input) => input,
             WidgetType::HorizontalSlider(input) => input,
             WidgetType::NumEntry(input) => input,
-            _ => panic!("The parameter {} is not a ranged input.", node.path()),
+            _ => panic!(
+                "The parameter {} is not a ranged input.",
+                nodeindex.1.path()
+            ),
         };
         Self {
-            value: input.init,
             input: input.clone(),
-            path: node.path(),
+            path: nodeindex.1.path(),
+            idx: nodeindex.0,
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct BoolControl {
-    /// On-off state
-    pub value: bool,
+    /// Idx for the DSP
+    pub idx: i32,
 
-    /// Name for the DSP
+    /// Path for the dsp
     pub path: String,
 }
 
-impl ControlTrait for BoolControl {
-    fn send(&mut self, state: &mut StateHandle) {
-        state
-            .set_by_path(&self.path, if self.value { 1.0 } else { 0.0 })
-            .unwrap();
+impl BoolControl {
+    pub fn send(&self, tx: &Sender<ParameterUpdate>, value: bool) {
+        tx.send(ParameterUpdate::new(
+            self.idx,
+            if value { 1.0 } else { 0.0 },
+        ))
+        .unwrap();
     }
 }
 
-impl From<&Node> for BoolControl {
-    fn from(node: &Node) -> Self {
-        let value = node.widget_type().init_value() > 0.5;
-        let path = node.path();
-        Self { value, path }
+impl From<NodeIndex<'_>> for BoolControl {
+    fn from(nodeindex: NodeIndex<'_>) -> Self {
+        Self {
+            idx: nodeindex.0,
+            path: nodeindex.1.path(),
+        }
     }
 }
 
@@ -267,14 +181,8 @@ pub struct NoteControl {
     pub volume: Control,
 }
 
-impl ControlTrait for NoteControl {
-    fn send(&mut self, state: &mut StateHandle) {
-        self.note.send(state);
-        self.volume.send(state);
-    }
-}
-impl From<(&Node, &Node)> for NoteControl {
-    fn from((note, volume): (&Node, &Node)) -> Self {
+impl From<(NodeIndex<'_>, NodeIndex<'_>)> for NoteControl {
+    fn from((note, volume): (NodeIndex<'_>, NodeIndex<'_>)) -> Self {
         Self {
             note: note.into(),
             volume: volume.into(),
@@ -291,14 +199,8 @@ pub struct PluckControl {
     pub pluck: BoolControl,
 }
 
-impl ControlTrait for PluckControl {
-    fn send(&mut self, state: &mut StateHandle) {
-        self.note.send(state);
-        self.pluck.send(state);
-    }
-}
-impl From<(&Node, &Node)> for PluckControl {
-    fn from((note, pluck): (&Node, &Node)) -> Self {
+impl From<(NodeIndex<'_>, NodeIndex<'_>)> for PluckControl {
+    fn from((note, pluck): (NodeIndex<'_>, NodeIndex<'_>)) -> Self {
         Self {
             note: note.into(),
             pluck: pluck.into(),
@@ -306,13 +208,20 @@ impl From<(&Node, &Node)> for PluckControl {
     }
 }
 
+pub struct NodeIndex<'a>(i32, &'a Node);
+
 trait NodeByPath {
-    fn node_by_path(&self, path: &str) -> Option<&Node>;
+    fn by_path(&self, path: &str) -> NodeIndex<'_>;
 }
 
 impl NodeByPath for StateHandle {
-    fn node_by_path(&self, path: &str) -> Option<&Node> {
-        self.params().values().find(|n| n.path() == path)
+    fn by_path(&self, path: &str) -> NodeIndex<'_> {
+        for n in self.params().iter() {
+            if n.1.path() == path {
+                return NodeIndex(*n.0, n.1);
+            }
+        }
+        panic!("Wrongly parameterized parameter {}", path);
     }
 }
 

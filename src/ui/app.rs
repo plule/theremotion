@@ -4,16 +4,28 @@ use crossbeam_channel::{Receiver, Sender};
 
 use egui::{FontFamily, FontId, Key, RichText, TextStyle};
 
-use crate::{controls, settings::Settings};
+use crate::{controls::Controls, dsp_thread::ParameterUpdate, settings::Settings};
+
+use super::UiUpdate;
 
 pub struct App {
-    dsp_controls_rx: Receiver<controls::Controls>,
-    controls: controls::Controls,
+    update_rx: Receiver<UiUpdate>,
+    controls: Controls,
     settings: Settings,
     saved_settings: Settings,
     settings_tx: Sender<Settings>,
+    dsp_tx: Sender<ParameterUpdate>,
     main_tab: MainTab,
     tabtip: bool,
+    error: Option<String>,
+    lead_volume: f32,
+    lead_chord_notes: [f32; 4],
+    lead_chord_volumes: [f32; 4],
+    raw_note: f32,
+    filter_cutoff: f32,
+    filter_resonance: f32,
+    autotune_amount: usize,
+    has_hands: (bool, bool),
 }
 
 #[derive(Debug, PartialEq, Eq, EnumIter, Clone, Copy)]
@@ -51,38 +63,17 @@ impl MainTab {
             MainTab::Instructions => "ℹ",
         }
     }
-
-    pub fn add_widget<'a>(
-        &self,
-        ui: &mut egui::Ui,
-        controls: &'a mut controls::Controls,
-        settings: &'a mut Settings,
-        tabtip: bool,
-    ) {
-        match self {
-            MainTab::Play => ui.add(super::TabPlay::new(controls, &mut settings.current_preset)),
-            MainTab::RootEdit => ui.add(super::TabRootNote::new(
-                controls,
-                &mut settings.current_preset,
-            )),
-            MainTab::Scale => ui.add(super::TabScale::new(controls, &mut settings.current_preset)),
-            MainTab::Mix => ui.add(super::TabMix::new(&mut settings.current_preset)),
-            MainTab::Effects => ui.add(super::TabEffects::new(
-                controls,
-                &mut settings.current_preset,
-            )),
-            MainTab::Presets => ui.add(super::TabPresets::new(settings, tabtip)),
-            MainTab::Instructions => ui.add(super::TabInstructions::new()),
-        };
-    }
 }
 
 impl App {
     /// Called once before the first frame.
     pub fn new(
         cc: &eframe::CreationContext<'_>,
-        dsp_controls_rx: Receiver<controls::Controls>,
+        update_rx: Receiver<UiUpdate>,
+        dsp_tx: Sender<ParameterUpdate>,
         settings_tx: Sender<Settings>,
+        controls: Controls,
+        settings: Settings,
         tabtip: bool,
     ) -> Self {
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
@@ -127,17 +118,76 @@ impl App {
         style.spacing.button_padding.y = 10.0;
         cc.egui_ctx.set_style(style);
 
-        let controls = dsp_controls_rx.recv().unwrap();
-        let settings = Settings::read();
-        settings_tx.send(settings.clone()).unwrap();
         Self {
-            dsp_controls_rx,
+            update_rx,
+            dsp_tx,
             settings_tx,
-            controls,
             saved_settings: settings.clone(),
             main_tab: MainTab::Play,
             settings,
             tabtip,
+            error: None,
+            lead_volume: controls.lead_volume.input.init,
+            lead_chord_notes: controls.lead.clone().map(|n| n.note.input.init),
+            lead_chord_volumes: controls.lead.clone().map(|n| n.volume.input.init),
+            raw_note: controls.lead[0].note.input.init,
+            filter_cutoff: controls.cutoff_note.input.init,
+            filter_resonance: controls.resonance.input.init,
+            autotune_amount: 0,
+            has_hands: (false, false),
+            controls,
+        }
+    }
+
+    pub fn draw_current_tab(&mut self, ui: &mut egui::Ui) {
+        match self.main_tab {
+            MainTab::Play => ui.add(super::TabPlay::new(
+                &self.controls,
+                &mut self.settings.current_preset,
+                self.lead_volume,
+                &self.lead_chord_notes,
+                &self.lead_chord_volumes,
+                self.raw_note,
+                self.filter_cutoff,
+                self.filter_resonance,
+                self.autotune_amount,
+            )),
+            MainTab::RootEdit => ui.add(super::TabRootNote::new(
+                &mut self.settings.current_preset,
+                &self.lead_chord_notes,
+                &self.lead_chord_volumes,
+            )),
+            MainTab::Scale => ui.add(super::TabScale::new(
+                &mut self.settings.current_preset,
+                &self.lead_chord_notes,
+                &self.lead_chord_volumes,
+            )),
+            MainTab::Mix => ui.add(super::TabMix::new(&mut self.settings.current_preset)),
+            MainTab::Effects => ui.add(super::TabEffects::new(
+                &self.controls,
+                &mut self.settings.current_preset,
+            )),
+            MainTab::Presets => ui.add(super::TabPresets::new(&mut self.settings, self.tabtip)),
+            MainTab::Instructions => ui.add(super::TabInstructions::new()),
+        };
+    }
+
+    pub fn receive_update(&mut self) {
+        for msg in self.update_rx.try_iter() {
+            match msg {
+                UiUpdate::Error(x) => self.error = Some(x),
+                UiUpdate::ErrorReset => self.error = None,
+                UiUpdate::LeadVolume(x) => self.lead_volume = x,
+                UiUpdate::LeadChordNotes(x) => self.lead_chord_notes = x,
+                UiUpdate::LeadChordVolumes(x) => self.lead_chord_volumes = x,
+                UiUpdate::RawNote(x) => self.raw_note = x,
+                UiUpdate::Filter(cutoff, resonance) => {
+                    self.filter_cutoff = cutoff;
+                    self.filter_resonance = resonance;
+                }
+                UiUpdate::AutotuneAmount(x) => self.autotune_amount = x,
+                UiUpdate::HasHands(x) => self.has_hands = x,
+            }
         }
     }
 }
@@ -146,24 +196,12 @@ impl eframe::App for App {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        let Self {
-            dsp_controls_rx,
-            controls,
-            settings,
-            settings_tx,
-            saved_settings,
-            main_tab,
-            tabtip: _,
-        } = self;
-
         if ctx.input().key_down(Key::Escape) {
             frame.close();
         }
 
-        // Update the current control state from the DSP
-        if let Some(new_controls) = dsp_controls_rx.try_iter().last() {
-            *controls = new_controls;
-        }
+        // Receive UI update messages
+        self.receive_update();
 
         egui::SidePanel::right("right_panel")
             .default_width(24.0)
@@ -171,7 +209,7 @@ impl eframe::App for App {
                 ui.vertical_centered_justified(|ui| {
                     for tab in MainTab::iter() {
                         ui.selectable_value(
-                            main_tab,
+                            &mut self.main_tab,
                             tab,
                             RichText::new(tab.icon())
                                 .text_style(egui::TextStyle::Button)
@@ -183,12 +221,7 @@ impl eframe::App for App {
         egui::TopBottomPanel::bottom("bottom_panel")
             .default_height(32.0)
             .show(ctx, |ui| {
-                if let Some(warning) = &controls.warning {
-                    let warning = format!("⚠ Leap: {}", warning);
-                    ui.label(RichText::new(warning).color(egui::Color32::YELLOW));
-                }
-
-                if let Some(error) = &controls.error {
+                if let Some(error) = &self.error {
                     let error = format!("⚠ Leap: {}", error);
                     ui.label(RichText::new(error).color(egui::Color32::RED));
                 }
@@ -197,22 +230,26 @@ impl eframe::App for App {
             });
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical_centered_justified(|ui| {
-                let (lh, rh) = controls.has_hands;
+                let (lh, rh) = self.has_hands;
                 let lh = if lh { "👈" } else { "⬜" };
                 let rh = if rh { "👉" } else { "⬜" };
-                let title = main_tab.title();
+                let title = self.main_tab.title();
                 ui.heading(format!("{lh} {title} {rh}"));
             });
             ui.separator();
-            main_tab.add_widget(ui, controls, settings, self.tabtip);
+            self.draw_current_tab(ui);
         });
 
-        if saved_settings != settings {
-            if let Err(err) = settings.save() {
+        if self.saved_settings != self.settings {
+            if let Err(err) = self.settings.save() {
                 log::error!("{}", err);
             }
-            *saved_settings = settings.clone();
-            settings_tx.send(settings.clone()).unwrap();
+            self.saved_settings = self.settings.clone();
+            self.settings_tx.send(self.settings.clone()).unwrap();
+            self.settings
+                .current_preset
+                .send_to_dsp(&self.controls, &self.dsp_tx)
+                .unwrap();
         }
         ctx.request_repaint();
     }

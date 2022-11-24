@@ -2,11 +2,27 @@ use std::slice;
 
 use cpal::traits::{DeviceTrait, HostTrait};
 use cpal::{SampleFormat, StreamConfig};
-use faust_state::DspHandle;
+use crossbeam_channel::Receiver;
+use faust_state::{DspHandle, StateHandle};
 use faust_types::FaustDsp;
 
+pub struct ParameterUpdate {
+    idx: i32,
+    value: f32,
+}
+
+impl ParameterUpdate {
+    pub fn new(idx: i32, value: f32) -> Self {
+        Self { idx, value }
+    }
+}
+
 /// Run the DSP thread
-pub fn run<T>(mut dsp: DspHandle<T>) -> cpal::Stream
+pub fn run<T>(
+    mut dsp: DspHandle<T>,
+    mut state: StateHandle,
+    parameter_rx: Receiver<ParameterUpdate>,
+) -> cpal::Stream
 where
     T: FaustDsp<T = f32> + 'static + Send,
 {
@@ -53,11 +69,19 @@ where
                 move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
                     let len = data.len();
                     assert!(len <= buffer_size, "Need buffer size of at least {}", len);
+
+                    // Retrieve the parameter updates
+                    for parameter in parameter_rx.try_iter() {
+                        state.set_param(parameter.idx, parameter.value);
+                    }
+                    state.send();
+
+                    // Compute the DSP
                     dsp.update_and_compute(len as i32, &buffer_input[..], &mut buffer_output[..]);
 
+                    // Send to audio buffer
                     for (out, dsp_sample) in data.iter_mut().zip(&outputs[0]) {
                         *out = *dsp_sample;
-                        //*sample = Sample::from(&0.0);
                     }
                 },
                 err_fn,

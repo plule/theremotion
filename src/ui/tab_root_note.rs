@@ -1,18 +1,27 @@
 use egui::{RichText, Widget};
 use staff::Pitch;
 
-use crate::{controls, settings::Preset};
+use crate::settings::Preset;
 
 use super::KeyboardEditMode;
 
 pub struct TabRootNote<'a> {
-    controls: &'a mut controls::Controls,
     preset: &'a mut Preset,
+    lead_chord_notes: &'a [f32; 4],
+    lead_chord_volumes: &'a [f32; 4],
 }
 
 impl<'a> TabRootNote<'a> {
-    pub fn new(controls: &'a mut controls::Controls, preset: &'a mut Preset) -> Self {
-        Self { controls, preset }
+    pub fn new(
+        preset: &'a mut Preset,
+        lead_chord_notes: &'a [f32; 4],
+        lead_chord_volumes: &'a [f32; 4],
+    ) -> Self {
+        Self {
+            preset,
+            lead_chord_notes,
+            lead_chord_volumes,
+        }
     }
 }
 
@@ -20,7 +29,8 @@ impl Widget for TabRootNote<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.vertical(|ui| {
             ui.add(crate::ui::Keyboard::new(
-                self.controls.lead.iter().collect(),
+                self.lead_chord_notes,
+                self.lead_chord_volumes,
                 self.preset,
                 KeyboardEditMode::RootNote,
             ));
