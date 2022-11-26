@@ -59,7 +59,7 @@ impl Default for Preset {
             guitar_octave: 3,
             pitch: Pitch::C,
             octave_range: 3,
-            scale: ScaleIntervals::all(),
+            scale: ScaleIntervals::major(),
             drone: Default::default(),
             mix: Default::default(),
             fx: Default::default(),
@@ -175,4 +175,20 @@ pub struct System {
     /// Bump up the process priority
     #[serde(default)]
     pub high_priority_process: bool,
+
+    #[serde(default)]
+    pub handedness: Handedness,
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub enum Handedness {
+    RightHanded,
+    LeftHanded,
+}
+
+impl Default for Handedness {
+    fn default() -> Self {
+        Self::RightHanded
+    }
 }

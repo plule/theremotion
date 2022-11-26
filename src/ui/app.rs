@@ -142,18 +142,18 @@ impl App {
 
     pub fn draw_current_tab(&mut self, ui: &mut egui::Ui) {
         match self.main_tab {
-            MainTab::Play => ui.add(super::TabPlay::new(
-                &self.controls,
-                &mut self.settings.current_preset,
-                self.lead_volume,
-                &self.lead_chord_notes,
-                &self.lead_chord_volumes,
-                self.raw_note,
-                self.filter_cutoff,
-                self.filter_resonance,
-                self.pitch_xy,
-                self.chords_number,
-            )),
+            MainTab::Play => ui.add(super::TabPlay {
+                controls: &self.controls,
+                settings: &mut self.settings,
+                lead_volume: self.lead_volume,
+                lead_chord_notes: &self.lead_chord_notes,
+                lead_chord_volumes: &self.lead_chord_volumes,
+                raw_note: self.raw_note,
+                filter_cutoff: self.filter_cutoff,
+                filter_resonance: self.filter_resonance,
+                pitch_xy: self.pitch_xy,
+                chords_number: self.chords_number,
+            }),
             MainTab::RootEdit => ui.add(super::TabRootNote::new(
                 &mut self.settings.current_preset,
                 &self.lead_chord_notes,

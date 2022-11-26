@@ -15,6 +15,7 @@ use self::v1::{DroneSettings, EchoSettings, FxSettings, MixSettings, ReverbSetti
 
 pub type Settings = v1::Settings;
 pub type Preset = v1::Preset;
+pub type Handedness = v1::Handedness;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]

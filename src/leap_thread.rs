@@ -7,7 +7,7 @@ use nalgebra::{Vector2, Vector3};
 
 use crate::{
     controls, dsp_thread,
-    settings::{Preset, Settings},
+    settings::{Handedness, Settings},
     ui::{self, UiUpdate},
 };
 
@@ -27,8 +27,8 @@ pub fn run(
             if let Some(new_settings) = settings_rx.try_iter().last() {
                 settings = new_settings;
             }
-            let preset = &settings.current_preset;
-            if read_leap_and_update(&mut connection, preset, &controls, &ui_tx, &dsp_tx).is_err() {
+            if read_leap_and_update(&mut connection, &settings, &controls, &ui_tx, &dsp_tx).is_err()
+            {
                 // For the lack of better error handling, just assume
                 // that the gui thread quit
                 return;
@@ -39,7 +39,7 @@ pub fn run(
 
 fn read_leap_and_update(
     connection: &mut Connection,
-    preset: &Preset,
+    settings: &Settings,
     controls: &controls::Controls,
     ui_tx: &Sender<UiUpdate>,
     dsp_tx: &Sender<dsp_thread::ParameterUpdate>,
@@ -47,7 +47,7 @@ fn read_leap_and_update(
     match connection.poll(100) {
         Ok(message) => {
             if let Event::Tracking(e) = message.event() {
-                on_tracking_event(e, preset, controls, ui_tx, dsp_tx)?;
+                on_tracking_event(e, settings, controls, ui_tx, dsp_tx)?;
             }
             ui_tx.send(UiUpdate::ErrorReset)?;
         }
@@ -60,30 +60,42 @@ fn read_leap_and_update(
 
 fn on_tracking_event(
     e: TrackingEvent<'_>,
-    preset: &Preset,
+    settings: &Settings,
     controls: &controls::Controls,
     ui_tx: &Sender<UiUpdate>,
     dsp_tx: &Sender<dsp_thread::ParameterUpdate>,
 ) -> Result<()> {
+    let preset = &settings.current_preset;
+    let handedness = &settings.system.handedness;
+
     // Retrieve the current scale 2 by 2 windows
     let full_scale_window = preset.full_scale_floating_window();
     let restricted_scale_window = preset.restricted_scale_floating_window();
 
     // List of visible hands
     let hands = e.hands();
-    let left_hand = hands.iter().find(|h| h.hand_type() == HandType::Left);
-    let right_hand = hands.iter().find(|h| h.hand_type() == HandType::Right);
+    let pitch_hand = hands
+        .iter()
+        .find(|h| h.hand_type() == pitch_hand_type(handedness));
+    let volume_hand = hands
+        .iter()
+        .find(|h| h.hand_type() == volume_hand_type(handedness));
+
+    let x_mirror = match handedness {
+        Handedness::LeftHanded => -1.0,
+        Handedness::RightHanded => 1.0,
+    };
 
     // Guitar gates
     let mut guitar_gates = [false, false, false, false];
-    if let Some(hand) = left_hand {
+    if let Some(hand) = pitch_hand {
         let position = hand.palm().position();
         let velocity = hand.palm().velocity();
 
         let note_range = preset.note_range_f();
 
         // Position the virtual antenna and the pitch hand relative to it
-        let antenna_coord = Vector2::new(-400.0, -200.0);
+        let antenna_coord = Vector2::new(x_mirror * 400.0, -200.0);
         let pitch_coord_mm = antenna_coord - Vector2::new(position.x(), position.z());
         // Hand position in semitones
         let pitch_coord_semitones = pitch_coord_mm / 15.0;
@@ -145,7 +157,7 @@ fn on_tracking_event(
         ))?;
         ui_tx.send(UiUpdate::ChordsNumber(note_number_height))?;
     }
-    if let Some(hand) = right_hand {
+    if let Some(hand) = volume_hand {
         let position = hand.palm().position();
 
         let palm_normal = Vector3::from(hand.palm().normal().array());
@@ -160,7 +172,7 @@ fn on_tracking_event(
         let pluck_mute = controls.pluck_mute.get_scaled(palm_dot, &(-1.0..=0.0));
         let cutoff_note = controls
             .cutoff_note
-            .get_scaled(position.x(), &(50.0..=200.0));
+            .get_scaled(-x_mirror * position.x(), &(50.0..=200.0));
         let lead_volume = controls
             .lead_volume
             .get_scaled(position.y(), &(300.0..=400.0));
@@ -180,9 +192,23 @@ fn on_tracking_event(
     }
 
     ui_tx.send(UiUpdate::HasHands(
-        left_hand.is_some(),
-        right_hand.is_some(),
+        hands.iter().any(|h| h.hand_type() == HandType::Left),
+        hands.iter().any(|h| h.hand_type() == HandType::Right),
     ))?;
 
     Ok(())
+}
+
+fn pitch_hand_type(handedness: &Handedness) -> leaprs::HandType {
+    match handedness {
+        Handedness::RightHanded => leaprs::HandType::Right,
+        Handedness::LeftHanded => leaprs::HandType::Left,
+    }
+}
+
+fn volume_hand_type(handedness: &Handedness) -> leaprs::HandType {
+    match handedness {
+        Handedness::RightHanded => leaprs::HandType::Left,
+        Handedness::LeftHanded => leaprs::HandType::Right,
+    }
 }

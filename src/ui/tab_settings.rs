@@ -1,6 +1,6 @@
 use egui::Widget;
 
-use crate::settings::Settings;
+use crate::settings::{Handedness, Settings};
 
 pub struct TabSettings<'a> {
     settings: &'a mut Settings,
@@ -29,6 +29,24 @@ impl<'a> Widget for TabSettings<'a> {
                 "Use Tabtip for text input",
             )
             .on_hover_text("Enable if the visual keyboard is not opening when using a touchscreen");
+            ui.horizontal(|ui| {
+                ui.selectable_value(
+                    &mut self.settings.system.handedness,
+                    Handedness::RightHanded,
+                    "Right handed",
+                )
+                .on_hover_text(
+                    "The left hand controls the volume and the right hand controls the pitch.",
+                );
+                ui.selectable_value(
+                    &mut self.settings.system.handedness,
+                    Handedness::LeftHanded,
+                    "Left handed",
+                )
+                .on_hover_text(
+                    "The left hand controls the pitch and the right hand controls the volume.",
+                );
+            });
         })
         .response
     }
