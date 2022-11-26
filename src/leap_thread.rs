@@ -65,52 +65,58 @@ fn on_tracking_event(
     ui_tx: &Sender<UiUpdate>,
     dsp_tx: &Sender<dsp_thread::ParameterUpdate>,
 ) -> Result<()> {
+    // Retrieve the current scale 2 by 2 windows
     let full_scale_window = preset.full_scale_floating_window();
     let restricted_scale_window = preset.restricted_scale_floating_window();
+
+    // List of visible hands
     let hands = e.hands();
     let left_hand = hands.iter().find(|h| h.hand_type() == HandType::Left);
     let right_hand = hands.iter().find(|h| h.hand_type() == HandType::Right);
-    ui_tx.send(UiUpdate::HasHands((
-        left_hand.is_some(),
-        right_hand.is_some(),
-    )))?;
-    let mut strums_enabled = [false, false, false, false];
+
+    // Guitar gates
+    let mut guitar_gates = [false, false, false, false];
     if let Some(hand) = left_hand {
         let position = hand.palm().position();
         let velocity = hand.palm().velocity();
 
+        let note_range = preset.note_range_f();
+
+        // Position the virtual antenna and the pitch hand relative to it
         let antenna_coord = Vector2::new(-400.0, -200.0);
-        let pitch_coord = Vector2::new(position.x(), position.z());
-        let dist = (pitch_coord - antenna_coord).norm();
-        let raw_note = controls::convert_range(dist, 500.0..=0.0, &preset.note_range_f());
+        let pitch_coord_mm = antenna_coord - Vector2::new(position.x(), position.z());
+        // Hand position in semitones
+        let pitch_coord_semitones = pitch_coord_mm / 15.0;
+        let pitch_coord_semitones = Vector2::new(-pitch_coord_semitones.x, pitch_coord_semitones.y);
+        // Hand distance from the antenna in semitones
+        let pitch_distance_semitones = pitch_coord_semitones.norm();
+        // Convert to note, based on the current note range
+        let raw_note = (*note_range.end() - pitch_distance_semitones)
+            .clamp(*note_range.start(), *note_range.end());
 
-        // Determine the played chord
-        let y = position.y();
-        let lead_volumes = [0, 1, 2, 3].map(|i| {
-            if i == 0 {
-                return 1.0;
-            }
-            let note = &controls.lead[i];
-            let from = 300.0 + 50.0 * i as f32;
-            let to = 350.0 + 50.0 * i as f32;
-            note.volume.get_scaled(y, from..=to)
-        });
+        // Floating number of played chords. 2.5 means 2 notes and one half volume.
+        let note_number_height =
+            controls::convert_range(position.y(), &(350.0..=500.0), &(1.0..=4.0));
+        let lead_volumes =
+            [0.0, 1.0, 2.0, 3.0].map(|v| (note_number_height.clamp(1.0, 4.0) - v).clamp(0.0, 1.0));
 
-        strums_enabled = lead_volumes.map(|v| v >= 0.5);
+        guitar_gates = lead_volumes.map(|v| v >= 0.2);
 
+        // Autotune amount
         let autotune =
-            controls::convert_range(hand.pinch_strength(), 0.0..=1.0, &(0.0..=5.0)) as usize;
+            controls::convert_range(hand.pinch_strength(), &(0.0..=1.0), &(0.0..=5.0)) as usize;
 
-        // In any case, assign all the notes
+        // Lead note, autotuned
         let note = restricted_scale_window.autotune(raw_note, autotune);
 
+        // Autochord, from the autotuned note so that the chord itself is autotuned
         let chord = full_scale_window.autochord(note, &[0, 2, 4, 7]);
 
         let pluck_offset = 12.0 * (preset.guitar_octave - preset.octave) as f32;
 
         let pitch_bend = controls
             .pitch_bend
-            .get_scaled(velocity.x() + velocity.y(), -300.0..=300.0);
+            .get_scaled(velocity.x() + velocity.y(), &(-300.0..=300.0));
 
         // Send to dsp
         for (control, value) in controls.lead.iter().zip(lead_volumes) {
@@ -133,6 +139,11 @@ fn on_tracking_event(
         ))?;
         ui_tx.send(UiUpdate::LeadChordVolumes(lead_volumes))?;
         ui_tx.send(UiUpdate::RawNote(raw_note))?;
+        ui_tx.send(UiUpdate::PitchXY(
+            pitch_coord_semitones.x,
+            pitch_coord_semitones.y,
+        ))?;
+        ui_tx.send(UiUpdate::ChordsNumber(note_number_height))?;
     }
     if let Some(hand) = right_hand {
         let position = hand.palm().position();
@@ -141,16 +152,21 @@ fn on_tracking_event(
         let palm_dot = palm_normal.dot(&Vector3::y());
         if hand.pinch_strength() > 0.9 {
             for (i, string) in &mut controls.strum.iter().enumerate() {
-                string.pluck.send(
-                    dsp_tx,
-                    palm_dot > 0.0 + (i as f32) * 0.2 && strums_enabled[i],
-                );
+                string
+                    .pluck
+                    .send(dsp_tx, palm_dot > 0.0 + (i as f32) * 0.2 && guitar_gates[i]);
             }
         }
-        let pluck_mute = controls.pluck_mute.get_scaled(palm_dot, -1.0..=0.0);
-        let cutoff_note = controls.cutoff_note.get_scaled(position.x(), 50.0..=200.0);
-        let lead_volume = controls.lead_volume.get_scaled(position.y(), 300.0..=400.0);
-        let resonance = controls.resonance.get_scaled(position.z(), 100.0..=-100.0);
+        let pluck_mute = controls.pluck_mute.get_scaled(palm_dot, &(-1.0..=0.0));
+        let cutoff_note = controls
+            .cutoff_note
+            .get_scaled(position.x(), &(50.0..=200.0));
+        let lead_volume = controls
+            .lead_volume
+            .get_scaled(position.y(), &(300.0..=400.0));
+        let resonance = controls
+            .resonance
+            .get_scaled(position.z(), &(100.0..=-100.0));
 
         // Send to dsp
         controls.pluck_mute.send(dsp_tx, pluck_mute)?;
@@ -162,5 +178,11 @@ fn on_tracking_event(
         ui_tx.send(UiUpdate::Filter(cutoff_note, resonance))?;
         ui_tx.send(UiUpdate::LeadVolume(lead_volume))?;
     }
+
+    ui_tx.send(UiUpdate::HasHands(
+        left_hand.is_some(),
+        right_hand.is_some(),
+    ))?;
+
     Ok(())
 }

@@ -20,11 +20,13 @@ pub struct App {
     lead_volume: f32,
     lead_chord_notes: [f32; 4],
     lead_chord_volumes: [f32; 4],
+    chords_number: f32,
     raw_note: f32,
     filter_cutoff: f32,
     filter_resonance: f32,
     autotune_amount: usize,
     has_hands: (bool, bool),
+    pitch_xy: (f32, f32),
 }
 
 #[derive(Debug, PartialEq, Eq, EnumIter, Clone, Copy)]
@@ -127,11 +129,13 @@ impl App {
             lead_volume: controls.lead_volume.input.init,
             lead_chord_notes: controls.lead.clone().map(|n| n.note.input.init),
             lead_chord_volumes: controls.lead.clone().map(|n| n.volume.input.init),
+            chords_number: 0.0,
             raw_note: controls.lead[0].note.input.init,
             filter_cutoff: controls.cutoff_note.input.init,
             filter_resonance: controls.resonance.input.init,
             autotune_amount: 0,
             has_hands: (false, false),
+            pitch_xy: (0.0, 0.0),
             controls,
         }
     }
@@ -147,7 +151,8 @@ impl App {
                 self.raw_note,
                 self.filter_cutoff,
                 self.filter_resonance,
-                self.autotune_amount,
+                self.pitch_xy,
+                self.chords_number,
             )),
             MainTab::RootEdit => ui.add(super::TabRootNote::new(
                 &mut self.settings.current_preset,
@@ -177,13 +182,15 @@ impl App {
                 UiUpdate::LeadVolume(x) => self.lead_volume = x,
                 UiUpdate::LeadChordNotes(x) => self.lead_chord_notes = x,
                 UiUpdate::LeadChordVolumes(x) => self.lead_chord_volumes = x,
+                UiUpdate::ChordsNumber(x) => self.chords_number = x,
                 UiUpdate::RawNote(x) => self.raw_note = x,
                 UiUpdate::Filter(cutoff, resonance) => {
                     self.filter_cutoff = cutoff;
                     self.filter_resonance = resonance;
                 }
                 UiUpdate::AutotuneAmount(x) => self.autotune_amount = x,
-                UiUpdate::HasHands(x) => self.has_hands = x,
+                UiUpdate::HasHands(left, right) => self.has_hands = (left, right),
+                UiUpdate::PitchXY(x, y) => self.pitch_xy = (x, y),
             }
         }
     }

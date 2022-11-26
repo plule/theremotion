@@ -22,15 +22,28 @@ use crate::controls;
 
 /// Message to update externally the UI
 pub enum UiUpdate {
+    // Display an error message
     Error(String),
+    // Remove the error message
     ErrorReset,
+    // Lead instrument volume (0-1)
     LeadVolume(f32),
+    // Lead chord notes (floating midi)
     LeadChordNotes([f32; 4]),
+    // Lead chord volumes (0-1)
     LeadChordVolumes([f32; 4]),
+    // Floating number of chord notes (2.5 is 2 chord notes and the next half volume)
+    ChordsNumber(f32),
+    // Lead instrument note, without autotune
     RawNote(f32),
+    // Filter cutoff and resonance
     Filter(f32, f32),
+    // Amount of autotune
     AutotuneAmount(usize),
-    HasHands((bool, bool)),
+    // Visible hands
+    HasHands(bool, bool),
+    // Pitch position, in semitones relative to the antenna
+    PitchXY(f32, f32),
 }
 
 trait FromControl<'a> {
