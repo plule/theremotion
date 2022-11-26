@@ -101,7 +101,7 @@ impl<'a> TabPlay<'a> {
 
     fn pitch_plot(&self, name: &str, ui: &mut egui::Ui, size: f32) {
         let note_range = self.preset.note_range_f();
-        let xy_range = (note_range.end() - note_range.start()) * 0.8;
+        let xy_range = (note_range.end() - note_range.start()) * 0.9;
 
         let raw_coordinates = Vector2::new(self.pitch_xy.0, self.pitch_xy.1);
         let raw_coordinates_direction = raw_coordinates.normalize();
@@ -112,9 +112,9 @@ impl<'a> TabPlay<'a> {
             .allow_drag(false)
             .allow_scroll(false)
             .allow_zoom(false)
-            .include_x(0.0)
+            .include_x(-1.0)
             .include_x(xy_range)
-            .include_y(0.0)
+            .include_y(1.0)
             .include_y(-xy_range)
             .x_grid_spacer(uniform_grid_spacer(|_| [12.0, 1.0, 1.0]))
             .y_grid_spacer(uniform_grid_spacer(|_| [12.0, 1.0, 1.0]))
@@ -144,12 +144,6 @@ impl<'a> TabPlay<'a> {
                         .radius(6.0 * volume),
                     );
                 }
-
-                plot_ui.points(
-                    Points::new(PlotPoints::Owned(vec![PlotPoint::new(0.0, 0.0)]))
-                        .shape(MarkerShape::Circle)
-                        .radius(6.0),
-                );
 
                 for note in scale {
                     let width = if note.pitch() == root.pitch() {
@@ -210,7 +204,7 @@ impl<'a> TabPlay<'a> {
                 plot_ui.bar_chart(
                     BarChart::new(vec![Bar::new(0.0, (self.chords_number + 1.0).into())])
                         .width(2.0)
-                        .name("Poly."),
+                        .name("Chord"),
                 );
             });
     }
