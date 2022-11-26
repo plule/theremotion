@@ -120,7 +120,7 @@ impl Control {
         dsp_tx.send(ParameterUpdate::new(self.idx, value))
     }
 
-    pub fn get_scaled(&self, value: f32, value_range: RangeInclusive<f32>) -> f32 {
+    pub fn get_scaled(&self, value: f32, value_range: &RangeInclusive<f32>) -> f32 {
         convert_range(value, value_range, &self.input.range)
     }
 }
@@ -227,14 +227,12 @@ impl NodeByPath for StateHandle {
 
 pub fn convert_range(
     value: f32,
-    input_range: RangeInclusive<f32>,
+    input_range: &RangeInclusive<f32>,
     output_range: &RangeInclusive<f32>,
 ) -> f32 {
-    {
-        let in_min = *input_range.start();
-        let in_max = *input_range.end();
-        let out_min = *output_range.start();
-        let out_max = *output_range.end();
-        (((value - in_min) * (out_max - out_min)) / (in_max - in_min)) + out_min
-    }
+    let in_min = *input_range.start();
+    let in_max = *input_range.end();
+    let out_min = *output_range.start();
+    let out_max = *output_range.end();
+    (((value - in_min) * (out_max - out_min)) / (in_max - in_min)) + out_min
 }
