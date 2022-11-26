@@ -70,6 +70,7 @@ fn main() {
 
     // Start UI
     let native_options = eframe::NativeOptions {
+        initial_window_pos: Some(egui::Pos2 { x: 0.0, y: 0.0 }),
         initial_window_size: Some(egui::vec2(800.0, 480.0)),
         maximized: settings.system.fullscreen,
         decorated: !settings.system.fullscreen,
