@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
 use staff::{midi::MidiNote, scale::ScaleIntervals, Pitch};
 
+const PRESETS: &[u8] = include_bytes!("presets.yaml");
+
 /// Application settings
-#[derive(Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Settings {
     /// Current sound settings
@@ -16,6 +18,16 @@ pub struct Settings {
     /// System settings
     #[serde(default)]
     pub system: System,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            current_preset: Default::default(),
+            presets: serde_yaml::from_slice(PRESETS).unwrap(),
+            system: Default::default(),
+        }
+    }
 }
 
 /// Sound preset
@@ -86,7 +98,7 @@ impl Default for MixSettings {
             master: 1.0,
             lead: 1.0,
             guitar: 1.0,
-            drone: 0.4,
+            drone: 0.14,
         }
     }
 }
@@ -190,5 +202,19 @@ pub enum Handedness {
 impl Default for Handedness {
     fn default() -> Self {
         Self::RightHanded
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rstest::rstest;
+
+    use super::*;
+
+    #[rstest]
+    fn default() {
+        // Dynamically deserialized at runtime...
+        let settings = Settings::default();
+        assert!(settings.presets.len() > 0);
     }
 }
