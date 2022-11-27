@@ -16,13 +16,17 @@ scale, making it much easier to control than a Theremin.
 
 ## Features
 
+![Screenshot](doc/capture.png)
+
 - 👐 Theremotion is a synthesizer controlled by your hands.
-- 👉 Move up and down your right hand to control the volume.
-- 👈 Move up and down your left hand to control the pitch.
-- 👋 Move your right hand on the horizontal plane to control the filter.
-- 👋 Advance left hand on the horizontal plane to play a chord.
-- 👌 Pinch with your left hand to stick on a scale.
-- 🎸 Pinch with your right hand, and rotate it to play guitar.
+- 👈 Move up left hand to control the volume.
+- 👉 Move your right hand horizontally closer or further away from a virtual antenna to control the pitch.
+- 👋 Move your left hand on the horizontal plane to control the filter.
+- 👋 Move up your right hand to play a chord.
+- 👌 Pinch with your right hand to snap to a scale.
+- 🎸 Pinch with your left hand, and rotate it to play guitar.
+
+A left handed mode is also included.
 
 ## Installation
 
