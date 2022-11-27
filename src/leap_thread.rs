@@ -112,7 +112,7 @@ fn on_tracking_event(
         let lead_volumes =
             [0.0, 1.0, 2.0, 3.0].map(|v| (note_number_height.clamp(1.0, 4.0) - v).clamp(0.0, 1.0));
 
-        guitar_gates = lead_volumes.map(|v| v >= 0.2);
+        guitar_gates = lead_volumes.map(|v| v > 0.0);
 
         // Autotune amount
         let autotune =

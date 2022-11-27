@@ -1,4 +1,4 @@
-use egui::{Color32, Response, Widget};
+use egui::{color::Hsva, Response, Widget};
 use staff::{
     midi::{MidiNote, Octave},
     Interval, Pitch,
@@ -47,28 +47,30 @@ impl<'a> Keyboard<'a> {
     fn draw_key(&self, ui: &mut egui::Ui, key_dimension: &egui::Vec2, note: &MidiNote) -> Response {
         let scale = self.preset.restricted_scale();
         let note_byte = note.into_byte();
-
         let note_float = note_byte as f32;
-        let mut red = 0;
 
-        for (played_note, played_volume) in self.chord_notes.iter().zip(self.chord_volumes) {
-            let note_distance = (note_float - played_note).abs().clamp(0.0, 1.0);
-            red = red.max(((1.0 - note_distance) * 255.0 * played_volume) as u8);
-        }
-        let green = if self
+        let saturation = if self
             .preset
             .drone
             .notes
             .iter()
             .any(|drone_note| drone_note.iter().any(|drone_note| note == drone_note))
         {
-            255
+            1.0
         } else {
-            0
+            0.6
         };
-        let blue = if scale.contains(note) { 255 } else { 0 };
 
-        let color = Color32::from_rgb(red, green, blue);
+        let mut value: f32 = 0.20;
+
+        for (played_note, played_volume) in self.chord_notes.iter().zip(self.chord_volumes) {
+            let note_distance = (note_float - played_note).abs().clamp(0.0, 1.0) * 0.80;
+            value = value.max((1.0 - note_distance) * played_volume);
+        }
+
+        let hue = if scale.contains(note) { 122.0 } else { 0.0 } / 360.0;
+
+        let color = Hsva::new(hue, saturation, value, 1.0);
         let (rect, mut response) = ui.allocate_exact_size(*key_dimension, egui::Sense::click());
         if response.clicked() {
             response.mark_changed();

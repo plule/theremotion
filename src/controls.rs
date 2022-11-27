@@ -122,6 +122,7 @@ impl Control {
 
     pub fn get_scaled(&self, value: f32, value_range: &RangeInclusive<f32>) -> f32 {
         convert_range(value, value_range, &self.input.range)
+            .clamp(*self.input.range.start(), *self.input.range.end())
     }
 }
 
