@@ -5,20 +5,26 @@
 👐 Theremotion is a virtual instrument inspired by the Theremin.
 
 Just like a Theremin, the position of your hand in the air controls the pitch
-and volume of the sound. However, you can also control much more dimensions of
-the sound with specific motions.
+and volume of the sound. However, instead of being controlled with a pure analog
+signal, the Theremotion is controled through digital hand tracking. This enables
+additional dimensions to control the sound. With specific hand motions, you can
+control a low pass filter, a guitar sound, make a chord. You can even make the
+instrument snap to a scale, making it easier to control than a Theremin.
 
-With specific hand positions, you can control a low pass filter, a supersaw
-sound, a guitar sound and more. You can even make the instrument "stick" to a
-scale, making it much easier to control than a Theremin.
+The Theremotion cannot replace a Theremin but it is intended to be a twist
+around the idea of the Theremin that is more fun and maybe easier to learn. It
+is however not as sensitive as a Theremin, and usual Theremin finger techniques
+don't apply to the Theremotion.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/GGALeKm_uzc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+⚠️ The motions have changed since this video, don't rely on it to learn how to
+play.
 
 ## Features
 
 ![Screenshot](doc/capture.png)
 
-- 👐 Theremotion is a synthesizer controlled by your hands.
 - 👈 Move up left hand to control the volume.
 - 👉 Move your right hand horizontally closer or further away from a virtual antenna to control the pitch.
 - 👋 Move your left hand on the horizontal plane to control the filter.
