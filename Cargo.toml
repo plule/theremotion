@@ -38,7 +38,7 @@ log = "0.4"
 itertools = "0.10"
 
 [dev-dependencies]
-rstest = "0.15"
+rstest = "0.16"
 
 [build-dependencies]
 faust-build = { git = "https://github.com/Frando/rust-faust", branch="main" }
