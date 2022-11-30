@@ -36,7 +36,8 @@ pub enum UiUpdate {
     ChordsNumber(f32),
     // Lead instrument note, without autotune
     RawNote(f32),
-    // Filter cutoff and resonance
+    // Filter cutoff and resonance.
+    // Filter: -1 to 1, resonance: 0 to 1
     Filter(f32, f32),
     // Amount of autotune
     AutotuneAmount(usize),

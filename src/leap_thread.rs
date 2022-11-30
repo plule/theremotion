@@ -81,22 +81,17 @@ fn on_tracking_event(
         .iter()
         .find(|h| h.hand_type() == volume_hand_type(handedness));
 
-    let x_mirror = match handedness {
-        Handedness::LeftHanded => -1.0,
-        Handedness::RightHanded => 1.0,
-    };
-
     // Guitar gates
     let mut guitar_gates = [false, false, false, false];
     if let Some(hand) = pitch_hand {
-        let position = hand.palm().position();
-        let velocity = hand.palm().velocity();
+        let position = hand.position_from_body();
+        let velocity = hand.velocity_from_body();
 
         let note_range = preset.note_range_f();
 
         // Position the virtual antenna and the pitch hand relative to it
-        let antenna_coord = Vector2::new(x_mirror * 400.0, -200.0);
-        let pitch_coord_mm = antenna_coord - Vector2::new(position.x(), position.z());
+        let antenna_coord = Vector2::new(400.0, -200.0);
+        let pitch_coord_mm = antenna_coord - Vector2::new(position.x, position.z);
         // Hand position in semitones
         let pitch_coord_semitones = pitch_coord_mm / 15.0;
         let pitch_coord_semitones = Vector2::new(-pitch_coord_semitones.x, pitch_coord_semitones.y);
@@ -108,7 +103,7 @@ fn on_tracking_event(
 
         // Floating number of played chords. 2.5 means 2 notes and one half volume.
         let note_number_height =
-            controls::convert_range(position.y(), &(350.0..=500.0), &(1.0..=4.0));
+            controls::convert_range(position.y, &(350.0..=500.0), &(1.0..=4.0));
         let lead_volumes =
             [0.0, 1.0, 2.0, 3.0].map(|v| (note_number_height.clamp(1.0, 4.0) - v).clamp(0.0, 1.0));
 
@@ -128,7 +123,7 @@ fn on_tracking_event(
 
         let pitch_bend = controls
             .pitch_bend
-            .get_scaled(velocity.x() + velocity.y(), &(-300.0..=300.0));
+            .get_scaled(velocity.x + velocity.y, &(-300.0..=300.0));
 
         // Send to dsp
         for (control, value) in controls.lead.iter().zip(lead_volumes) {
@@ -152,13 +147,13 @@ fn on_tracking_event(
         ui_tx.send(UiUpdate::LeadChordVolumes(lead_volumes))?;
         ui_tx.send(UiUpdate::RawNote(raw_note))?;
         ui_tx.send(UiUpdate::PitchXY(
-            pitch_coord_semitones.x,
+            pitch_coord_semitones.x * hand.x_factor(),
             pitch_coord_semitones.y,
         ))?;
         ui_tx.send(UiUpdate::ChordsNumber(note_number_height))?;
     }
     if let Some(hand) = volume_hand {
-        let position = hand.palm().position();
+        let position = hand.position_from_body();
 
         let palm_normal = Vector3::from(hand.palm().normal().array());
         let palm_dot = palm_normal.dot(&Vector3::y());
@@ -170,15 +165,17 @@ fn on_tracking_event(
             }
         }
         let pluck_mute = controls.pluck_mute.get_scaled(palm_dot, &(-1.0..=0.0));
+        let cutoff_note_norm =
+            controls::convert_range(position.x, &(50.0..=200.0), &(-1.0..=1.0)).clamp(-1.0, 1.0);
         let cutoff_note = controls
             .cutoff_note
-            .get_scaled(-x_mirror * position.x(), &(50.0..=200.0));
+            .get_scaled(cutoff_note_norm, &(-1.0..=1.0));
+        let resonance_norm =
+            controls::convert_range(position.z, &(100.0..=-100.0), &(0.0..=1.0)).clamp(0.0, 1.0);
+        let resonance = controls.resonance.get_scaled(resonance_norm, &(0.0..=1.0));
         let lead_volume = controls
             .lead_volume
-            .get_scaled(position.y(), &(300.0..=400.0));
-        let resonance = controls
-            .resonance
-            .get_scaled(position.z(), &(100.0..=-100.0));
+            .get_scaled(position.y, &(300.0..=400.0));
 
         // Send to dsp
         controls.pluck_mute.send(dsp_tx, pluck_mute)?;
@@ -187,7 +184,10 @@ fn on_tracking_event(
         controls.resonance.send(dsp_tx, resonance)?;
 
         // Send to UI
-        ui_tx.send(UiUpdate::Filter(cutoff_note, resonance))?;
+        ui_tx.send(UiUpdate::Filter(
+            cutoff_note_norm * hand.x_factor(),
+            resonance_norm,
+        ))?;
         ui_tx.send(UiUpdate::LeadVolume(lead_volume))?;
     }
 
@@ -210,5 +210,39 @@ fn volume_hand_type(handedness: &Handedness) -> leaprs::HandType {
     match handedness {
         Handedness::RightHanded => leaprs::HandType::Left,
         Handedness::LeftHanded => leaprs::HandType::Right,
+    }
+}
+
+/// Normalized body direction trait.
+/// x direction is from the center of the body to the outside
+trait DirectionFromBody {
+    /// Factor applied to the x axis to normalize its direction
+    fn x_factor(&self) -> f32;
+    /// Palm position where the left/right position is normalized:
+    /// positive x means arms more open.
+    fn position_from_body(&self) -> Vector3<f32>;
+    /// Palm velocity where the left/right position is normalized:
+    /// positive x means arms more open.
+    fn velocity_from_body(&self) -> Vector3<f32>;
+}
+
+impl DirectionFromBody for Hand<'_> {
+    fn x_factor(&self) -> f32 {
+        match self.hand_type() {
+            // The left hand goes away from the body in the negative x
+            HandType::Left => -1.0,
+            // The right hand goes away from the body in the positive x
+            HandType::Right => 1.0,
+        }
+    }
+
+    fn position_from_body(&self) -> Vector3<f32> {
+        let position = self.palm().position();
+        Vector3::new(self.x_factor() * position.x(), position.y(), position.z())
+    }
+
+    fn velocity_from_body(&self) -> Vector3<f32> {
+        let velocity = self.palm().velocity();
+        Vector3::new(self.x_factor() * velocity.x(), velocity.y(), velocity.z())
     }
 }

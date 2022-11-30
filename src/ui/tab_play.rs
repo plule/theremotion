@@ -101,10 +101,14 @@ impl<'a> TabPlay<'a> {
             let raw_coordinates_direction = raw_coordinates.normalize();
             let root = preset.root_note();
             let scale = preset.restricted_scale();
+            // Even though only the distance is taken in account,
+            // in right handed mode, the hand is generally on the left of the antenna
+            // and in left handed mode, the hand is on the right
             let x_range = match self.settings.system.handedness {
                 Handedness::RightHanded => -xy_range,
                 Handedness::LeftHanded => xy_range,
             };
+            // In any case, the hand is always on the negative y
             let y_range = -xy_range;
             egui::plot::Plot::new(format!("{}{}", name, x_range))
                 .allow_boxed_zoom(false)
@@ -264,17 +268,15 @@ impl<'a> TabPlay<'a> {
 
     fn filter_plot(&self, plot_name: &'a str, size: f32) -> impl egui::Widget + '_ {
         move |ui: &mut egui::Ui| {
-            let cutoff = &self.controls.cutoff_note;
-            let resonance = &self.controls.resonance;
             egui::plot::Plot::new(plot_name)
                 .allow_boxed_zoom(false)
                 .allow_drag(false)
                 .allow_scroll(false)
                 .allow_zoom(false)
-                .include_x(*cutoff.input.range.start())
-                .include_x(*cutoff.input.range.end())
-                .include_y(*resonance.input.range.start())
-                .include_y(*resonance.input.range.end())
+                .include_x(-1.0)
+                .include_x(1.0)
+                .include_y(0.0)
+                .include_y(1.0)
                 .legend(Legend::default().text_style(TextStyle::Small))
                 .show_axes([false, false])
                 .width(size)
