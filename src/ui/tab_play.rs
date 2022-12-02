@@ -39,14 +39,24 @@ impl Widget for TabPlay<'_> {
                 KeyboardEditMode::Drone,
             ));
             ui.separator();
+            let available_size = ui.available_size();
+            let tuner_height = 38.0;
             ui.horizontal(|ui| {
-                let height = 235.0;
                 let shortspace = 8.0;
                 let bigspace = 16.0;
-                let chord_number = self.chords_number("chords", 75.0, height);
-                let pitch_plot = self.pitch_plot("pitch", height);
-                let filter_plot = self.filter_plot("filter", height);
-                let volume_plot = self.volume("volume", 75.0, height);
+                let slider_width = 75.0;
+
+                let xy_size = f32::min(
+                    // Remove the tuner from the available height
+                    available_size.y - tuner_height,
+                    // Remove the sliders and spaces from the available width. Divide by two for the two xy plots
+                    (available_size.x - slider_width * 2.0 - shortspace * 4.0 - bigspace) / 2.0,
+                ) - 3.0; // Keep some space for the separators
+
+                let chord_number = self.chords_number("chords", slider_width, xy_size);
+                let pitch_plot = self.pitch_plot("pitch", xy_size);
+                let filter_plot = self.filter_plot("filter", xy_size);
+                let volume_plot = self.volume("volume", slider_width, xy_size);
                 match self.settings.system.handedness {
                     Handedness::RightHanded => {
                         ui.add_space(shortspace);
@@ -72,7 +82,7 @@ impl Widget for TabPlay<'_> {
                     }
                 };
             });
-            ui.add(self.tuner("tuner", 670.0, 38.0));
+            ui.add(self.tuner("tuner", ui.available_width(), tuner_height));
         })
         .response
     }
@@ -241,7 +251,7 @@ impl<'a> TabPlay<'a> {
                 .include_x(closest + 2.0)
                 .include_y(-1.0)
                 .include_y(1.0)
-                .y_grid_spacer(move |input| {
+                .x_grid_spacer(move |input| {
                     ((input.bounds.0.floor() as u8)..=(input.bounds.1.ceil() as u8))
                         .into_iter()
                         .map(|n| {
