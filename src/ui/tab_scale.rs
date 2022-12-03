@@ -66,7 +66,7 @@ impl Widget for TabScale<'_> {
                         if ui
                             .selectable_value(
                                 &mut self.settings.current_preset.scale,
-                                scale.scale.clone(),
+                                scale.scale,
                                 scale.name.clone(),
                             )
                             .clicked()
