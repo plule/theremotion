@@ -23,6 +23,8 @@ pub struct Controls {
     pub pluck_mute: Control,
     /// Drone detune
     pub drone_detune: Control,
+    /// Drone "trumpet"
+    pub drone_trumpet: Control,
     /// Drone notes
     pub drone_notes: [NoteControl; 4],
     /// Global pitch bend (guitar+lead)
@@ -71,6 +73,7 @@ impl From<&StateHandle> for Controls {
             }),
             pluck_mute: state.by_path("pluck/mute").into(),
             drone_detune: state.by_path("drone/detune").into(),
+            drone_trumpet: state.by_path("drone/trumpet").into(),
             drone_notes: [0, 1, 2, 3].map(|i| {
                 (
                     state.by_path(format!("drone/{}/note", i).as_str()),
