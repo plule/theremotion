@@ -2531,6 +2531,7 @@ dependencies = [
  "faust-types",
  "image",
  "itertools",
+ "lazy_static",
  "leaprs",
  "log",
  "nalgebra",

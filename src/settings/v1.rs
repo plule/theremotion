@@ -1,10 +1,8 @@
 use serde::{Deserialize, Serialize};
 use staff::{midi::MidiNote, scale::ScaleIntervals, Pitch};
 
-const PRESETS: &[u8] = include_bytes!("presets.yaml");
-
 /// Application settings
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(deny_unknown_fields)]
 pub struct Settings {
     /// Current sound settings
@@ -15,19 +13,13 @@ pub struct Settings {
     #[serde(default)]
     pub presets: Vec<Preset>,
 
+    /// Saved scales
+    #[serde(default)]
+    pub scales: Vec<NamedScale>,
+
     /// System settings
     #[serde(default)]
     pub system: System,
-}
-
-impl Default for Settings {
-    fn default() -> Self {
-        Self {
-            current_preset: Default::default(),
-            presets: serde_yaml::from_slice(PRESETS).unwrap(),
-            system: Default::default(),
-        }
-    }
 }
 
 /// Sound preset
@@ -205,16 +197,15 @@ impl Default for Handedness {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use rstest::rstest;
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(deny_unknown_fields, default)]
+pub struct NamedScale {
+    pub name: String,
+    pub scale: ScaleIntervals,
+}
 
-    use super::*;
-
-    #[rstest]
-    fn default() {
-        // Dynamically deserialized at runtime...
-        let settings = Settings::default();
-        assert!(settings.presets.len() > 0);
+impl NamedScale {
+    pub fn new(name: String, scale: ScaleIntervals) -> Self {
+        Self { name, scale }
     }
 }
