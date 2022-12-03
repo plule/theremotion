@@ -60,8 +60,8 @@ impl From<&StateHandle> for Controls {
                     .into()
             }),
             lead_volume: state.by_path("lead/volume").into(),
-            cutoff_note: state.by_path("lead/cutoffNote").into(),
-            resonance: state.by_path("lead/res").into(),
+            cutoff_note: state.by_path("filter/cutoffNote").into(),
+            resonance: state.by_path("filter/res").into(),
             strum: [0, 1, 2, 3].map(|i| {
                 (
                     state.by_path(format!("pluck/{}/note", i).as_str()),

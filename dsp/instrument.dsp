@@ -8,11 +8,16 @@ import("stdfaust.lib");
 // Precompute midi note to frequency
 // Clamped to the midi range since the dsp is not strict on that
 // It could be checked with the latest -ct 1 Faust option instead, but let's keep the dsp "correct".
-midikey2hztable(mk) = ba.tabulate(0, ba.midikey2hz, 2048, 0, 127, mk).val;
-midikey2hz(mk) = mk : min(127) : max(0) : midikey2hztable;
+midikey2hz(mk) = ba.tabulate(1, ba.midikey2hz, 2048, 0, 127, mk).val;
+
+// Filter used in each voice
+filter(res, note, cutoffNote) = ve.moog_vcf_2b(res, cutoffFreq)
+with {
+    cutoffFreq = note + cutoffNote : midikey2hz : si.smoo;
+};
 
 // Lead oscillator
-lead(res, cutoffNote) = os.sawtooth(f) * v : ve.moog_vcf_2b(res, cutoffFreq)
+lead(res, cutoffNote) = os.sawtooth(f) * v : filter(res, note, cutoffNote)
 with {    
     v = hslider("[1]volume", 0.0, 0, 1, 0.001) : si.smoo;
 
@@ -21,22 +26,20 @@ with {
     cutoffFreq = note + cutoffNote : midikey2hz : si.smoo;
 };
 
-leadChord = (res, cutoffNote) <: par(i, 4, vgroup("[3]%i", lead)) :> _ * v
+leadChord(res, cutoffNote) = (res, cutoffNote) <: par(i, 4, vgroup("[3]%i", lead)) :> _ * v
 with {
     v = hslider("[0]volume", 0.0, 0, 1, 0.001) : si.smoo;
-    cutoffNote = hslider("[1]cutoffNote", 0, -20, 50, 0.001) : si.smoo;
-    res = hslider("[2]res", 0, 0, 0.99, 0.001) : si.smoo;
 };
 
 feedback(signal)= signal * 0.005;
 
 // Guitar
 elecGuitar(stringLength,pluckPosition,mute,gain,trigger) =
-    (pm.elecGuitarModel(stringLength,pluckPosition,mute) : co.compressor_mono(20,-10,0,0.1)) ~
+    (pm.elecGuitarModel(stringLength,pluckPosition,mute) : co.compressor_mono(20,-10,0,0.1)) * 1.5 ~
     (_  : ef.gate_mono(-20, 0.0001, 0.1, 0.02)) * 0.005 + pm.pluckString(stringLength,1,1,1,gain,trigger);
 
-guitarStrumNote(mute, pitchBend) = elecGuitar(length,0.5,mute,0.5,gate)
-    : fi.lowpass(1, f * 2)
+guitarStrumNote(mute, pitchBend, res, cutoffNote) = elecGuitar(length,0.5,mute,0.5,gate)
+    : filter(res, note, cutoffNote)
 with {
     f = note + pitchBend : midikey2hz : si.smoo;
     length = f : pm.f2l;
@@ -44,9 +47,9 @@ with {
     note = hslider("[1]note", 80, 0, 127, 0.001);
 };
 
-guitarStrum(mute, pitchBend) = (mute, pitchBend) <: par(i, 4, vgroup("[3]%i", guitarStrumNote)) :> _;
+guitarStrum(mute, pitchBend, res, cutoffNote) = (mute, pitchBend, res, cutoffNote) <: par(i, 4, vgroup("[3]%i", guitarStrumNote)) :> _;
 
-guitar = guitarStrum(mute, pitchBend)
+guitar(res, cutoffNote) = guitarStrum(mute, pitchBend, res, cutoffNote)
 with {
     mute = hslider("[2]mute", 1, 0.90, 1, 0.001);
     pitchBend = hslider("[3]pitchBend", 0, -1, 1, 0.001) : si.smoo;
@@ -87,8 +90,8 @@ fx = vgroup("[0]echo", echo) : vgroup("[1]reverb", reverb);
 
 // Mix
 process = hgroup("[2]drone", drone) * drone_volume
-    + vgroup("[0]lead", leadChord) * lead_volume
-    + hgroup("[1]pluck", guitar) * pluck_volume
+    + vgroup("[0]lead", leadChord)(res, cutoffNote) * lead_volume
+    + hgroup("[1]pluck", guitar)(res, cutoffNote) * pluck_volume
     : hgroup("[2]fx", fx)
     : _ * master_volume
     <: _, _
@@ -98,4 +101,8 @@ with {
     drone_volume = mixGroup(hslider("[1]drone", 1, 0, 1, 0.001)) : si.smoo;
     lead_volume = mixGroup(hslider("[2]lead", 1, 0, 1, 0.001)) : si.smoo;
     pluck_volume = mixGroup(hslider("[3]pluck", 1, 0, 1, 0.001)) : si.smoo;
+    
+    filterGroup(x) = vgroup("[4]filter", x);
+    cutoffNote = filterGroup(hslider("[1]cutoffNote", 0, -20, 50, 0.001)) : si.smoo;
+    res = filterGroup(hslider("[2]res", 0, 0, 0.99, 0.001)) : si.smoo;
 };
