@@ -17,6 +17,12 @@ pub type Settings = v1::Settings;
 pub type Preset = v1::Preset;
 pub type Handedness = v1::Handedness;
 
+const PRESETS_BYTES: &[u8] = include_bytes!("presets.yaml");
+
+lazy_static::lazy_static! {
+    static ref PRESETS: Vec<Preset> = serde_yaml::from_slice(PRESETS_BYTES).unwrap();
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 enum Version {
@@ -78,18 +84,6 @@ impl Settings {
         serde_yaml::to_writer(f, &settings)?;
         Ok(())
     }
-
-    pub fn can_save_current_preset(&self) -> bool {
-        !self.presets.contains(&self.current_preset)
-    }
-
-    pub fn save_current_preset(&mut self) {
-        self.presets.push(self.current_preset.clone());
-    }
-
-    pub fn delete_preset(&mut self, name: &String) {
-        self.presets.retain_mut(|preset| preset.name != *name);
-    }
 }
 
 impl Preset {
@@ -138,6 +132,10 @@ impl Preset {
         self.mix.send_to_dsp(controls, tx)?;
         self.fx.send_to_dsp(controls, tx)?;
         Ok(())
+    }
+
+    pub fn system_presets() -> &'static Vec<Self> {
+        &PRESETS
     }
 }
 
@@ -214,5 +212,11 @@ mod tests {
         assert_eq!(0.1, settings.current_preset.mix.drone);
         assert_eq!(0.9, settings.current_preset.fx.echo.mix);
         assert_eq!(0.8, settings.current_preset.fx.reverb.mix);
+    }
+
+    #[rstest]
+    fn default() {
+        // Dynamically deserialized at runtime...
+        assert!(Preset::system_presets().len() > 0);
     }
 }

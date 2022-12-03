@@ -1,5 +1,3 @@
-use std::os::windows::process::CommandExt;
-
 use egui::{ScrollArea, Widget};
 
 use crate::settings::{Preset, Settings};
@@ -18,41 +16,24 @@ impl Widget for TabPresets<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                if ui
-                    .text_edit_singleline(&mut self.settings.current_preset.name)
-                    .clicked()
-                    && self.settings.system.tabtip
-                {
-                    // hack
-                    // windows touchscreen keyboard does not show up by default
-                    // running tabtip.exe opens it (on the nuc only)
-                    // running tabtip directly trigger a privilege error, but through cmd.exe it works.
-                    std::process::Command::new("cmd.exe")
-                        .arg("/C")
-                        .arg(r"C:\Program Files\Common Files\microsoft shared\ink\TabTip.exe")
-                        .creation_flags(0x00000008) // DETACHED_PROCESS
-                        .spawn()
-                        .unwrap();
+                ui.add(super::text_edit_singleline_tabtip(
+                    &mut self.settings.current_preset.name,
+                    self.settings.system.tabtip,
+                ));
+                if ui.button("💾").clicked() {
+                    self.settings
+                        .presets
+                        .push(self.settings.current_preset.clone());
                 }
-                ui.add_enabled_ui(self.settings.can_save_current_preset(), |ui| {
-                    if ui.button("💾").clicked() {
-                        self.settings.save_current_preset();
-                    }
-                });
             });
 
             ui.separator();
             ScrollArea::vertical().show(ui, |ui| {
-                ui.selectable_value(
-                    &mut self.settings.current_preset,
-                    Preset::default(),
-                    "Default",
-                );
                 let mut delete = None;
-                for preset in &self.settings.presets {
+                for (index, preset) in self.settings.presets.iter().enumerate() {
                     ui.horizontal(|ui| {
                         if ui.button("🗑").clicked() {
-                            delete = Some(preset.name.clone());
+                            delete = Some(index);
                         }
                         ui.selectable_value(
                             &mut self.settings.current_preset,
@@ -63,8 +44,19 @@ impl Widget for TabPresets<'_> {
                     });
                 }
 
-                if let Some(delete) = delete {
-                    self.settings.delete_preset(&delete);
+                for preset in Preset::system_presets() {
+                    ui.horizontal(|ui| {
+                        ui.selectable_value(
+                            &mut self.settings.current_preset,
+                            preset.clone(),
+                            preset.name.clone(),
+                        );
+                        ui.add_space(ui.available_width());
+                    });
+                }
+
+                if let Some(delete_index) = delete {
+                    self.settings.presets.remove(delete_index);
                 }
             });
         })
