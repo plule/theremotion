@@ -27,6 +27,7 @@ pub struct App {
     autotune_amount: usize,
     has_hands: (bool, bool),
     pitch_xy: (f32, f32),
+    current_scale_name: String,
 }
 
 #[derive(Debug, PartialEq, Eq, EnumIter, Clone, Copy)]
@@ -137,6 +138,7 @@ impl App {
             has_hands: (false, false),
             pitch_xy: (0.0, 0.0),
             controls,
+            current_scale_name: String::default(),
         }
     }
 
@@ -161,9 +163,10 @@ impl App {
                 &self.lead_chord_volumes,
             )),
             MainTab::Scale => ui.add(super::TabScale::new(
-                &mut self.settings.current_preset,
+                &mut self.settings,
                 &self.lead_chord_notes,
                 &self.lead_chord_volumes,
+                &mut self.current_scale_name,
             )),
             MainTab::Mix => ui.add(super::TabMix::new(&mut self.settings.current_preset)),
             MainTab::Effects => ui.add(super::TabEffects::new(

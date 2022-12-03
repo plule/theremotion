@@ -16,6 +16,7 @@ use self::v1::{DroneSettings, EchoSettings, FxSettings, MixSettings, ReverbSetti
 pub type Settings = v1::Settings;
 pub type Preset = v1::Preset;
 pub type Handedness = v1::Handedness;
+pub type NamedScale = v1::NamedScale;
 
 const PRESETS_BYTES: &[u8] = include_bytes!("presets.yaml");
 

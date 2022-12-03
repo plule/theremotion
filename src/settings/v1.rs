@@ -13,6 +13,10 @@ pub struct Settings {
     #[serde(default)]
     pub presets: Vec<Preset>,
 
+    /// Saved scales
+    #[serde(default)]
+    pub scales: Vec<NamedScale>,
+
     /// System settings
     #[serde(default)]
     pub system: System,
@@ -190,5 +194,18 @@ pub enum Handedness {
 impl Default for Handedness {
     fn default() -> Self {
         Self::RightHanded
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(deny_unknown_fields, default)]
+pub struct NamedScale {
+    pub name: String,
+    pub scale: ScaleIntervals,
+}
+
+impl NamedScale {
+    pub fn new(name: String, scale: ScaleIntervals) -> Self {
+        Self { name, scale }
     }
 }

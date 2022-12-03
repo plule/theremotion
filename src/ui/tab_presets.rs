@@ -44,6 +44,10 @@ impl Widget for TabPresets<'_> {
                     });
                 }
 
+                if let Some(delete_index) = delete {
+                    self.settings.presets.remove(delete_index);
+                }
+
                 for preset in Preset::system_presets() {
                     ui.horizontal(|ui| {
                         ui.selectable_value(
@@ -53,10 +57,6 @@ impl Widget for TabPresets<'_> {
                         );
                         ui.add_space(ui.available_width());
                     });
-                }
-
-                if let Some(delete_index) = delete {
-                    self.settings.presets.remove(delete_index);
                 }
             });
         })
