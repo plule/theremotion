@@ -63,9 +63,12 @@ with {
     osc(note) = note : midikey2hz : si.smoo : os.triangle : _ / 3;
 };
 
-drone = detune <: par(i, 4, vgroup("[1]%i", droneNote)) :> _
+drone = detune <: par(i, 4, vgroup("[1]%i", droneNote)) :> _ : ef.cubicnl(drive, offset)
 with {
     detune = hslider("[0]detune", 0.1, 0, 0.3, 0.001);
+    trumpet = hslider("[1]trumpet", 0, 0, 1, 0.001) : si.smoo;
+    drive = trumpet / 3;
+    offset = trumpet;
 };
 
 echo(s) = s <: ef.echo(10.0, duration, feedback) * mix, s * (1-mix) :> _

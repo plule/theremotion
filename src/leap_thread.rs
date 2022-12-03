@@ -154,7 +154,9 @@ fn on_tracking_event(
     }
     if let Some(hand) = volume_hand {
         let position = hand.position_from_body();
-
+        let trumpet = controls
+            .drone_trumpet
+            .get_scaled(hand.grab_strength(), &(0.0..=1.0));
         let palm_normal = Vector3::from(hand.palm().normal().array());
         let palm_dot = palm_normal.dot(&Vector3::y());
         if hand.pinch_strength() > 0.9 {
@@ -182,6 +184,7 @@ fn on_tracking_event(
         controls.cutoff_note.send(dsp_tx, cutoff_note)?;
         controls.lead_volume.send(dsp_tx, lead_volume)?;
         controls.resonance.send(dsp_tx, resonance)?;
+        controls.drone_trumpet.send(dsp_tx, trumpet)?;
 
         // Send to UI
         ui_tx.send(UiUpdate::Filter(
