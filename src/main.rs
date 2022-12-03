@@ -69,11 +69,16 @@ fn main() {
     let leap_worker = leap_thread::run(controls.clone(), settings_rx, ui_tx, dsp_tx.clone());
 
     // Start UI
+    let fullscreen = settings.system.fullscreen;
+    let initial_window_size = if fullscreen {
+        None
+    } else {
+        Some(egui::vec2(800.0, 480.0))
+    };
     let native_options = eframe::NativeOptions {
         initial_window_pos: Some(egui::Pos2 { x: 0.0, y: 0.0 }),
-        initial_window_size: Some(egui::vec2(800.0, 480.0)),
-        maximized: settings.system.fullscreen,
-        decorated: !settings.system.fullscreen,
+        initial_window_size,
+        fullscreen,
         icon_data: Some(eframe::IconData {
             rgba: ICON.to_vec(),
             width: 128,
