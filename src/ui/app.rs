@@ -153,6 +153,7 @@ impl App {
                 filter_resonance: self.filter_resonance,
                 pitch_xy: self.pitch_xy,
                 chords_number: self.chords_number,
+                autotune_amount: (self.autotune_amount as f32) / 5.0,
             }),
             MainTab::RootEdit => ui.add(super::TabRootNote::new(
                 &mut self.settings.current_preset,

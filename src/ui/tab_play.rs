@@ -1,6 +1,7 @@
 use std::{f64::consts::TAU, ops::RangeInclusive};
 
 use egui::{
+    color::Hsva,
     plot::{
         uniform_grid_spacer, Bar, BarChart, GridMark, Legend, Line, MarkerShape, PlotPoint,
         PlotPoints, Points, VLine,
@@ -27,6 +28,7 @@ pub struct TabPlay<'a> {
     pub filter_resonance: f32,
     pub pitch_xy: (f32, f32),
     pub chords_number: f32,
+    pub autotune_amount: f32,
 }
 
 impl Widget for TabPlay<'_> {
@@ -136,29 +138,6 @@ impl<'a> TabPlay<'a> {
                 .height(size)
                 .legend(Legend::default().text_style(TextStyle::Small))
                 .show(ui, |plot_ui| {
-                    plot_ui.points(
-                        Points::new(PlotPoints::Owned(vec![PlotPoint::new(
-                            raw_coordinates.x,
-                            raw_coordinates.y,
-                        )]))
-                        .shape(MarkerShape::Plus)
-                        .radius(6.0)
-                        .name("Note"),
-                    );
-
-                    for (note, volume) in self.lead_chord_notes.iter().zip(self.lead_chord_volumes)
-                    {
-                        let coordinates = raw_coordinates_direction * (*note_range.end() - note);
-                        plot_ui.points(
-                            Points::new(PlotPoints::Owned(vec![PlotPoint::new(
-                                coordinates.x,
-                                coordinates.y,
-                            )]))
-                            .shape(MarkerShape::Circle)
-                            .radius(6.0 * volume),
-                        );
-                    }
-
                     for note in scale {
                         let width = if note.pitch() == root.pitch() {
                             3.0
@@ -173,6 +152,36 @@ impl<'a> TabPlay<'a> {
                             .color(Color32::from_rgb(100, 200, 100))
                             .width(width);
                         plot_ui.line(circle);
+                    }
+
+                    plot_ui.points(
+                        Points::new(PlotPoints::Owned(vec![PlotPoint::new(
+                            raw_coordinates.x,
+                            raw_coordinates.y,
+                        )]))
+                        .shape(MarkerShape::Plus)
+                        .radius(6.0)
+                        .name("Note"),
+                    );
+
+                    for (note, volume) in self.lead_chord_notes.iter().zip(self.lead_chord_volumes)
+                    {
+                        let coordinates = raw_coordinates_direction * (*note_range.end() - note);
+                        let saturation = crate::controls::convert_range(
+                            self.autotune_amount,
+                            &(0.0..=1.0),
+                            &(0.2..=1.0),
+                        );
+                        let color = Hsva::new(18.0 / 360.0, saturation, 0.5, 1.0);
+                        plot_ui.points(
+                            Points::new(PlotPoints::Owned(vec![PlotPoint::new(
+                                coordinates.x,
+                                coordinates.y,
+                            )]))
+                            .shape(MarkerShape::Circle)
+                            .color(color)
+                            .radius(6.0 * volume),
+                        );
                     }
                 })
                 .response
