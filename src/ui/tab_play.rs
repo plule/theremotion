@@ -322,8 +322,7 @@ impl<'a> TabPlay<'a> {
 /// Get a color representing an intensity from an input in 0-1
 fn intensity_color(value: f32) -> Hsva {
     let saturation = crate::controls::convert_range(value, &(0.0..=1.0), &(0.2..=1.0));
-    let color = Hsva::new(18.0 / 360.0, saturation, 0.5, 1.0);
-    color
+    Hsva::new(18.0 / 360.0, saturation, 0.5, 1.0)
 }
 
 fn note_formatter(note: f64, _range: &RangeInclusive<f64>) -> String {
