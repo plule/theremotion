@@ -29,6 +29,8 @@ pub struct TabPlay<'a> {
     pub pitch_xy: (f32, f32),
     pub chords_number: f32,
     pub autotune_amount: f32,
+    pub strum_ready: bool,
+    pub trumpet_strength: f32,
 }
 
 impl Widget for TabPlay<'_> {
@@ -164,15 +166,10 @@ impl<'a> TabPlay<'a> {
                         .name("Note"),
                     );
 
+                    let color = intensity_color(self.autotune_amount);
                     for (note, volume) in self.lead_chord_notes.iter().zip(self.lead_chord_volumes)
                     {
                         let coordinates = raw_coordinates_direction * (*note_range.end() - note);
-                        let saturation = crate::controls::convert_range(
-                            self.autotune_amount,
-                            &(0.0..=1.0),
-                            &(0.2..=1.0),
-                        );
-                        let color = Hsva::new(18.0 / 360.0, saturation, 0.5, 1.0);
                         plot_ui.points(
                             Points::new(PlotPoints::Owned(vec![PlotPoint::new(
                                 coordinates.x,
@@ -286,6 +283,11 @@ impl<'a> TabPlay<'a> {
     }
 
     fn filter_plot(&self, plot_name: &'a str, size: f32) -> impl egui::Widget + '_ {
+        let shape = match self.strum_ready {
+            true => MarkerShape::Diamond,
+            false => MarkerShape::Circle,
+        };
+        let color = intensity_color(self.trumpet_strength);
         move |ui: &mut egui::Ui| {
             egui::plot::Plot::new(plot_name)
                 .allow_boxed_zoom(false)
@@ -307,12 +309,20 @@ impl<'a> TabPlay<'a> {
                             self.filter_resonance as f64,
                         ]])
                         .radius(10.0)
+                        .shape(shape)
+                        .color(color)
                         .name("Filter"),
                     );
                 })
                 .response
         }
     }
+}
+
+/// Get a color representing an intensity from an input in 0-1
+fn intensity_color(value: f32) -> Hsva {
+    let saturation = crate::controls::convert_range(value, &(0.0..=1.0), &(0.2..=1.0));
+    Hsva::new(18.0 / 360.0, saturation, 0.5, 1.0)
 }
 
 fn note_formatter(note: f64, _range: &RangeInclusive<f64>) -> String {

@@ -47,6 +47,10 @@ pub enum UiUpdate {
     HasHands(bool, bool),
     // Pitch position, in semitones relative to the antenna
     PitchXY(f32, f32),
+    // Volume hand is pinching and the guitar sound can be activated
+    StrumReady(bool),
+    // Trumpet string strength (0-1)
+    TrumpetStrength(f32),
 }
 
 trait FromControl<'a> {

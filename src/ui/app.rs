@@ -28,6 +28,8 @@ pub struct App {
     has_hands: (bool, bool),
     pitch_xy: (f32, f32),
     current_scale_name: String,
+    strum_ready: bool,
+    trumpet_strength: f32,
 }
 
 #[derive(Debug, PartialEq, Eq, EnumIter, Clone, Copy)]
@@ -139,6 +141,8 @@ impl App {
             pitch_xy: (0.0, 0.0),
             controls,
             current_scale_name: String::default(),
+            strum_ready: false,
+            trumpet_strength: 0.0,
         }
     }
 
@@ -156,6 +160,8 @@ impl App {
                 pitch_xy: self.pitch_xy,
                 chords_number: self.chords_number,
                 autotune_amount: (self.autotune_amount as f32) / 5.0,
+                strum_ready: self.strum_ready,
+                trumpet_strength: self.trumpet_strength,
             }),
             MainTab::RootEdit => ui.add(super::TabRootNote::new(
                 &mut self.settings.current_preset,
@@ -195,6 +201,8 @@ impl App {
                 UiUpdate::AutotuneAmount(x) => self.autotune_amount = x,
                 UiUpdate::HasHands(left, right) => self.has_hands = (left, right),
                 UiUpdate::PitchXY(x, y) => self.pitch_xy = (x, y),
+                UiUpdate::StrumReady(x) => self.strum_ready = x,
+                UiUpdate::TrumpetStrength(x) => self.trumpet_strength = x,
             }
         }
     }

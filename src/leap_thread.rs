@@ -159,7 +159,8 @@ fn on_tracking_event(
             .get_scaled(hand.grab_strength(), &(0.0..=1.0));
         let palm_normal = Vector3::from(hand.palm().normal().array());
         let palm_dot = palm_normal.dot(&Vector3::y());
-        if hand.pinch_strength() > 0.9 {
+        let strum_ready = hand.pinch_strength() > 0.9;
+        if strum_ready {
             for (i, string) in &mut controls.strum.iter().enumerate() {
                 string
                     .pluck
@@ -192,6 +193,8 @@ fn on_tracking_event(
             resonance_norm,
         ))?;
         ui_tx.send(UiUpdate::LeadVolume(lead_volume))?;
+        ui_tx.send(UiUpdate::StrumReady(strum_ready))?;
+        ui_tx.send(UiUpdate::TrumpetStrength(trumpet))?;
     }
 
     ui_tx.send(UiUpdate::HasHands(
