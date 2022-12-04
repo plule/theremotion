@@ -17,16 +17,16 @@ with {
 };
 
 // Lead oscillator
-lead(res, cutoffNote) = os.sawtooth(f) * v : filter(res, note, cutoffNote)
+lead(pitchBend, res, cutoffNote) = os.sawtooth(f) * v : filter(res, note, cutoffNote)
 with {    
     v = hslider("[1]volume", 0.0, 0, 1, 0.001) : si.smoo;
 
-    note = hslider("[0]note", 60, 0, 127, 0.001);
+    note = hslider("[0]note", 60, 0, 127, 0.001) + pitchBend;
     f = note : midikey2hz : si.smoo;
     cutoffFreq = note + cutoffNote : midikey2hz : si.smoo;
 };
 
-leadChord(res, cutoffNote) = (res, cutoffNote) <: par(i, 4, vgroup("[3]%i", lead)) :> _ * v
+leadChord(pitchBend, res, cutoffNote) = (pitchBend, res, cutoffNote) <: par(i, 4, vgroup("[3]%i", lead)) :> _ * v
 with {
     v = hslider("[0]volume", 0.0, 0, 1, 0.001) : si.smoo;
 };
@@ -49,10 +49,9 @@ with {
 
 guitarStrum(mute, pitchBend, res, cutoffNote) = (mute, pitchBend, res, cutoffNote) <: par(i, 4, vgroup("[3]%i", guitarStrumNote)) :> _;
 
-guitar(res, cutoffNote) = guitarStrum(mute, pitchBend, res, cutoffNote)
+guitar(pitchBend, res, cutoffNote) = guitarStrum(mute, pitchBend, res, cutoffNote)
 with {
     mute = hslider("[2]mute", 1, 0.90, 1, 0.001);
-    pitchBend = hslider("[3]pitchBend", 0, -1, 1, 0.001) : si.smoo;
 };
 
 // Drone
@@ -93,8 +92,8 @@ fx = vgroup("[0]echo", echo) : vgroup("[1]reverb", reverb);
 
 // Mix
 process = hgroup("[2]drone", drone) * drone_volume
-    + vgroup("[0]lead", leadChord)(res, cutoffNote) * lead_volume
-    + hgroup("[1]pluck", guitar)(res, cutoffNote) * pluck_volume
+    + vgroup("[0]lead", leadChord)(pitchBend, res, cutoffNote) * lead_volume
+    + hgroup("[1]pluck", guitar)(pitchBend, res, cutoffNote) * pluck_volume
     : hgroup("[2]fx", fx)
     : _ * master_volume
     <: _, _
@@ -108,4 +107,6 @@ with {
     filterGroup(x) = vgroup("[4]filter", x);
     cutoffNote = filterGroup(hslider("[1]cutoffNote", 0, -20, 50, 0.001)) : si.smoo;
     res = filterGroup(hslider("[2]res", 0, 0, 0.99, 0.001)) : si.smoo;
+    
+    pitchBend = hslider("[5]pitchBend", 0, -1, 1, 0.001) : si.smoo;
 };

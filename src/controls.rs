@@ -81,7 +81,7 @@ impl From<&StateHandle> for Controls {
                 )
                     .into()
             }),
-            pitch_bend: state.by_path("pluck/pitchBend").into(),
+            pitch_bend: state.by_path("pitchBend").into(),
             echo_mix: state.by_path("fx/echo/mix").into(),
             echo_duration: state.by_path("fx/echo/duration").into(),
             echo_feedback: state.by_path("fx/echo/feedback").into(),
