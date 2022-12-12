@@ -17,7 +17,7 @@ leap = ["leaprs"]
 default-boxed = []
 
 [dependencies]
-egui = "0.19"
+egui = "0.20"
 eframe = { version = "0.19" }
 tracing-subscriber = "0.3"
 cpal = "0.14"
