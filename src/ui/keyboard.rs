@@ -1,4 +1,4 @@
-use egui::{color::Hsva, Response, Widget};
+use egui::{ecolor::Hsva, Response, Widget};
 use staff::{
     midi::{MidiNote, Octave},
     Interval, Pitch,

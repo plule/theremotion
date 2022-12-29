@@ -1,7 +1,7 @@
 use std::{f64::consts::TAU, ops::RangeInclusive};
 
 use egui::{
-    color::Hsva,
+    ecolor::Hsva,
     plot::{
         uniform_grid_spacer, Bar, BarChart, GridMark, Legend, Line, MarkerShape, PlotPoint,
         PlotPoints, Points, VLine,
