@@ -9,6 +9,7 @@ use crate::{
     controls, dsp_thread,
     settings::{Handedness, Settings},
     ui::{self, UiUpdate},
+    OctaveInterval,
 };
 
 /// Start the leap motion thread
@@ -119,7 +120,8 @@ fn on_tracking_event(
         // Autochord, from the autotuned note so that the chord itself is autotuned
         let chord = full_scale_window.autochord(note, &[0, 2, 4, 7]);
 
-        let pluck_offset = 12.0 * (preset.guitar_octave - preset.octave) as f32;
+        let pluck_offset =
+            OctaveInterval::from_octaves(preset.octave, preset.guitar_octave).semitones() as f32;
 
         let pitch_bend = controls
             .pitch_bend

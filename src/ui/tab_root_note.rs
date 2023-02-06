@@ -1,5 +1,5 @@
 use egui::{RichText, Widget};
-use staff::Pitch;
+use staff::{midi::Octave, Pitch};
 
 use crate::settings::Preset;
 
@@ -56,10 +56,10 @@ impl Widget for TabRootNote<'_> {
     }
 }
 
-fn octave_selector(ui: &mut egui::Ui, name: &str, octave_value: &mut i8) {
+fn octave_selector(ui: &mut egui::Ui, name: &str, octave_value: &mut Octave) {
     ui.horizontal_wrapped(|ui| {
         ui.label(RichText::new(name).size(40.0));
-        for octave in 0..=4 {
+        for octave in (0..=4).map(Octave::new_unchecked) {
             ui.selectable_value(
                 octave_value,
                 octave,

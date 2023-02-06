@@ -1,10 +1,7 @@
 use egui::{ecolor::Hsva, Response, Widget};
-use staff::{
-    midi::{MidiNote, Octave},
-    Interval, Pitch,
-};
+use staff::{midi::MidiNote, Interval, Pitch};
 
-use crate::settings::Preset;
+use crate::{settings::Preset, step_iter::StepIter, OctaveInterval};
 
 /// Display a keyboard with a floating point note
 pub struct Keyboard<'a> {
@@ -46,8 +43,7 @@ impl<'a> Keyboard<'a> {
 
     fn draw_key(&self, ui: &mut egui::Ui, key_dimension: &egui::Vec2, note: &MidiNote) -> Response {
         let scale = self.preset.restricted_scale();
-        let note_byte = note.into_byte();
-        let note_float = note_byte as f32;
+        let note_float = note.into_byte() as f32;
 
         let saturation = if self
             .preset
@@ -123,15 +119,15 @@ impl<'a> Keyboard<'a> {
 
 impl<'a> Widget for Keyboard<'a> {
     fn ui(mut self, ui: &mut egui::Ui) -> egui::Response {
-        let start_octave = Octave::new_unchecked(self.preset.octave.clamp(-1, 8));
-        let displayed_octave_count = self.preset.octave_range + 1;
+        let start_octave = self.preset.octave;
+        let displayed_octave_count = self.preset.octave_range + OctaveInterval::new(1);
 
-        let start_note = MidiNote::new(Pitch::C, start_octave).into_byte();
-        let note_range = start_note..=start_note + 12 * displayed_octave_count;
+        let start_note = MidiNote::new(Pitch::C, start_octave);
+        let note_range = start_note..=start_note + displayed_octave_count.into();
 
         let key_dimension = egui::vec2(22.0, 40.0);
         let keyboard_size = egui::vec2(
-            (key_dimension.x + 1.0) * displayed_octave_count as f32 * 7.0,
+            (key_dimension.x + 1.0) * displayed_octave_count.semitones() as f32 * 7.0,
             (key_dimension.y + 1.0) * 2.0,
         );
         ui.spacing_mut().item_spacing.x = 1.0;
@@ -147,8 +143,7 @@ impl<'a> Widget for Keyboard<'a> {
                     egui::Sense::focusable_noninteractive(),
                 );
 
-                for byte in note_range.clone() {
-                    let note = MidiNote::from_byte(byte);
+                for note in note_range.step_iter() {
                     match note.pitch() {
                         Pitch::B | Pitch::E => {
                             // Space between keys
@@ -171,8 +166,7 @@ impl<'a> Widget for Keyboard<'a> {
 
             // White keys
             ui.horizontal(|ui| {
-                for byte in note_range.clone() {
-                    let note = MidiNote::from_byte(byte);
+                for note in note_range.step_iter() {
                     match note.pitch() {
                         Pitch::C
                         | Pitch::D

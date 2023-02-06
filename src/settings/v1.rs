@@ -1,5 +1,11 @@
 use serde::{Deserialize, Serialize};
-use staff::{midi::MidiNote, scale::ScaleIntervals, Pitch};
+use staff::{
+    midi::{MidiNote, Octave},
+    scale::ScaleIntervals,
+    Pitch,
+};
+
+use crate::OctaveInterval;
 
 /// Application settings
 #[derive(Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -30,16 +36,16 @@ pub struct Preset {
     pub name: String,
 
     /// Octave of the root note
-    pub octave: i8,
+    pub octave: Octave,
 
     /// Octave of the guitar sound
-    pub guitar_octave: i8,
+    pub guitar_octave: Octave,
 
     /// Pitch of the root note
     pub pitch: Pitch,
 
     /// Number of octave to display
-    pub octave_range: u8,
+    pub octave_range: OctaveInterval,
 
     /// Scale of the autotune
     pub scale: ScaleIntervals,
@@ -59,10 +65,10 @@ impl Default for Preset {
     fn default() -> Self {
         Self {
             name: "Default".to_string(),
-            octave: 3,
-            guitar_octave: 3,
+            octave: Octave::THREE,
+            guitar_octave: Octave::THREE,
             pitch: Pitch::C,
-            octave_range: 3,
+            octave_range: OctaveInterval::new(3),
             scale: ScaleIntervals::major(),
             drone: Default::default(),
             mix: Default::default(),
