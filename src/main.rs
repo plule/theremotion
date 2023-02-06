@@ -88,7 +88,7 @@ fn main() {
     };
 
     eframe::run_native(
-        format!("Theremotion v{}", VERSION).as_str(),
+        format!("Theremotion v{VERSION}").as_str(),
         native_options,
         Box::new(move |cc| {
             Box::new(ui::App::new(

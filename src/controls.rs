@@ -56,8 +56,8 @@ impl From<&StateHandle> for Controls {
         Self {
             lead: [0, 1, 2, 3].map(|i| {
                 (
-                    state.by_path(format!("lead/{}/note", i).as_str()),
-                    state.by_path(format!("lead/{}/volume", i).as_str()),
+                    state.by_path(format!("lead/{i}/note").as_str()),
+                    state.by_path(format!("lead/{i}/volume").as_str()),
                 )
                     .into()
             }),
@@ -66,8 +66,8 @@ impl From<&StateHandle> for Controls {
             resonance: state.by_path("filter/res").into(),
             strum: [0, 1, 2, 3].map(|i| {
                 (
-                    state.by_path(format!("pluck/{}/note", i).as_str()),
-                    state.by_path(format!("pluck/{}/gate", i).as_str()),
+                    state.by_path(format!("pluck/{i}/note").as_str()),
+                    state.by_path(format!("pluck/{i}/gate").as_str()),
                 )
                     .into()
             }),
@@ -76,8 +76,8 @@ impl From<&StateHandle> for Controls {
             drone_trumpet: state.by_path("drone/trumpet").into(),
             drone_notes: [0, 1, 2, 3].map(|i| {
                 (
-                    state.by_path(format!("drone/{}/note", i).as_str()),
-                    state.by_path(format!("drone/{}/volume", i).as_str()),
+                    state.by_path(format!("drone/{i}/note").as_str()),
+                    state.by_path(format!("drone/{i}/volume").as_str()),
                 )
                     .into()
             }),
@@ -225,7 +225,7 @@ impl NodeByPath for StateHandle {
                 return NodeIndex(*n.0, n.1);
             }
         }
-        panic!("Wrongly parameterized parameter {}", path);
+        panic!("Wrongly parameterized parameter {path}");
     }
 }
 

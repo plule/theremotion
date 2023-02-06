@@ -97,7 +97,7 @@ impl Widget for TabScale<'_> {
                             .selectable_value(
                                 &mut self.settings.current_preset.scale,
                                 scale,
-                                format!("🎼 {}", name),
+                                format!("🎼 {name}"),
                             )
                             .clicked()
                         {
