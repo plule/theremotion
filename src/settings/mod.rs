@@ -4,10 +4,7 @@ use std::{ops::RangeInclusive, path::PathBuf};
 use anyhow::{Context, Ok, Result};
 use crossbeam_channel::Sender;
 use serde::{Deserialize, Serialize};
-use staff::{
-    midi::{MidiNote, Octave},
-    Interval,
-};
+use staff::midi::MidiNote;
 
 use crate::{controls::Controls, dsp_thread::ParameterUpdate, scale_windows::ScaleWindows};
 
@@ -89,17 +86,16 @@ impl Settings {
 
 impl Preset {
     pub fn root_note(&self) -> MidiNote {
-        MidiNote::new(self.pitch, Octave::new_unchecked(self.octave.clamp(-1, 8)))
+        MidiNote::new(self.pitch, self.octave)
     }
 
-    pub fn note_range(&self) -> RangeInclusive<u8> {
-        self.root_note().into_byte()
-            ..=(self.root_note() + Interval::new(self.octave_range * 12)).into_byte()
+    pub fn note_range(&self) -> RangeInclusive<MidiNote> {
+        self.root_note()..=(self.root_note() + self.octave_range.into())
     }
 
     pub fn note_range_f(&self) -> RangeInclusive<f32> {
         let range = self.note_range();
-        (*range.start() as f32)..=(*range.end() as f32)
+        (range.start().into_byte() as f32)..=(range.end().into_byte() as f32)
     }
 
     /// List all the notes of the current scale for the selected number of octaves
@@ -109,7 +105,7 @@ impl Preset {
 
     /// List all the notes of the current scale for the whole keyboard
     pub fn full_scale(&self) -> Vec<MidiNote> {
-        self.scale_notes(0..=127)
+        self.scale_notes(MidiNote::from_byte(0)..=MidiNote::from_byte(127))
     }
 
     /// Build the scale two by two floating window for the full keyboard
@@ -123,7 +119,7 @@ impl Preset {
     }
 
     /// List all the notes in the current scale for the given range
-    fn scale_notes(&self, range: RangeInclusive<u8>) -> Vec<MidiNote> {
+    fn scale_notes(&self, range: RangeInclusive<MidiNote>) -> Vec<MidiNote> {
         crate::scale_windows::build_scale_notes(self.root_note(), self.scale, range)
     }
 
@@ -195,7 +191,7 @@ impl FxSettings {
 #[cfg(test)]
 mod tests {
     use rstest::rstest;
-    use staff::midi::MidiNote;
+    use staff::midi::{MidiNote, Octave};
 
     use super::*;
 
@@ -205,6 +201,8 @@ mod tests {
         let settings = Settings::from_reader(f).unwrap();
         assert_eq!("Current", settings.current_preset.name);
         assert_eq!(1, settings.presets.len());
+        assert_eq!(Octave::TWO, settings.current_preset.octave);
+        assert_eq!(Octave::THREE, settings.current_preset.guitar_octave);
         assert_eq!(
             Some(MidiNote::from_byte(50)),
             settings.current_preset.drone.notes[0]

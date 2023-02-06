@@ -3,6 +3,8 @@ use std::{cmp::Ordering, ops::RangeInclusive};
 use itertools::Itertools;
 use staff::{midi::MidiNote, scale::ScaleIntervals, Interval};
 
+use crate::step_iter::StepIter;
+
 /// Floating 2 by 2 window in a scale.
 /// Useful for many blurry algorithms in theremotion
 pub struct ScaleWindows {
@@ -111,10 +113,10 @@ impl ScaleWindows {
 pub fn build_scale_notes(
     root_note: MidiNote,
     scale: ScaleIntervals,
-    restricted_to: RangeInclusive<u8>,
+    restricted_to: RangeInclusive<MidiNote>,
 ) -> Vec<MidiNote> {
     restricted_to
-        .map(MidiNote::from_byte)
+        .step_iter()
         .filter(|note| {
             let interval = Interval::new((*note - root_note).semitones() % 12);
             scale.contains(interval)
@@ -171,7 +173,11 @@ mod tests {
         #[case] degree: isize,
         #[case] expected: f32,
     ) {
-        let notes = build_scale_notes(root_note, scale, 0..=127);
+        let notes = build_scale_notes(
+            root_note,
+            scale,
+            MidiNote::from_byte(0)..=MidiNote::from_byte(127),
+        );
         let scale = ScaleWindows::from_notes(notes);
         assert_eq!(
             Some(expected),
