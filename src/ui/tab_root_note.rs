@@ -1,20 +1,20 @@
 use egui::{RichText, Widget};
 use staff::{midi::Octave, Pitch};
 
-use crate::settings::Preset;
+use crate::{settings::Preset, MidiNoteF};
 
 use super::KeyboardEditMode;
 
 pub struct TabRootNote<'a> {
     preset: &'a mut Preset,
-    lead_chord_notes: &'a [f32; 4],
+    lead_chord_notes: &'a [MidiNoteF; 4],
     lead_chord_volumes: &'a [f32; 4],
 }
 
 impl<'a> TabRootNote<'a> {
     pub fn new(
         preset: &'a mut Preset,
-        lead_chord_notes: &'a [f32; 4],
+        lead_chord_notes: &'a [MidiNoteF; 4],
         lead_chord_volumes: &'a [f32; 4],
     ) -> Self {
         Self {

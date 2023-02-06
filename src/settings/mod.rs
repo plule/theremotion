@@ -6,7 +6,9 @@ use crossbeam_channel::Sender;
 use serde::{Deserialize, Serialize};
 use staff::midi::MidiNote;
 
-use crate::{controls::Controls, dsp_thread::ParameterUpdate, scale_windows::ScaleWindows};
+use crate::{
+    controls::Controls, dsp_thread::ParameterUpdate, scale_windows::ScaleWindows, MidiNoteF,
+};
 
 use self::v1::{DroneSettings, EchoSettings, FxSettings, MixSettings, ReverbSettings};
 
@@ -93,9 +95,9 @@ impl Preset {
         self.root_note()..=(self.root_note() + self.octave_range.into())
     }
 
-    pub fn note_range_f(&self) -> RangeInclusive<f32> {
+    pub fn note_range_f(&self) -> RangeInclusive<MidiNoteF> {
         let range = self.note_range();
-        (range.start().into_byte() as f32)..=(range.end().into_byte() as f32)
+        (MidiNoteF::from(*range.start()))..=(MidiNoteF::from(*range.end()))
     }
 
     /// List all the notes of the current scale for the selected number of octaves

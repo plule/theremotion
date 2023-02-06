@@ -7,6 +7,7 @@ mod controls;
 mod dsp_thread;
 #[cfg(feature = "leap")]
 mod leap_thread;
+mod midi_f;
 mod octave_interval;
 mod scale_windows;
 mod scales;
@@ -21,6 +22,7 @@ mod dsp;
 use cpal::traits::StreamTrait;
 use default_boxed::DefaultBoxed;
 use faust_state::DspHandle;
+pub use midi_f::*;
 pub use octave_interval::OctaveInterval;
 use settings::Settings;
 

@@ -15,15 +15,16 @@ use crate::{
     controls::{self},
     settings::{Handedness, Settings},
     ui::KeyboardEditMode,
+    MidiNoteF,
 };
 
 pub struct TabPlay<'a> {
     pub controls: &'a controls::Controls,
     pub settings: &'a mut Settings,
     pub lead_volume: f32,
-    pub lead_chord_notes: &'a [f32; 4],
+    pub lead_chord_notes: &'a [MidiNoteF; 4],
     pub lead_chord_volumes: &'a [f32; 4],
-    pub raw_note: f32,
+    pub raw_note: MidiNoteF,
     pub filter_cutoff: f32,
     pub filter_resonance: f32,
     pub pitch_xy: (f32, f32),
@@ -109,7 +110,7 @@ impl<'a> TabPlay<'a> {
         move |ui: &mut egui::Ui| {
             let preset = &self.settings.current_preset;
             let note_range = preset.note_range_f();
-            let xy_range = (note_range.end() - note_range.start()) * 0.9;
+            let xy_range = (*note_range.end() - *note_range.start()) * 0.9;
 
             let raw_coordinates = Vector2::new(self.pitch_xy.0, self.pitch_xy.1);
             let raw_coordinates_direction = raw_coordinates.normalize();
@@ -130,9 +131,9 @@ impl<'a> TabPlay<'a> {
                 .allow_scroll(false)
                 .allow_zoom(false)
                 .include_x(-1.0)
-                .include_x(x_range)
+                .include_x(x_range.semitones())
                 .include_y(1.0)
-                .include_y(y_range)
+                .include_y(y_range.semitones())
                 .x_grid_spacer(uniform_grid_spacer(|_| [12.0, 1.0, 1.0]))
                 .y_grid_spacer(uniform_grid_spacer(|_| [12.0, 1.0, 1.0]))
                 .show_axes([false, false]) // would be nice to have, but have to deal with inverted axes first
@@ -148,7 +149,7 @@ impl<'a> TabPlay<'a> {
                         };
                         let circle = self
                             .circle(
-                                *note_range.end() - note.into_byte() as f32,
+                                note_range.end().note() - note.into_byte() as f32,
                                 Vector2::new(0.0, 0.0),
                             )
                             .color(Color32::from_rgb(100, 200, 100))
@@ -169,7 +170,8 @@ impl<'a> TabPlay<'a> {
                     let color = intensity_color(self.autotune_amount);
                     for (note, volume) in self.lead_chord_notes.iter().zip(self.lead_chord_volumes)
                     {
-                        let coordinates = raw_coordinates_direction * (*note_range.end() - note);
+                        let coordinates =
+                            raw_coordinates_direction * (*note_range.end() - *note).semitones();
                         plot_ui.points(
                             Points::new(PlotPoints::Owned(vec![PlotPoint::new(
                                 coordinates.x,
@@ -247,14 +249,14 @@ impl<'a> TabPlay<'a> {
             let closest = scale_window.closest_in_scale(note_raw);
 
             // hack: force the include_x/include_y to recenter on root note change
-            let plot_id = format!("{plot_name}{closest}");
+            let plot_id = format!("{plot_name}{}", closest.note());
             egui::plot::Plot::new(plot_id)
                 .allow_boxed_zoom(false)
                 .allow_drag(false)
                 .allow_scroll(false)
                 .allow_zoom(false)
-                .include_x(closest - 2.0)
-                .include_x(closest + 2.0)
+                .include_x(closest.note() - 2.0)
+                .include_x(closest.note() + 2.0)
                 .include_y(-1.0)
                 .include_y(1.0)
                 .x_grid_spacer(move |input| {

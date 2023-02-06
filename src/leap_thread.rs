@@ -9,7 +9,7 @@ use crate::{
     controls, dsp_thread,
     settings::{Handedness, Settings},
     ui::{self, UiUpdate},
-    OctaveInterval,
+    IntervalF, OctaveInterval,
 };
 
 /// Start the leap motion thread
@@ -97,7 +97,7 @@ fn on_tracking_event(
         let pitch_coord_semitones = pitch_coord_mm / 15.0;
         let pitch_coord_semitones = Vector2::new(-pitch_coord_semitones.x, pitch_coord_semitones.y);
         // Hand distance from the antenna in semitones
-        let pitch_distance_semitones = pitch_coord_semitones.norm();
+        let pitch_distance_semitones = IntervalF::new(pitch_coord_semitones.norm());
         // Convert to note, based on the current note range
         let raw_note = (*note_range.end() - pitch_distance_semitones)
             .clamp(*note_range.start(), *note_range.end());
@@ -120,8 +120,9 @@ fn on_tracking_event(
         // Autochord, from the autotuned note so that the chord itself is autotuned
         let chord = full_scale_window.autochord(note, &[0, 2, 4, 7]);
 
-        let pluck_offset =
-            OctaveInterval::from_octaves(preset.octave, preset.guitar_octave).semitones() as f32;
+        let pluck_offset = IntervalF::new(
+            OctaveInterval::from_octaves(preset.octave, preset.guitar_octave).semitones() as f32,
+        );
 
         let pitch_bend = controls
             .pitch_bend
@@ -134,8 +135,8 @@ fn on_tracking_event(
 
         for (i, note) in chord.iter().enumerate() {
             if let Some(note) = note {
-                controls.lead[i].note.send(dsp_tx, *note)?;
-                controls.strum[i].note.send(dsp_tx, *note + pluck_offset)?;
+                controls.lead[i].send_note(dsp_tx, note)?;
+                controls.strum[i].send_note(dsp_tx, &(*note + pluck_offset))?;
             }
         }
 

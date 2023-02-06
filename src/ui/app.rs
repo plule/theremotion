@@ -4,7 +4,7 @@ use crossbeam_channel::{Receiver, Sender};
 
 use egui::{FontFamily, FontId, Key, RichText, TextStyle};
 
-use crate::{controls::Controls, dsp_thread::ParameterUpdate, settings::Settings};
+use crate::{controls::Controls, dsp_thread::ParameterUpdate, settings::Settings, MidiNoteF};
 
 use super::UiUpdate;
 
@@ -18,10 +18,10 @@ pub struct App {
     main_tab: MainTab,
     error: Option<String>,
     lead_volume: f32,
-    lead_chord_notes: [f32; 4],
+    lead_chord_notes: [MidiNoteF; 4],
     lead_chord_volumes: [f32; 4],
     chords_number: f32,
-    raw_note: f32,
+    raw_note: MidiNoteF,
     filter_cutoff: f32,
     filter_resonance: f32,
     autotune_amount: usize,
@@ -130,10 +130,13 @@ impl App {
             settings,
             error: None,
             lead_volume: controls.lead_volume.input.init,
-            lead_chord_notes: controls.lead.clone().map(|n| n.note.input.init),
+            lead_chord_notes: controls
+                .lead
+                .clone()
+                .map(|n| MidiNoteF::new(n.note.input.init)),
             lead_chord_volumes: controls.lead.clone().map(|n| n.volume.input.init),
             chords_number: 0.0,
-            raw_note: controls.lead[0].note.input.init,
+            raw_note: MidiNoteF::new(controls.lead[0].note.input.init),
             filter_cutoff: controls.cutoff_note.input.init,
             filter_resonance: controls.resonance.input.init,
             autotune_amount: 0,
