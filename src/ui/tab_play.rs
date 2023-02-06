@@ -124,7 +124,7 @@ impl<'a> TabPlay<'a> {
             };
             // In any case, the hand is always on the negative y
             let y_range = -xy_range;
-            egui::plot::Plot::new(format!("{}{}", name, x_range))
+            egui::plot::Plot::new(format!("{name}{x_range}"))
                 .allow_boxed_zoom(false)
                 .allow_drag(false)
                 .allow_scroll(false)

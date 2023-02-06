@@ -47,7 +47,7 @@ impl Widget for TabRootNote<'_> {
                     ui.selectable_value(
                         &mut self.preset.pitch,
                         pitch,
-                        RichText::new(format!("  {}  ", pitch)).size(40.0),
+                        RichText::new(format!("  {pitch}  ")).size(40.0),
                     );
                 }
             });
@@ -63,7 +63,7 @@ fn octave_selector(ui: &mut egui::Ui, name: &str, octave_value: &mut i8) {
             ui.selectable_value(
                 octave_value,
                 octave,
-                RichText::new(format!("  {}  ", octave)).size(40.0),
+                RichText::new(format!("  {octave}  ")).size(40.0),
             );
         }
     });

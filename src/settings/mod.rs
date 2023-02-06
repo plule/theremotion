@@ -218,6 +218,6 @@ mod tests {
     #[rstest]
     fn default() {
         // Dynamically deserialized at runtime...
-        assert!(Preset::system_presets().len() > 0);
+        assert!(!Preset::system_presets().is_empty());
     }
 }

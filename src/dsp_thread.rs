@@ -38,7 +38,7 @@ where
         .next()
         .expect("no supported config?!")
         .with_max_sample_rate();
-    let err_fn = |err| eprintln!("an error occurred on the output audio stream: {}", err);
+    let err_fn = |err| eprintln!("an error occurred on the output audio stream: {err}");
     let sample_format = supported_config.sample_format();
     let config: StreamConfig = supported_config.into();
     // no way of knowing the buffer size in advance?
@@ -68,7 +68,7 @@ where
                 &config,
                 move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
                     let len = data.len();
-                    assert!(len <= buffer_size, "Need buffer size of at least {}", len);
+                    assert!(len <= buffer_size, "Need buffer size of at least {len}");
 
                     // Retrieve the parameter updates
                     for parameter in parameter_rx.try_iter() {

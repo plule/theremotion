@@ -45,6 +45,6 @@ fn mix_slider(ui: &mut egui::Ui, name: &str, value: &mut f32) {
             .max_decimals(2)
             .step_by(0.01)
             .show_value(false)
-            .text(format!("{} {}", icon, name)),
+            .text(format!("{icon} {name}")),
     );
 }

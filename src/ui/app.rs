@@ -238,7 +238,7 @@ impl eframe::App for App {
             .default_height(32.0)
             .show(ctx, |ui| {
                 if let Some(error) = &self.error {
-                    let error = format!("⚠ Leap: {}", error);
+                    let error = format!("⚠ Leap: {error}");
                     ui.label(RichText::new(error).color(egui::Color32::RED));
                 }
 
