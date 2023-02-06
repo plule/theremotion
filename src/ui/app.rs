@@ -103,7 +103,7 @@ impl App {
             (TextStyle::Body, FontId::new(21.0, FontFamily::Proportional)),
             (
                 TextStyle::Button,
-                FontId::new(40.0, FontFamily::Proportional),
+                FontId::new(35.0, FontFamily::Proportional),
             ),
             (
                 TextStyle::Heading,
