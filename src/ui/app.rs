@@ -215,9 +215,11 @@ impl eframe::App for App {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        if ctx.input().key_down(Key::Escape) {
-            frame.close();
-        }
+        ctx.input(|i| {
+            if i.key_down(Key::Escape) {
+                frame.close();
+            }
+        });
 
         // Receive UI update messages
         self.receive_update();

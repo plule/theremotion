@@ -105,7 +105,8 @@ fn main() {
                 settings,
             ))
         }),
-    );
+    )
+    .expect("Failed to run the UI");
 
     #[cfg(feature = "leap")]
     leap_worker
