@@ -8,9 +8,8 @@ use nalgebra::{Vector2, Vector3};
 use crate::{
     controls, dsp_thread,
     settings::{Handedness, Settings},
-    solfege::IntervalF,
+    solfege::{IntervalF, OctaveInterval},
     ui::{self, UiUpdate},
-    OctaveInterval,
 };
 
 /// Start the leap motion thread

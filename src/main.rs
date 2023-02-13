@@ -7,9 +7,6 @@ mod controls;
 mod dsp_thread;
 #[cfg(feature = "leap")]
 mod leap_thread;
-mod octave_interval;
-mod scale_windows;
-mod scales;
 mod settings;
 mod solfege;
 mod step_iter;
@@ -22,7 +19,6 @@ mod dsp;
 use cpal::traits::StreamTrait;
 use default_boxed::DefaultBoxed;
 use faust_state::DspHandle;
-pub use octave_interval::OctaveInterval;
 use settings::Settings;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

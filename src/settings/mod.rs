@@ -7,8 +7,9 @@ use serde::{Deserialize, Serialize};
 use staff::midi::MidiNote;
 
 use crate::{
-    controls::Controls, dsp_thread::ParameterUpdate, scale_windows::ScaleWindows,
-    solfege::MidiNoteF,
+    controls::Controls,
+    dsp_thread::ParameterUpdate,
+    solfege::{MidiNoteF, ScaleWindows},
 };
 
 use self::v1::{DroneSettings, EchoSettings, FxSettings, MixSettings, ReverbSettings};
@@ -123,7 +124,7 @@ impl Preset {
 
     /// List all the notes in the current scale for the given range
     fn scale_notes(&self, range: RangeInclusive<MidiNote>) -> Vec<MidiNote> {
-        crate::scale_windows::build_scale_notes(self.root_note(), self.scale, range)
+        crate::solfege::build_scale_notes(self.root_note(), self.scale, range)
     }
 
     /// Send the relevant preset data to the DSP

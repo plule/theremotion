@@ -2,9 +2,8 @@ use egui::{ScrollArea, Widget};
 use staff::scale::ScaleIntervals;
 
 use crate::{
-    scales::MoreScales,
     settings::{NamedScale, Settings},
-    solfege::MidiNoteF,
+    solfege::{MidiNoteF, MoreScales},
 };
 
 use super::KeyboardEditMode;

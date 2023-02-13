@@ -5,7 +5,7 @@ use staff::{
     Pitch,
 };
 
-use crate::OctaveInterval;
+use crate::solfege::OctaveInterval;
 
 /// Application settings
 #[derive(Clone, Serialize, Deserialize, PartialEq, Default)]

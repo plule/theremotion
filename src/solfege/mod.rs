@@ -1,9 +1,15 @@
 mod interval;
 mod midi_note;
+mod octave_interval;
+mod scale_windows;
+mod scales;
 use std::ops::{Add, Sub};
 
 pub use interval::*;
 pub use midi_note::*;
+pub use octave_interval::*;
+pub use scale_windows::*;
+pub use scales::*;
 
 impl Add<IntervalF> for MidiNoteF {
     type Output = Self;
