@@ -1,7 +1,7 @@
 use egui::{ecolor::Hsva, Response, Widget};
 use staff::{midi::MidiNote, Interval, Pitch};
 
-use crate::{settings::Preset, step_iter::StepIter, MidiNoteF, OctaveInterval};
+use crate::{settings::Preset, solfege::MidiNoteF, step_iter::StepIter, OctaveInterval};
 
 /// Display a keyboard with a floating point note
 pub struct Keyboard<'a> {

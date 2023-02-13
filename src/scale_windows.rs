@@ -3,7 +3,7 @@ use std::{cmp::Ordering, ops::RangeInclusive};
 use itertools::Itertools;
 use staff::{midi::MidiNote, scale::ScaleIntervals, Interval};
 
-use crate::{step_iter::StepIter, MidiNoteF};
+use crate::{solfege::MidiNoteF, step_iter::StepIter};
 
 /// Floating 2 by 2 window in a scale.
 /// Useful for many blurry algorithms in theremotion

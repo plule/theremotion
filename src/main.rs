@@ -24,7 +24,6 @@ use default_boxed::DefaultBoxed;
 use faust_state::DspHandle;
 pub use octave_interval::OctaveInterval;
 use settings::Settings;
-pub use solfege::*;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 const ICON: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/icon"));

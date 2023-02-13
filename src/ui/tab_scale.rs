@@ -4,7 +4,7 @@ use staff::scale::ScaleIntervals;
 use crate::{
     scales::MoreScales,
     settings::{NamedScale, Settings},
-    MidiNoteF,
+    solfege::MidiNoteF,
 };
 
 use super::KeyboardEditMode;

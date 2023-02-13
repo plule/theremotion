@@ -4,7 +4,9 @@ use crossbeam_channel::{Receiver, Sender};
 
 use egui::{FontFamily, FontId, Key, RichText, TextStyle};
 
-use crate::{controls::Controls, dsp_thread::ParameterUpdate, settings::Settings, MidiNoteF};
+use crate::{
+    controls::Controls, dsp_thread::ParameterUpdate, settings::Settings, solfege::MidiNoteF,
+};
 
 use super::UiUpdate;
 

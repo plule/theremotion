@@ -1,7 +1,7 @@
 use egui::{RichText, Widget};
 use staff::{midi::Octave, Pitch};
 
-use crate::{settings::Preset, MidiNoteF};
+use crate::{settings::Preset, solfege::MidiNoteF};
 
 use super::KeyboardEditMode;
 

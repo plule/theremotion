@@ -20,7 +20,7 @@ pub use tab_root_note::*;
 pub use tab_scale::*;
 pub use tab_settings::*;
 
-use crate::{controls, MidiNoteF};
+use crate::{controls, solfege::MidiNoteF};
 
 /// Message to update externally the UI
 pub enum UiUpdate {

@@ -7,7 +7,8 @@ use serde::{Deserialize, Serialize};
 use staff::midi::MidiNote;
 
 use crate::{
-    controls::Controls, dsp_thread::ParameterUpdate, scale_windows::ScaleWindows, MidiNoteF,
+    controls::Controls, dsp_thread::ParameterUpdate, scale_windows::ScaleWindows,
+    solfege::MidiNoteF,
 };
 
 use self::v1::{DroneSettings, EchoSettings, FxSettings, MixSettings, ReverbSettings};

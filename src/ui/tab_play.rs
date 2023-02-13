@@ -14,8 +14,8 @@ use staff::midi::MidiNote;
 use crate::{
     controls::{self},
     settings::{Handedness, Settings},
+    solfege::MidiNoteF,
     ui::KeyboardEditMode,
-    MidiNoteF,
 };
 
 pub struct TabPlay<'a> {

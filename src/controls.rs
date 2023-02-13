@@ -4,7 +4,7 @@ use anyhow::Result;
 use crossbeam_channel::{SendError, Sender};
 use faust_state::{Node, RangedInput, StateHandle, WidgetType};
 
-use crate::{dsp_thread::ParameterUpdate, MidiNoteF};
+use crate::{dsp_thread::ParameterUpdate, solfege::MidiNoteF};
 
 /// DSP controls
 #[derive(Debug, Clone)]
