@@ -4,13 +4,14 @@ use staff::scale::ScaleIntervals;
 use crate::{
     scales::MoreScales,
     settings::{NamedScale, Settings},
+    MidiNoteF,
 };
 
 use super::KeyboardEditMode;
 
 pub struct TabScale<'a> {
     settings: &'a mut Settings,
-    lead_chord_notes: &'a [f32; 4],
+    lead_chord_notes: &'a [MidiNoteF; 4],
     lead_chord_volumes: &'a [f32; 4],
     current_scale_name: &'a mut String,
 }
@@ -18,7 +19,7 @@ pub struct TabScale<'a> {
 impl<'a> TabScale<'a> {
     pub fn new(
         settings: &'a mut Settings,
-        lead_chord_notes: &'a [f32; 4],
+        lead_chord_notes: &'a [MidiNoteF; 4],
         lead_chord_volumes: &'a [f32; 4],
         current_scale_name: &'a mut String,
     ) -> Self {

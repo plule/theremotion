@@ -20,7 +20,7 @@ pub use tab_root_note::*;
 pub use tab_scale::*;
 pub use tab_settings::*;
 
-use crate::controls;
+use crate::{controls, MidiNoteF};
 
 /// Message to update externally the UI
 pub enum UiUpdate {
@@ -31,13 +31,13 @@ pub enum UiUpdate {
     // Lead instrument volume (0-1)
     LeadVolume(f32),
     // Lead chord notes (floating midi)
-    LeadChordNotes([f32; 4]),
+    LeadChordNotes([MidiNoteF; 4]),
     // Lead chord volumes (0-1)
     LeadChordVolumes([f32; 4]),
     // Floating number of chord notes (2.5 is 2 chord notes and the next half volume)
     ChordsNumber(f32),
     // Lead instrument note, without autotune
-    RawNote(f32),
+    RawNote(MidiNoteF),
     // Filter cutoff and resonance.
     // Filter: -1 to 1, resonance: 0 to 1
     Filter(f32, f32),

@@ -1,12 +1,12 @@
 use egui::{ecolor::Hsva, Response, Widget};
 use staff::{midi::MidiNote, Interval, Pitch};
 
-use crate::{settings::Preset, step_iter::StepIter, OctaveInterval};
+use crate::{settings::Preset, step_iter::StepIter, MidiNoteF, OctaveInterval};
 
 /// Display a keyboard with a floating point note
 pub struct Keyboard<'a> {
     /// Currently played midi note
-    pub chord_notes: &'a [f32; 4],
+    pub chord_notes: &'a [MidiNoteF; 4],
 
     pub chord_volumes: &'a [f32; 4],
 
@@ -28,7 +28,7 @@ pub enum KeyboardEditMode {
 
 impl<'a> Keyboard<'a> {
     pub fn new(
-        chord_notes: &'a [f32; 4],
+        chord_notes: &'a [MidiNoteF; 4],
         chord_volumes: &'a [f32; 4],
         settings: &'a mut Preset,
         edit_mode: KeyboardEditMode,
@@ -43,7 +43,7 @@ impl<'a> Keyboard<'a> {
 
     fn draw_key(&self, ui: &mut egui::Ui, key_dimension: &egui::Vec2, note: &MidiNote) -> Response {
         let scale = self.preset.restricted_scale();
-        let note_float = note.into_byte() as f32;
+        let note_float = MidiNoteF::from(*note);
 
         let saturation = if self
             .preset
@@ -60,7 +60,10 @@ impl<'a> Keyboard<'a> {
         let mut value: f32 = 0.20;
 
         for (played_note, played_volume) in self.chord_notes.iter().zip(self.chord_volumes) {
-            let note_distance = (note_float - played_note).abs().clamp(0.0, 1.0) * 0.80;
+            let note_distance = (note_float.note() - played_note.note())
+                .abs()
+                .clamp(0.0, 1.0)
+                * 0.80;
             value = value.max((1.0 - note_distance) * played_volume);
         }
 

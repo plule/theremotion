@@ -4,7 +4,7 @@ use anyhow::Result;
 use crossbeam_channel::{SendError, Sender};
 use faust_state::{Node, RangedInput, StateHandle, WidgetType};
 
-use crate::dsp_thread::ParameterUpdate;
+use crate::{dsp_thread::ParameterUpdate, MidiNoteF};
 
 /// DSP controls
 #[derive(Debug, Clone)]
@@ -185,6 +185,16 @@ pub struct NoteControl {
     pub volume: Control,
 }
 
+impl NoteControl {
+    pub fn send_note(
+        &self,
+        dsp_tx: &Sender<ParameterUpdate>,
+        note: &MidiNoteF,
+    ) -> Result<(), SendError<ParameterUpdate>> {
+        self.note.send(dsp_tx, note.note())
+    }
+}
+
 impl From<(NodeIndex<'_>, NodeIndex<'_>)> for NoteControl {
     fn from((note, volume): (NodeIndex<'_>, NodeIndex<'_>)) -> Self {
         Self {
@@ -201,6 +211,16 @@ pub struct PluckControl {
 
     /// Control for the pluck impulse
     pub pluck: BoolControl,
+}
+
+impl PluckControl {
+    pub fn send_note(
+        &self,
+        dsp_tx: &Sender<ParameterUpdate>,
+        note: &MidiNoteF,
+    ) -> Result<(), SendError<ParameterUpdate>> {
+        self.note.send(dsp_tx, note.note())
+    }
 }
 
 impl From<(NodeIndex<'_>, NodeIndex<'_>)> for PluckControl {
