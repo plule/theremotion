@@ -4,12 +4,14 @@ use crate::{controls, settings::Preset};
 
 use super::{FromControl, NamedGroup};
 
+/// Content of the effect tab
 pub struct TabEffects<'a> {
     controls: &'a controls::Controls,
     preset: &'a mut Preset,
 }
 
 impl<'a> TabEffects<'a> {
+    /// Creates a new [`TabEffects`].
     pub fn new(controls: &'a controls::Controls, preset: &'a mut Preset) -> Self {
         Self { controls, preset }
     }

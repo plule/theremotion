@@ -4,7 +4,10 @@ use staff::midi::MidiNote;
 
 /// Poor's man Step implementation
 pub trait StepIter<T> {
+    /// Inner iterator type
     type ItemIterator: Iterator<Item = T>;
+
+    /// Get a stepping iterator
     fn step_iter(&self) -> Self::ItemIterator;
 }
 

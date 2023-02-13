@@ -6,12 +6,14 @@ use crossbeam_channel::Receiver;
 use faust_state::{DspHandle, StateHandle};
 use faust_types::FaustDsp;
 
+/// Parameter update message
 pub struct ParameterUpdate {
     idx: i32,
     value: f32,
 }
 
 impl ParameterUpdate {
+    /// Creates a new [`ParameterUpdate`].
     pub fn new(idx: i32, value: f32) -> Self {
         Self { idx, value }
     }

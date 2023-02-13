@@ -54,9 +54,11 @@ pub struct Preset {
     #[serde(default)]
     pub drone: DroneSettings,
 
+    /// Volume settings
     #[serde(default)]
     pub mix: MixSettings,
 
+    /// Effects settings
     #[serde(default)]
     pub fx: FxSettings,
 }
@@ -77,16 +79,17 @@ impl Default for Preset {
     }
 }
 
+/// Mix table settings
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
-#[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields, default)]
 pub struct MixSettings {
-    #[serde(default)]
+    /// Master volume
     pub master: f32,
-    #[serde(default)]
+    /// Lead synthesizer volume
     pub lead: f32,
-    #[serde(default)]
+    /// Guitar volume
     pub guitar: f32,
-    #[serde(default)]
+    /// Drone volume
     pub drone: f32,
 }
 
@@ -101,23 +104,25 @@ impl Default for MixSettings {
     }
 }
 
+/// Effects settings
 #[derive(Clone, Serialize, Deserialize, PartialEq, Default)]
-#[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields, default)]
 pub struct FxSettings {
-    #[serde(default)]
+    /// Echo settings
     pub echo: EchoSettings,
-    #[serde(default)]
+    /// Reverb settings
     pub reverb: ReverbSettings,
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
-#[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields, default)]
+/// Echo settings
 pub struct EchoSettings {
-    #[serde(default)]
+    /// Echo amount
     pub mix: f32,
-    #[serde(default)]
+    /// Echo duration (seconds)
     pub duration: f32,
-    #[serde(default)]
+    /// Echo feedback (0-1)
     pub feedback: f32,
 }
 
@@ -131,16 +136,17 @@ impl Default for EchoSettings {
     }
 }
 
+/// Reverb settings
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
-#[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields, default)]
 pub struct ReverbSettings {
-    #[serde(default)]
+    /// Reverb amount
     pub mix: f32,
-    #[serde(default)]
+    /// Reverb time
     pub time: f32,
-    #[serde(default)]
+    /// Reverb damp amount
     pub damp: f32,
-    #[serde(default)]
+    /// Reverb room size
     pub size: f32,
 }
 
@@ -155,10 +161,13 @@ impl Default for ReverbSettings {
     }
 }
 
+/// Drone settings
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
-#[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields, default)]
 pub struct DroneSettings {
+    /// List of notes of the drone
     pub notes: [Option<MidiNote>; 4],
+    /// Detune amount (in midi note) between the notes
     pub detune: f32,
 }
 
@@ -190,10 +199,17 @@ pub struct System {
     pub handedness: Handedness,
 }
 
+/// Left or right handed mode
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub enum Handedness {
+    /// Right handed mode
+    ///
+    /// The right hand controls the note, the left hand controls the note
     RightHanded,
+    /// Left handed mode
+    ///
+    /// The left hand controls the note, the right hand controls the volme
     LeftHanded,
 }
 
@@ -203,14 +219,18 @@ impl Default for Handedness {
     }
 }
 
+/// Scale with a name
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(deny_unknown_fields, default)]
 pub struct NamedScale {
+    /// Human readable name
     pub name: String,
+    /// Corresponding scale
     pub scale: ScaleIntervals,
 }
 
 impl NamedScale {
+    /// Creates a new [`NamedScale`].
     pub fn new(name: String, scale: ScaleIntervals) -> Self {
         Self { name, scale }
     }

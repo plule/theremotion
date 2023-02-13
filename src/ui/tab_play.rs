@@ -18,6 +18,7 @@ use crate::{
     ui::KeyboardEditMode,
 };
 
+/// Content of the play tab
 pub struct TabPlay<'a> {
     pub controls: &'a controls::Controls,
     pub settings: &'a mut Settings,

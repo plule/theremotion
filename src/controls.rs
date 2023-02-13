@@ -30,24 +30,46 @@ pub struct Controls {
     /// Global pitch bend (guitar+lead)
     pub pitch_bend: Control,
 
-    /// Echo
+    /// Echo amount
     pub echo_mix: Control,
+
+    /// Echo duration (seconds)
     pub echo_duration: Control,
+
+    /// Echo feedback (0-1)
     pub echo_feedback: Control,
 
-    /// Reverb
+    /// Reverb amount
     pub reverb_mix: Control,
+
+    /// Reverb decay time
     pub reverb_time: Control,
+
+    /// Reverb damp amount
     pub reverb_damp: Control,
+
+    /// Reverb room size
     pub reverb_size: Control,
+
+    /// Amount of early reverb diffusion
     pub reverb_early_diff: Control,
+
+    /// Amount of the reverb modulation
     pub reverb_mod_depth: Control,
+
+    /// Frequency of the reverb modulation
     pub reverb_mod_freq: Control,
 
-    /// Mix
+    /// Master volume
     pub mix_master_volume: Control,
+
+    /// Drone volume
     pub mix_drone_volume: Control,
+
+    /// Lead synth volume
     pub mix_lead_volume: Control,
+
+    /// Guitar volume
     pub mix_pluck_volume: Control,
 }
 
@@ -100,6 +122,7 @@ impl From<&StateHandle> for Controls {
     }
 }
 
+/// Floating input parameter
 #[derive(Debug, Clone)]
 pub struct Control {
     /// DSP metadata
@@ -113,6 +136,7 @@ pub struct Control {
 }
 
 impl Control {
+    /// Send a new value for this parameter to the DSP
     pub fn send(
         &self,
         dsp_tx: &Sender<ParameterUpdate>,
@@ -123,6 +147,7 @@ impl Control {
         dsp_tx.send(ParameterUpdate::new(self.idx, value))
     }
 
+    /// Get a rescaled value for this parameter
     pub fn get_scaled(&self, value: f32, value_range: &RangeInclusive<f32>) -> f32 {
         convert_range(value, value_range, &self.input.range)
             .clamp(*self.input.range.start(), *self.input.range.end())
@@ -148,6 +173,7 @@ impl From<NodeIndex<'_>> for Control {
     }
 }
 
+/// Boolean input parameter
 #[derive(Debug, Clone)]
 pub struct BoolControl {
     /// Idx for the DSP
@@ -158,6 +184,7 @@ pub struct BoolControl {
 }
 
 impl BoolControl {
+    /// Send a new boolean value for this parameter
     pub fn send(&self, tx: &Sender<ParameterUpdate>, value: bool) {
         tx.send(ParameterUpdate::new(
             self.idx,
@@ -176,6 +203,7 @@ impl From<NodeIndex<'_>> for BoolControl {
     }
 }
 
+/// Music note input parameter
 #[derive(Debug, Clone)]
 pub struct NoteControl {
     /// Control for the pitch of the note
@@ -186,6 +214,7 @@ pub struct NoteControl {
 }
 
 impl NoteControl {
+    /// Send a new note value for this parameter
     pub fn send_note(
         &self,
         dsp_tx: &Sender<ParameterUpdate>,
@@ -204,6 +233,7 @@ impl From<(NodeIndex<'_>, NodeIndex<'_>)> for NoteControl {
     }
 }
 
+/// Guitar with note and gate input control
 #[derive(Debug, Clone)]
 pub struct PluckControl {
     /// Control for the pitch of the note
@@ -214,6 +244,7 @@ pub struct PluckControl {
 }
 
 impl PluckControl {
+    /// Send an update for the current pluck note
     pub fn send_note(
         &self,
         dsp_tx: &Sender<ParameterUpdate>,
@@ -232,9 +263,12 @@ impl From<(NodeIndex<'_>, NodeIndex<'_>)> for PluckControl {
     }
 }
 
+/// Reference to a node and its index in the DSP
 pub struct NodeIndex<'a>(i32, &'a Node);
 
+/// Ability to retrieve node by path
 trait NodeByPath {
+    /// From a faust path, get the node and its index
     fn by_path(&self, path: &str) -> NodeIndex<'_>;
 }
 
@@ -249,6 +283,7 @@ impl NodeByPath for StateHandle {
     }
 }
 
+/// Proportionaly remap a range
 pub fn convert_range(
     value: f32,
     input_range: &RangeInclusive<f32>,

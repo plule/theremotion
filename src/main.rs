@@ -1,17 +1,33 @@
+//! Music instrument based on the Leap Motion and Faust
+
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 #![cfg_attr(not(feature = "leap"), allow(dead_code))] // When building without leap support for tests, allow dead code
 #![cfg_attr(not(feature = "leap"), allow(unused_variables))] // When building without leap support for tests, allow dead code
 
+/// DSP controllable parameters
 mod controls;
+
+/// Thread computing the DSP and sending parameter updates
 mod dsp_thread;
+
+/// Thread reading the hand positions
 #[cfg(feature = "leap")]
 mod leap_thread;
-mod settings;
-mod solfege;
-mod step_iter;
-mod ui;
 
+/// Application settings
+mod settings;
+
+/// Music related types and algorithms
+mod solfege;
+
+/// Poor man's Step implementation
+mod step_iter;
+
+/// User interface
+pub mod ui;
+
+/// Generated Faust DSP
 #[allow(clippy::all)]
 #[rustfmt::skip]
 mod dsp;
@@ -20,8 +36,12 @@ use cpal::traits::StreamTrait;
 use default_boxed::DefaultBoxed;
 use faust_state::DspHandle;
 use settings::Settings;
+pub use step_iter::StepIter;
 
+/// Theremotion version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// Theremotion icon data
 const ICON: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/icon"));
 
 fn main() {

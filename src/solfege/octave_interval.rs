@@ -3,6 +3,7 @@ use std::ops::Add;
 use serde::{Deserialize, Serialize};
 use staff::{midi::Octave, Interval};
 
+/// Octave difference
 #[derive(Clone, Copy, Serialize, Deserialize, PartialEq)]
 #[serde(transparent)]
 pub struct OctaveInterval {
@@ -10,18 +11,22 @@ pub struct OctaveInterval {
 }
 
 impl OctaveInterval {
+    /// Creates a new [`OctaveInterval`].
     pub fn new(octaves: u8) -> Self {
         Self { octaves }
     }
 
+    /// Initialize from two octaves
     pub fn from_octaves(from: Octave, to: Octave) -> Self {
         Self::new((to.into_i8() - from.into_i8()) as u8)
     }
 
+    /// Returns the octaves of this [`OctaveInterval`].
     pub fn octaves(&self) -> u8 {
         self.octaves
     }
 
+    /// Returns the semitones of this [`OctaveInterval`].
     pub fn semitones(&self) -> u8 {
         self.octaves * 12
     }

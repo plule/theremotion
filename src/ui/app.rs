@@ -10,6 +10,7 @@ use crate::{
 
 use super::UiUpdate;
 
+/// Application state
 pub struct App {
     update_rx: Receiver<UiUpdate>,
     controls: Controls,
@@ -34,18 +35,27 @@ pub struct App {
     trumpet_strength: f32,
 }
 
+/// List of tabs in the application
 #[derive(Debug, PartialEq, Eq, EnumIter, Clone, Copy)]
 pub enum MainTab {
+    /// Play screen
     Play,
+    /// Root note editor
     RootEdit,
+    /// Scale editor
     Scale,
+    /// Mix table
     Mix,
+    /// Effects control
     Effects,
+    /// Preset management
     Presets,
+    /// Application settings
     Settings,
 }
 
 impl MainTab {
+    /// Title of the tab
     pub fn title(&self) -> &str {
         match self {
             MainTab::Play => "Play",
@@ -58,6 +68,7 @@ impl MainTab {
         }
     }
 
+    /// Emoji icon of the tab
     pub fn icon(&self) -> &str {
         match self {
             MainTab::Play => "👐",
@@ -151,7 +162,7 @@ impl App {
         }
     }
 
-    pub fn draw_current_tab(&mut self, ui: &mut egui::Ui) {
+    fn draw_current_tab(&mut self, ui: &mut egui::Ui) {
         match self.main_tab {
             MainTab::Play => ui.add(super::TabPlay {
                 controls: &self.controls,
@@ -189,7 +200,7 @@ impl App {
         };
     }
 
-    pub fn receive_update(&mut self) {
+    fn receive_update(&mut self) {
         for msg in self.update_rx.try_iter() {
             match msg {
                 UiUpdate::Error(x) => self.error = Some(x),

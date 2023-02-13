@@ -1,13 +1,14 @@
 use egui::{ecolor::Hsva, Response, Widget};
 use staff::{midi::MidiNote, Interval, Pitch};
 
-use crate::{settings::Preset, solfege::MidiNoteF, solfege::OctaveInterval, step_iter::StepIter};
+use crate::{settings::Preset, solfege::MidiNoteF, solfege::OctaveInterval, StepIter};
 
 /// Display a keyboard with a floating point note
 pub struct Keyboard<'a> {
-    /// Currently played midi note
+    /// Notes of the chord
     pub chord_notes: &'a [MidiNoteF; 4],
 
+    /// Volumes of the chord notes
     pub chord_volumes: &'a [f32; 4],
 
     /// Settings preset
@@ -17,16 +18,22 @@ pub struct Keyboard<'a> {
     pub edit_mode: KeyboardEditMode,
 }
 
+/// Keyboard interaction mode
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum KeyboardEditMode {
+    /// Do nothing
     #[default]
     None,
+    /// Set the drone note
     Drone,
+    /// Set the root note
     RootNote,
+    /// Edit the scale
     Scale,
 }
 
 impl<'a> Keyboard<'a> {
+    /// Creates a new [`Keyboard`].
     pub fn new(
         chord_notes: &'a [MidiNoteF; 4],
         chord_volumes: &'a [f32; 4],

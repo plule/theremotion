@@ -5,6 +5,7 @@ use crate::{settings::Preset, solfege::MidiNoteF};
 
 use super::KeyboardEditMode;
 
+/// Content of the root note tab
 pub struct TabRootNote<'a> {
     preset: &'a mut Preset,
     lead_chord_notes: &'a [MidiNoteF; 4],
@@ -12,6 +13,7 @@ pub struct TabRootNote<'a> {
 }
 
 impl<'a> TabRootNote<'a> {
+    /// Creates a new [`TabRootNote`].
     pub fn new(
         preset: &'a mut Preset,
         lead_chord_notes: &'a [MidiNoteF; 4],

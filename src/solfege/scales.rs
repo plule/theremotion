@@ -1,13 +1,15 @@
 use staff::{scale::ScaleIntervals, Interval};
 
+/// More predefined scales
 pub trait MoreScales {
+    /// <https://en.wikipedia.org/wiki/Phrygian_dominant_scale>
     fn freygish() -> Self;
 
+    /// <https://en.wikipedia.org/wiki/Ukrainian_Dorian_scale>
     fn altered_dorian() -> Self;
 }
 
 impl MoreScales for ScaleIntervals {
-    /// https://en.wikipedia.org/wiki/Phrygian_dominant_scale
     fn freygish() -> Self {
         ScaleIntervals::from_iter([
             Interval::UNISON,
@@ -20,7 +22,6 @@ impl MoreScales for ScaleIntervals {
         ])
     }
 
-    /// https://en.wikipedia.org/wiki/Ukrainian_Dorian_scale
     fn altered_dorian() -> Self {
         Self::from_iter([
             Interval::UNISON,

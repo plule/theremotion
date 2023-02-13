@@ -2,11 +2,13 @@ use egui::{ScrollArea, Widget};
 
 use crate::settings::{Preset, Settings};
 
+/// Content of the presets tab
 pub struct TabPresets<'a> {
     settings: &'a mut Settings,
 }
 
 impl<'a> TabPresets<'a> {
+    /// Creates a new [`TabPresets`].
     pub fn new(settings: &'a mut Settings) -> Self {
         Self { settings }
     }

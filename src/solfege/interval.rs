@@ -5,19 +5,24 @@ use std::{
 
 use staff::Interval;
 
+/// Interval between to floating notes
 #[derive(Default, Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct IntervalF(f32);
 
 impl IntervalF {
+    /// Creates a new [`IntervalF`].
     pub fn new(semitones: f32) -> Self {
         Self(semitones)
     }
+    /// Returns the semitones of this [`IntervalF`].
     pub fn semitones(&self) -> f32 {
         self.0
     }
+    /// Absolute interval.
     pub fn abs(&self) -> Self {
         Self(self.semitones().abs())
     }
+    /// Clamp this interval between a minimal and a maximal value
     pub fn clamp(&self, min: IntervalF, max: IntervalF) -> Self {
         Self(self.semitones().clamp(min.semitones(), max.semitones()))
     }

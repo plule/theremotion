@@ -3,7 +3,7 @@ use std::{cmp::Ordering, ops::RangeInclusive};
 use itertools::Itertools;
 use staff::{midi::MidiNote, scale::ScaleIntervals, Interval};
 
-use crate::step_iter::StepIter;
+use crate::StepIter;
 
 use super::MidiNoteF;
 
@@ -134,7 +134,7 @@ pub fn build_scale_notes(
 
 /// Smooth step function loosely "sticking" the value to 0 or 1
 /// Assumes that value is between 0 and 1
-/// https://en.wikipedia.org/wiki/Smoothstep
+/// <https://en.wikipedia.org/wiki/Smoothstep>
 fn smoothstep(a: f32, b: f32, x: f32) -> f32 {
     let x = (x - a) / (b - a);
     x * x * (3.0 - 2.0 * x)

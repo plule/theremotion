@@ -12,19 +12,22 @@ use crate::{
     solfege::{MidiNoteF, ScaleWindows},
 };
 
-use self::v1::{DroneSettings, EchoSettings, FxSettings, MixSettings, ReverbSettings};
+pub use self::v1::{
+    DroneSettings, EchoSettings, FxSettings, Handedness, MixSettings, NamedScale, Preset,
+    ReverbSettings, Settings,
+};
 
-pub type Settings = v1::Settings;
-pub type Preset = v1::Preset;
-pub type Handedness = v1::Handedness;
-pub type NamedScale = v1::NamedScale;
-
+/// Default presets
 const PRESETS_BYTES: &[u8] = include_bytes!("presets.yaml");
 
 lazy_static::lazy_static! {
+    /// Default presets
     static ref PRESETS: Vec<Preset> = serde_yaml::from_slice(PRESETS_BYTES).unwrap();
 }
 
+/// Versionned application settings.
+///
+/// This is the top-level serialized object
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 enum Version {
@@ -38,6 +41,7 @@ impl Default for Version {
 }
 
 impl Settings {
+    /// Initialize from a stream
     pub fn from_reader<R>(f: R) -> Result<Self>
     where
         R: std::io::Read,
@@ -55,7 +59,8 @@ impl Settings {
         Ok(directory.with_file_name("settings.yaml"))
     }
 
-    pub fn try_read() -> Result<Self> {
+    /// Try reading the settings
+    fn try_read() -> Result<Self> {
         let path = Settings::path()?;
         log::debug!(
             "Loading settings from {}",
@@ -65,10 +70,12 @@ impl Settings {
         Self::from_reader(f)
     }
 
+    /// Read the settings or get the default
     pub fn read() -> Self {
         Self::try_read().unwrap_or_default()
     }
 
+    /// Save the settings
     pub fn save(&self) -> Result<()> {
         let path = Settings::path()?;
         if let Some(parent) = path.as_path().parent() {

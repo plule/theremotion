@@ -4,11 +4,13 @@ use crate::settings::Preset;
 
 use super::NamedGroup;
 
+/// Content of the mixing tab
 pub struct TabMix<'a> {
     preset: &'a mut Preset,
 }
 
 impl<'a> TabMix<'a> {
+    /// Creates a new [`TabMix`].
     pub fn new(preset: &'a mut Preset) -> Self {
         Self { preset }
     }

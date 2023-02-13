@@ -8,6 +8,7 @@ use crate::{
 
 use super::KeyboardEditMode;
 
+/// Content of the scale edit tab
 pub struct TabScale<'a> {
     settings: &'a mut Settings,
     lead_chord_notes: &'a [MidiNoteF; 4],
@@ -16,6 +17,7 @@ pub struct TabScale<'a> {
 }
 
 impl<'a> TabScale<'a> {
+    /// Creates a new [`TabScale`].
     pub fn new(
         settings: &'a mut Settings,
         lead_chord_notes: &'a [MidiNoteF; 4],

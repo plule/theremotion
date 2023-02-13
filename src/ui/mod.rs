@@ -24,32 +24,32 @@ use crate::{controls, solfege::MidiNoteF};
 
 /// Message to update externally the UI
 pub enum UiUpdate {
-    // Display an error message
+    /// Display an error message
     Error(String),
-    // Remove the error message
+    /// Remove the error message
     ErrorReset,
-    // Lead instrument volume (0-1)
+    /// Lead instrument volume (0-1)
     LeadVolume(f32),
-    // Lead chord notes (floating midi)
+    /// Lead chord notes (floating midi)
     LeadChordNotes([MidiNoteF; 4]),
-    // Lead chord volumes (0-1)
+    /// Lead chord volumes (0-1)
     LeadChordVolumes([f32; 4]),
-    // Floating number of chord notes (2.5 is 2 chord notes and the next half volume)
+    /// Floating number of chord notes (2.5 is 2 chord notes and the next half volume)
     ChordsNumber(f32),
-    // Lead instrument note, without autotune
+    /// Lead instrument note, without autotune
     RawNote(MidiNoteF),
-    // Filter cutoff and resonance.
-    // Filter: -1 to 1, resonance: 0 to 1
+    /// Filter cutoff and resonance.
+    /// Filter: -1 to 1, resonance: 0 to 1
     Filter(f32, f32),
-    // Amount of autotune
+    /// Amount of autotune
     AutotuneAmount(usize),
-    // Visible hands
+    /// Visible hands
     HasHands(bool, bool),
-    // Pitch position, in semitones relative to the antenna
+    /// Pitch position, in semitones relative to the antenna
     PitchXY(f32, f32),
-    // Volume hand is pinching and the guitar sound can be activated
+    /// Volume hand is pinching and the guitar sound can be activated
     StrumReady(bool),
-    // Trumpet string strength (0-1)
+    /// Trumpet string strength (0-1)
     TrumpetStrength(f32),
 }
 
@@ -67,6 +67,7 @@ impl<'a> FromControl<'a> for Slider<'a> {
 }
 
 trait NamedGroup {
+    /// Create a group with a name label
     fn named_group(&mut self, name: &str, add_contents: impl FnOnce(&mut egui::Ui));
 }
 
@@ -81,7 +82,7 @@ impl NamedGroup for egui::Ui {
     }
 }
 
-pub fn text_edit_singleline_tabtip<S: TextBuffer>(
+fn text_edit_singleline_tabtip<S: TextBuffer>(
     text: &mut S,
     tabtip: bool,
 ) -> impl egui::Widget + '_ {

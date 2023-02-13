@@ -2,11 +2,13 @@ use egui::Widget;
 
 use crate::settings::{Handedness, Settings};
 
+/// Content of the settings tab
 pub struct TabSettings<'a> {
     settings: &'a mut Settings,
 }
 
 impl<'a> TabSettings<'a> {
+    /// Creates a new [`TabSettings`].
     pub fn new(settings: &'a mut Settings) -> Self {
         Self { settings }
     }
