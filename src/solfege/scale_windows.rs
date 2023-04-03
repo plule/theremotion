@@ -1,7 +1,8 @@
 use std::{cmp::Ordering, ops::RangeInclusive};
 
+use eframe::epaint::ahash::HashSet;
 use itertools::Itertools;
-use staff::{midi::MidiNote, scale::ScaleIntervals, Interval, Pitch};
+use staff::{midi::MidiNote, scale::ScaleIntervals, Pitch};
 
 use crate::StepIter;
 
@@ -123,12 +124,12 @@ pub fn build_scale_notes(
     scale: ScaleIntervals,
     restricted_to: RangeInclusive<MidiNote>,
 ) -> Vec<MidiNote> {
+    let pitches: HashSet<u8> = scale
+        .map(|interval| (pitch + interval).into_byte())
+        .collect();
     restricted_to
         .step_iter()
-        .filter(|note| {
-            let interval = Interval::new((note.into_byte() - pitch.into_byte()) % 12);
-            scale.contains(interval)
-        })
+        .filter(|note| pitches.contains(&note.pitch().into_byte()))
         .collect()
 }
 

@@ -1,5 +1,8 @@
 use egui::{ecolor::Hsva, Response, Widget};
-use staff::{midi::MidiNote, Interval, Pitch};
+use staff::{
+    midi::{MidiNote, Octave},
+    Interval, Pitch,
+};
 
 use crate::{settings::Preset, solfege::MidiNoteF, solfege::OctaveInterval, StepIter};
 
@@ -54,8 +57,7 @@ impl<'a> Keyboard<'a> {
 
         let saturation = if self
             .preset
-            .drone
-            .notes
+            .drone_notes()
             .iter()
             .any(|drone_note| drone_note.iter().any(|drone_note| note == drone_note))
         {
@@ -100,14 +102,17 @@ impl<'a> Keyboard<'a> {
                 KeyboardEditMode::None => {}
                 KeyboardEditMode::Drone => {
                     // Toggle the selected note
-                    let drone_notes = &mut self.preset.drone.notes;
-                    if let Some(existing_drone) = drone_notes
+                    let note_interval = note - self.preset.root_note();
+                    let drone_intervals = &mut self.preset.drone.get_intervals();
+                    if let Some(existing_drone) = drone_intervals
                         .iter_mut()
-                        .find(|n| n.iter().any(|n| *n == note))
+                        .find(|n| n.iter().any(|n| *n == note_interval))
                     {
                         *existing_drone = None;
-                    } else if let Some(empty_slot) = drone_notes.iter_mut().find(|n| n.is_none()) {
-                        *empty_slot = Some(note);
+                    } else if let Some(empty_slot) =
+                        drone_intervals.iter_mut().find(|n| n.is_none())
+                    {
+                        *empty_slot = Some(note_interval);
                     }
                 }
                 KeyboardEditMode::RootNote => {
@@ -129,8 +134,8 @@ impl<'a> Keyboard<'a> {
 
 impl<'a> Widget for Keyboard<'a> {
     fn ui(mut self, ui: &mut egui::Ui) -> egui::Response {
-        let start_octave = self.preset.octave;
-        let displayed_octave_count = self.preset.octave_range + OctaveInterval::new(1);
+        let start_octave = Octave::ZERO;
+        let displayed_octave_count = Preset::octave_range() + OctaveInterval::new(1);
 
         let start_note = MidiNote::new(Pitch::C, start_octave);
         let note_range = start_note..=start_note + displayed_octave_count.into();

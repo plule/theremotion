@@ -8,7 +8,7 @@ use nalgebra::{Vector2, Vector3};
 use crate::{
     controls, dsp_thread,
     settings::{Handedness, Settings},
-    solfege::{IntervalF, OctaveInterval},
+    solfege::IntervalF,
     ui::{self, UiUpdate},
 };
 
@@ -114,15 +114,14 @@ fn on_tracking_event(
         let autotune =
             controls::convert_range(hand.pinch_strength(), &(0.0..=1.0), &(0.0..=5.0)) as usize;
 
-        // Lead note, autotuned
+        // Base note, autotuned
         let note = restricted_scale_window.autotune(raw_note, autotune);
 
         // Autochord, from the autotuned note so that the chord itself is autotuned
         let chord = full_scale_window.autochord(note, &[0, 2, 4, 7]);
 
-        let pluck_offset = IntervalF::new(
-            OctaveInterval::from_octaves(preset.octave, preset.guitar_octave).semitones() as f32,
-        );
+        let lead_offset = preset.lead_interval_f();
+        let pluck_offset = preset.pluck_interval_f();
 
         let pitch_bend = controls
             .pitch_bend
@@ -135,7 +134,7 @@ fn on_tracking_event(
 
         for (i, note) in chord.iter().enumerate() {
             if let Some(note) = note {
-                controls.lead[i].send_note(dsp_tx, note)?;
+                controls.lead[i].send_note(dsp_tx, &(*note + lead_offset))?;
                 controls.strum[i].send_note(dsp_tx, &(*note + pluck_offset))?;
             }
         }

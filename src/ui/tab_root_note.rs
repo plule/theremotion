@@ -37,11 +37,12 @@ impl Widget for TabRootNote<'_> {
                 KeyboardEditMode::RootNote,
             ));
             ui.separator();
-            octave_selector(ui, "Lead Octave", &mut self.preset.octave);
+            octave_selector(ui, "Lead Octave", &mut self.preset.lead_octave);
             octave_selector(ui, "Guitar Octave", &mut self.preset.guitar_octave);
+            octave_selector(ui, "Drone Octave", &mut self.preset.drone_octave);
             ui.separator();
             ui.vertical_centered_justified(|ui| {
-                ui.label(RichText::new("Note").size(30.0));
+                ui.label(RichText::new("Note").size(20.0));
             });
             ui.horizontal_wrapped(|ui| {
                 for pitch in 0..=11 {
@@ -49,7 +50,7 @@ impl Widget for TabRootNote<'_> {
                     ui.selectable_value(
                         &mut self.preset.pitch,
                         pitch,
-                        RichText::new(format!("  {pitch}  ")).size(40.0),
+                        RichText::new(format!("  {pitch}  ")).size(30.0),
                     );
                 }
             });
@@ -60,12 +61,12 @@ impl Widget for TabRootNote<'_> {
 
 fn octave_selector(ui: &mut egui::Ui, name: &str, octave_value: &mut Octave) {
     ui.horizontal_wrapped(|ui| {
-        ui.label(RichText::new(name).size(40.0));
+        ui.label(RichText::new(name).size(20.0));
         for octave in (0..=4).map(Octave::new_unchecked) {
             ui.selectable_value(
                 octave_value,
                 octave,
-                RichText::new(format!("  {octave}  ")).size(40.0),
+                RichText::new(format!("  {octave}  ")).size(30.0),
             );
         }
     });

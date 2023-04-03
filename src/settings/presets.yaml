@@ -1,15 +1,15 @@
 - name: Shiny Diamond
-  octave: 1
+  lead_octave: 1
   guitar_octave: 2
+  drone_octave: 1
   pitch: G
-  octave_range: 3
   scale: 1453
   drone:
-    notes:
-    - 31
-    - 43
-    - 50
-    - 55
+    intervals:
+    - 0
+    - 12
+    - 19
+    - 24
     detune: 0.031000001
   mix:
     master: 1.0
@@ -27,13 +27,13 @@
       damp: 0.74
       size: 5.0
 - name: Reverby Freygish
-  octave: 2
+  lead_octave: 2
   guitar_octave: 3
+  drone_octave: 2
   pitch: C
-  octave_range: 3
   scale: 1459
   drone:
-    notes:
+    intervals:
     - null
     - null
     - null

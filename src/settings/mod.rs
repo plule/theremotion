@@ -1,21 +1,24 @@
 mod v1;
+mod v2;
 use std::{ops::RangeInclusive, path::PathBuf};
 
 use anyhow::{Context, Ok, Result};
 use crossbeam_channel::Sender;
 use serde::{Deserialize, Serialize};
-use staff::midi::MidiNote;
+use staff::{
+    midi::{MidiNote, Octave},
+    Interval,
+};
 
 use crate::{
     controls::Controls,
     dsp_thread::ParameterUpdate,
-    solfege::{MidiNoteF, ScaleWindows},
+    solfege::{IntervalF, MidiNoteF, OctaveInterval, ScaleWindows},
 };
 
-pub use self::v1::{
-    DroneSettings, EchoSettings, FxSettings, Handedness, MixSettings, NamedScale, Preset,
-    ReverbSettings, Settings,
-};
+pub use self::v1::{EchoSettings, FxSettings, Handedness, MixSettings, NamedScale, ReverbSettings};
+
+pub use self::v2::{DroneSettings, Preset, Settings};
 
 /// Default presets
 const PRESETS_BYTES: &[u8] = include_bytes!("presets.yaml");
@@ -32,11 +35,12 @@ lazy_static::lazy_static! {
 #[serde(deny_unknown_fields)]
 enum Version {
     V1(v1::Settings),
+    V2(v2::Settings),
 }
 
 impl Default for Version {
     fn default() -> Self {
-        Version::V1(v1::Settings::default())
+        Version::V2(v2::Settings::default())
     }
 }
 
@@ -48,7 +52,8 @@ impl Settings {
     {
         let settings: Version = serde_yaml::from_reader(f)?;
         match settings {
-            Version::V1(settings) => Ok(settings),
+            Version::V1(settings) => Ok(settings.into()),
+            Version::V2(settings) => Ok(settings),
         }
     }
 
@@ -89,19 +94,43 @@ impl Settings {
             .truncate(true)
             .create(true)
             .open(path)?;
-        let settings = Version::V1(self.clone());
+        let settings = Version::V2(self.clone());
         serde_yaml::to_writer(f, &settings)?;
         Ok(())
     }
 }
 
 impl Preset {
+    pub fn octave_range() -> OctaveInterval {
+        OctaveInterval::new(3)
+    }
+    /// Root note from the zero octave
     pub fn root_note(&self) -> MidiNote {
-        MidiNote::new(self.pitch, self.octave)
+        MidiNote::new(self.pitch, Octave::ZERO)
+    }
+
+    pub fn lead_interval(&self) -> Interval {
+        OctaveInterval::from_octaves(Octave::ZERO, self.lead_octave).into()
+    }
+
+    pub fn lead_interval_f(&self) -> IntervalF {
+        self.lead_interval().into()
+    }
+
+    pub fn pluck_interval(&self) -> Interval {
+        OctaveInterval::from_octaves(Octave::ZERO, self.guitar_octave).into()
+    }
+
+    pub fn pluck_interval_f(&self) -> IntervalF {
+        self.pluck_interval().into()
+    }
+
+    pub fn drone_interval(&self) -> Interval {
+        OctaveInterval::from_octaves(Octave::ZERO, self.drone_octave).into()
     }
 
     pub fn note_range(&self) -> RangeInclusive<MidiNote> {
-        self.root_note()..=(self.root_note() + self.octave_range.into())
+        self.root_note()..=(self.root_note() + Self::octave_range().into())
     }
 
     pub fn note_range_f(&self) -> RangeInclusive<MidiNoteF> {
@@ -136,10 +165,29 @@ impl Preset {
 
     /// Send the relevant preset data to the DSP
     pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<ParameterUpdate>) -> Result<()> {
-        self.drone.send_to_dsp(controls, tx)?;
+        controls.drone_detune.send(tx, self.drone.detune)?;
+        let drone_interval = self.drone_interval();
+        for (control, drone) in controls.drone_notes.iter().zip(self.drone_notes()) {
+            if let Some(drone) = drone {
+                control
+                    .note
+                    .send(tx, (drone + drone_interval).into_byte() as f32)?;
+                control.volume.send(tx, 1.0)?;
+            } else {
+                control.volume.send(tx, 0.0)?;
+            }
+        }
+
         self.mix.send_to_dsp(controls, tx)?;
         self.fx.send_to_dsp(controls, tx)?;
         Ok(())
+    }
+
+    pub fn drone_notes(&self) -> [Option<MidiNote>; 4] {
+        let root_note = self.root_note();
+        self.drone
+            .get_intervals()
+            .map(|drone| drone.map(|drone| root_note + drone))
     }
 
     pub fn system_presets() -> &'static Vec<Self> {
@@ -148,17 +196,8 @@ impl Preset {
 }
 
 impl DroneSettings {
-    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<ParameterUpdate>) -> Result<()> {
-        controls.drone_detune.send(tx, self.detune)?;
-        for (control, drone) in controls.drone_notes.iter().zip(self.notes) {
-            if let Some(drone) = drone {
-                control.note.send(tx, drone.into_byte() as f32)?;
-                control.volume.send(tx, 1.0)?;
-            } else {
-                control.volume.send(tx, 0.0)?;
-            }
-        }
-        Ok(())
+    pub fn get_intervals(&self) -> [Option<Interval>; 4] {
+        self.intervals.map(|i| i.map(Interval::new))
     }
 }
 
@@ -212,13 +251,14 @@ mod tests {
         let settings = Settings::from_reader(f).unwrap();
         assert_eq!("Current", settings.current_preset.name);
         assert_eq!(1, settings.presets.len());
-        assert_eq!(Octave::TWO, settings.current_preset.octave);
+        assert_eq!(Octave::TWO, settings.current_preset.lead_octave);
         assert_eq!(Octave::THREE, settings.current_preset.guitar_octave);
         assert_eq!(
-            Some(MidiNote::from_byte(50)),
-            settings.current_preset.drone.notes[0]
+            MidiNote::from_byte(50),
+            settings.current_preset.drone_notes()[0].unwrap()
+                + settings.current_preset.drone_interval()
         );
-        assert_eq!(None, settings.current_preset.drone.notes[1]);
+        assert_eq!(None, settings.current_preset.drone.intervals[1]);
         assert_eq!(0.1, settings.current_preset.mix.drone);
         assert_eq!(0.9, settings.current_preset.fx.echo.mix);
         assert_eq!(0.8, settings.current_preset.fx.reverb.mix);

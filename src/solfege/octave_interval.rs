@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use staff::{midi::Octave, Interval};
 
 /// Octave difference
-#[derive(Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(transparent)]
 pub struct OctaveInterval {
     octaves: u8,
