@@ -109,6 +109,10 @@ impl Preset {
         MidiNote::new(self.pitch, Octave::ZERO)
     }
 
+    pub fn root_note_f(&self) -> MidiNoteF {
+        self.root_note().into()
+    }
+
     pub fn lead_interval(&self) -> Interval {
         OctaveInterval::from_octaves(Octave::ZERO, self.lead_octave).into()
     }

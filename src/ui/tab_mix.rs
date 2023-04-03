@@ -28,6 +28,12 @@ impl Widget for TabMix<'_> {
             ui.named_group("", |ui| {
                 mix_slider(ui, "Master", &mut preset.mix.master);
             });
+            ui.named_group("Other", |ui| {
+                ui.vertical(|ui| {
+                    ui.toggle_value(&mut preset.drone.pluck_drone, "Guitar Drone")
+                        .on_hover_text("Enable an additional string with a constant pitch")
+                });
+            })
         })
         .response
     }

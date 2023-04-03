@@ -138,6 +138,10 @@ fn on_tracking_event(
                 controls.strum[i].send_note(dsp_tx, &(*note + pluck_offset))?;
             }
         }
+        controls.strum_drone.send_note(
+            dsp_tx,
+            &(preset.root_note_f() + pluck_offset + IntervalF::new(12.0)),
+        )?;
 
         controls.pitch_bend.send(dsp_tx, pitch_bend)?;
 
@@ -168,6 +172,10 @@ fn on_tracking_event(
                     .pluck
                     .send(dsp_tx, palm_dot > 0.0 + (i as f32) * 0.2 && guitar_gates[i]);
             }
+            controls
+                .strum_drone
+                .pluck
+                .send(dsp_tx, preset.drone.pluck_drone && palm_dot > 0.1);
         }
         let pluck_mute = controls.pluck_mute.get_scaled(palm_dot, &(-1.0..=0.0));
         let cutoff_note_norm =

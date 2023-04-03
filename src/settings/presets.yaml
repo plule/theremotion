@@ -11,6 +11,7 @@
     - 19
     - 24
     detune: 0.031000001
+    pluck_drone: false
   mix:
     master: 1.0
     lead: 1.0
@@ -39,6 +40,7 @@
     - null
     - null
     detune: 0.1
+    pluck_drone: true
   mix:
     master: 1.0
     lead: 1.0

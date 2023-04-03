@@ -35,11 +35,13 @@ pub struct DroneSettings {
     pub intervals: [Option<u8>; 4],
     /// Detune amount (in midi note) between the notes
     pub detune: f32,
+    /// Enable the pluck drone
+    pub pluck_drone: bool,
 }
 
 /// Sound preset
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
-#[serde(deny_unknown_fields)]
+#[serde(deny_unknown_fields, default)]
 pub struct Preset {
     /// Name of the preset
     pub name: String,
@@ -60,15 +62,12 @@ pub struct Preset {
     pub scale: ScaleIntervals,
 
     /// Current drone
-    #[serde(default)]
     pub drone: DroneSettings,
 
     /// Volume settings
-    #[serde(default)]
     pub mix: v1::MixSettings,
 
     /// Effects settings
-    #[serde(default)]
     pub fx: v1::FxSettings,
 }
 
@@ -104,6 +103,7 @@ impl From<v1::Preset> for Preset {
             scale: value.scale,
             drone: DroneSettings {
                 intervals: drone_intervals,
+                pluck_drone: false,
                 detune: value.drone.detune,
             },
             mix: value.mix,

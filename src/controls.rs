@@ -19,6 +19,8 @@ pub struct Controls {
     pub resonance: Control,
     /// Guitar strum
     pub strum: [PluckControl; 4],
+    /// Drone string (actually fifth pluck)
+    pub strum_drone: PluckControl,
     /// Guitar pluck damping
     pub pluck_mute: Control,
     /// Drone detune
@@ -93,6 +95,7 @@ impl From<&StateHandle> for Controls {
                 )
                     .into()
             }),
+            strum_drone: (state.by_path("pluck/4/note"), state.by_path("pluck/4/gate")).into(),
             pluck_mute: state.by_path("pluck/mute").into(),
             drone_detune: state.by_path("drone/detune").into(),
             drone_trumpet: state.by_path("drone/trumpet").into(),

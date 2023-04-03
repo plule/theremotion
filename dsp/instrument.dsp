@@ -47,7 +47,7 @@ with {
     note = hslider("[1]note", 80, 0, 127, 0.001);
 };
 
-guitarStrum(mute, pitchBend, res, cutoffNote) = (mute, pitchBend, res, cutoffNote) <: par(i, 4, vgroup("[3]%i", guitarStrumNote)) :> _;
+guitarStrum(mute, pitchBend, res, cutoffNote) = (mute, pitchBend, res, cutoffNote) <: par(i, 5, vgroup("[3]%i", guitarStrumNote)) :> _;
 
 guitar(pitchBend, res, cutoffNote) = guitarStrum(mute, pitchBend, res, cutoffNote)
 with {
