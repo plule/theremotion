@@ -15,9 +15,6 @@ impl StepIter<MidiNote> for RangeInclusive<MidiNote> {
     type ItemIterator = Box<dyn Iterator<Item = MidiNote>>;
 
     fn step_iter(&self) -> Self::ItemIterator {
-        Box::new(
-            (self.start().into_byte()..=self.end().into_byte())
-                .map(MidiNote::from_byte),
-        )
+        Box::new((self.start().into_byte()..=self.end().into_byte()).map(MidiNote::from_byte))
     }
 }
