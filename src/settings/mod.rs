@@ -131,7 +131,7 @@ impl Preset {
 
     /// List all the notes in the current scale for the given range
     fn scale_notes(&self, range: RangeInclusive<MidiNote>) -> Vec<MidiNote> {
-        crate::solfege::build_scale_notes(self.root_note(), self.scale, range)
+        crate::solfege::build_scale_notes(self.pitch, self.scale, range)
     }
 
     /// Send the relevant preset data to the DSP

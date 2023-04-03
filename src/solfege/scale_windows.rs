@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, ops::RangeInclusive};
 
 use itertools::Itertools;
-use staff::{midi::MidiNote, scale::ScaleIntervals, Interval};
+use staff::{midi::MidiNote, scale::ScaleIntervals, Interval, Pitch};
 
 use crate::StepIter;
 
@@ -119,14 +119,14 @@ impl ScaleWindows {
 
 /// Build the list of notes in a given scale and root note, restricted to a note interval
 pub fn build_scale_notes(
-    root_note: MidiNote,
+    pitch: Pitch,
     scale: ScaleIntervals,
     restricted_to: RangeInclusive<MidiNote>,
 ) -> Vec<MidiNote> {
     restricted_to
         .step_iter()
         .filter(|note| {
-            let interval = Interval::new((*note - root_note).semitones() % 12);
+            let interval = Interval::new((note.into_byte() - pitch.into_byte()) % 12);
             scale.contains(interval)
         })
         .collect()
@@ -189,7 +189,7 @@ mod tests {
         #[case] expected: MidiNoteF,
     ) {
         let notes = build_scale_notes(
-            root_note,
+            root_note.pitch(),
             scale,
             MidiNote::from_byte(0)..=MidiNote::from_byte(127),
         );
