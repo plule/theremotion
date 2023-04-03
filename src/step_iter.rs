@@ -17,7 +17,6 @@ impl StepIter<MidiNote> for RangeInclusive<MidiNote> {
     fn step_iter(&self) -> Self::ItemIterator {
         Box::new(
             (self.start().into_byte()..=self.end().into_byte())
-                .into_iter()
                 .map(MidiNote::from_byte),
         )
     }

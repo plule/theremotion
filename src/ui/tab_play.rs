@@ -262,7 +262,6 @@ impl<'a> TabPlay<'a> {
                 .include_y(1.0)
                 .x_grid_spacer(move |input| {
                     ((input.bounds.0.floor() as u8)..=(input.bounds.1.ceil() as u8))
-                        .into_iter()
                         .map(|n| {
                             let note = MidiNote::from_byte(n);
                             let step_size = if scale.contains(&note) { 5.0 } else { 1.0 };
