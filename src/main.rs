@@ -57,7 +57,8 @@ fn main() {
             windows::Win32::System::Threading::SetPriorityClass(
                 process,
                 windows::Win32::System::Threading::REALTIME_PRIORITY_CLASS,
-            );
+            )
+            .expect("Failed to set high priority");
         }
     }
 
