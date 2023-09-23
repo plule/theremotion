@@ -51,7 +51,7 @@ jobs:
             exe-name: theremotion
             portable-type: tar
             portable-name: theremotion-linux.tar.gz
-    name: build-${{ matrix.name }}
+    name: build
     if: eq(${{ github.repository }}, "plule/theremotion") # no secrets in clones
     runs-on: ${{ matrix.runs-on }}
     env:
@@ -66,6 +66,9 @@ jobs:
         token: ${{ secrets.LEAP_SDK_REDIST_PAT }}
         path: leap-sdk-redist
     - uses: Swatinem/rust-cache@v2
+    - name: Install dependencies
+      if: ${{ matrix.runs-on == 'ubuntu-latest' }}
+      run: sudo apt-get install -y libasound2-dev
     - name: Install cargo wix
       run: cargo install cargo-wix
       if: ${{ matrix.wix }}
