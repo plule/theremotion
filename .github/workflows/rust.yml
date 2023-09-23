@@ -41,7 +41,7 @@ jobs:
             wix: true
             portable-type: zip
             portable-name: theremotion-windows.zip
-          - linux:
+          - name: linux
             runs-on: ubuntu-latest
             leapsdk-lib-path: ultraleap-hand-tracking-service
             leapsdk-ref: linux-gemini
