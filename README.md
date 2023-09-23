@@ -48,6 +48,12 @@ If the tracking software is installed at a custom path, set the environment
 variable `LEAPSDK_LIB_PATH` to the absolute path of the
 `Ultraleap/LeapSDK/lib/x64` before running the build.
 
+### Linux
+
+Building on Linux requires to install some development libraries including:
+
+- `libasound2-dev`
+
 ## License
 
 With the exception of any third-parties (such as the Rust, Faust and Ultraleap

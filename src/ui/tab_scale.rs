@@ -45,9 +45,9 @@ impl Widget for TabScale<'_> {
             ui.separator();
             ScrollArea::vertical().show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    ui.add(super::text_edit_singleline_tabtip(
+                    ui.add(super::text_edit_singleline_touchscreen(
                         self.current_scale_name,
-                        self.settings.system.tabtip,
+                        self.settings.system.force_touchscreen,
                     ));
                     if ui.button("💾").clicked() {
                         self.settings.scales.push(NamedScale::new(

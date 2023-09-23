@@ -18,9 +18,9 @@ impl Widget for TabPresets<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                ui.add(super::text_edit_singleline_tabtip(
+                ui.add(super::text_edit_singleline_touchscreen(
                     &mut self.settings.current_preset.name,
-                    self.settings.system.tabtip,
+                    self.settings.system.force_touchscreen,
                 ));
                 if ui.button("💾").clicked() {
                     self.settings
