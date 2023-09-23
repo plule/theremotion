@@ -55,7 +55,7 @@ jobs:
     if: eq(${{ github.repository }}, "plule/theremotion") # no secrets in clones
     runs-on: ${{ matrix.runs-on }}
     env:
-      LEAPSDK_LIB_PATH: ./leap-sdk-redist/${{ matrix.leapsdk-lib-path }}
+      LEAPSDK_LIB_PATH: ${{ github.workspace }}/leap-sdk-redist/${{ matrix.leapsdk-lib-path }}
 
     steps:
     - uses: actions/checkout@v4
@@ -72,6 +72,8 @@ jobs:
     - name: Install cargo wix
       run: cargo install cargo-wix
       if: ${{ matrix.wix }}
+    - name: despair
+      run: ls $LEAPSDK_LIB_PATH
     - name: Build
       run: cargo build --release
     - name: Outside of a release, override the version

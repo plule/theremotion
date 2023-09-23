@@ -36,8 +36,8 @@ fn setup_leapsdk_link() {
             .unwrap_or_else(|| panic!("{} is not a valid path.", leapsdk_path.display()));
 
         // Link to LeapC.lib
-        println!(r"cargo:rustc-link-search={}", path_str);
         println!(r"cargo:rustc-link-lib=LeapC");
+        println!(r"cargo:rustc-link-search={}", path_str);
     }
 }
 
