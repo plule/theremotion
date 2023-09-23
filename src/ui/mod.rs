@@ -87,7 +87,7 @@ fn text_edit_singleline_touchscreen<S: TextBuffer>(
 ) -> impl egui::Widget + '_ {
     move |ui: &mut egui::Ui| {
         let response = ui.text_edit_singleline(text);
-        if force_touchscreen {
+        if force_touchscreen && response.clicked() {
             show_touchscreen();
         }
         response
@@ -97,19 +97,18 @@ fn text_edit_singleline_touchscreen<S: TextBuffer>(
 #[cfg(target_os = "windows")]
 fn show_touchscreen() {
     use std::os::windows::process::CommandExt;
-    if response.clicked() && touchscreen {
-        // hack
-        // windows touchscreen keyboard does not show up by default
-        // running tabtip.exe opens it (on the nuc only)
-        // running tabtip directly trigger a privilege error, but through cmd.exe it works.
-        let res = std::process::Command::new("cmd.exe")
-            .arg("/C")
-            .arg(r"C:\Program Files\Common Files\microsoft shared\ink\TabTip.exe")
-            .creation_flags(0x00000008) // DETACHED_PROCESS
-            .spawn();
-        if let Err(e) = res {
-            log::error!("Failed to launch tabtip.exe: {}", e);
-        }
+
+    // hack
+    // windows touchscreen keyboard does not show up by default
+    // running tabtip.exe opens it (on the nuc only)
+    // running tabtip directly trigger a privilege error, but through cmd.exe it works.
+    let res = std::process::Command::new("cmd.exe")
+        .arg("/C")
+        .arg(r"C:\Program Files\Common Files\microsoft shared\ink\TabTip.exe")
+        .creation_flags(0x00000008) // DETACHED_PROCESS
+        .spawn();
+    if let Err(e) = res {
+        log::error!("Failed to launch tabtip.exe: {}", e);
     }
 }
 
