@@ -1117,7 +1117,7 @@ checksum = "6999dc1837253364c2ebb0704ba97994bd874e8f195d665c50b7548f6ea92764"
 [[package]]
 name = "faust-build"
 version = "0.1.0"
-source = "git+https://github.com/Frando/rust-faust?branch=main#1c9d11a8d54562185dca14c306d12a48aff12a28"
+source = "git+https://github.com/plule/rust-faust?branch=main#7ffd74381ca8e89d2e524d0a32bac52bff7f2abe"
 dependencies = [
  "heck 0.3.3",
  "tempfile",
@@ -1126,7 +1126,7 @@ dependencies = [
 [[package]]
 name = "faust-state"
 version = "0.1.0"
-source = "git+https://github.com/Frando/rust-faust?branch=main#1c9d11a8d54562185dca14c306d12a48aff12a28"
+source = "git+https://github.com/plule/rust-faust?branch=main#7ffd74381ca8e89d2e524d0a32bac52bff7f2abe"
 dependencies = [
  "faust-types",
  "rtrb",
@@ -1135,7 +1135,7 @@ dependencies = [
 [[package]]
 name = "faust-types"
 version = "0.1.0"
-source = "git+https://github.com/Frando/rust-faust?branch=main#1c9d11a8d54562185dca14c306d12a48aff12a28"
+source = "git+https://github.com/plule/rust-faust?branch=main#7ffd74381ca8e89d2e524d0a32bac52bff7f2abe"
 dependencies = [
  "jack",
  "libm",
