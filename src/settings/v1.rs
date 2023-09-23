@@ -188,8 +188,8 @@ pub struct System {
     pub fullscreen: bool,
 
     /// Run tabtip.exe on text input
-    #[serde(default)]
-    pub tabtip: bool,
+    #[serde(default, alias = "tabtip")]
+    pub force_touchscreen: bool,
 
     /// Bump up the process priority
     #[serde(default)]

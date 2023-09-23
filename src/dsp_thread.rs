@@ -21,8 +21,8 @@ impl ParameterUpdate {
 
 /// Run the DSP thread
 pub fn run<T>(
-    mut dsp: DspHandle<T>,
-    mut state: StateHandle,
+    dsp: DspHandle<T>,
+    state: StateHandle,
     parameter_rx: Receiver<ParameterUpdate>,
 ) -> cpal::Stream
 where
@@ -37,14 +37,26 @@ where
         .supported_output_configs()
         .expect("error while querying configs");
     let supported_config = supported_configs_range
-        .next()
-        .expect("no supported config?!")
+        .find(|c| c.sample_format() == SampleFormat::F32)
+        .expect("No F32 supported config")
         .with_max_sample_rate();
-    let err_fn = |err| eprintln!("an error occurred on the output audio stream: {err}");
-    let sample_format = supported_config.sample_format();
-    let config: StreamConfig = supported_config.into();
+
+    run_stream(supported_config, dsp, device, parameter_rx, state)
+}
+
+fn run_stream<T>(
+    config: cpal::SupportedStreamConfig,
+    mut dsp: DspHandle<T>,
+    device: cpal::Device,
+    parameter_rx: Receiver<ParameterUpdate>,
+    mut state: StateHandle,
+) -> cpal::Stream
+where
+    T: FaustDsp<T = f32> + 'static + Send,
+{
+    let config: StreamConfig = config.into();
     // no way of knowing the buffer size in advance?
-    let buffer_size: usize = 3000;
+    let mut buffer_size: usize = 0;
     // Get number of inputs and ouputs
     let num_inputs = dsp.num_inputs();
     let num_outputs = dsp.num_outputs();
@@ -52,45 +64,53 @@ where
     let sample_rate = config.sample_rate.0;
     dsp.init(sample_rate as i32);
     // Init output buffers
-    let inputs: Vec<Vec<f32>> = vec![vec![0_f32; buffer_size]; num_inputs];
+    let mut inputs: Vec<Vec<f32>> = vec![vec![0_f32; buffer_size]; num_inputs];
     let mut outputs: Vec<Vec<f32>> = vec![vec![0_f32; buffer_size]; num_outputs];
-    // Map our Vec<Vec<f32>> to a Vec<&f[32]> to create a buffer for the faust lib
-    let buffer_input: Vec<&[f32]> = inputs
-        .iter()
-        .map(|input| unsafe { slice::from_raw_parts(input.as_ptr(), buffer_size) })
-        .collect();
-    // Map our Vec<Vec<f32>> to a Vec<&f[32]> to create a buffer for the faust lib
-    let mut buffer_output: Vec<&mut [f32]> = outputs
-        .iter_mut()
-        .map(|output| unsafe { slice::from_raw_parts_mut(output.as_mut_ptr(), buffer_size) })
-        .collect();
-    if let SampleFormat::F32 = sample_format {
-        device
-            .build_output_stream(
-                &config,
-                move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                    let len = data.len();
-                    assert!(len <= buffer_size, "Need buffer size of at least {len}");
 
-                    // Retrieve the parameter updates
-                    for parameter in parameter_rx.try_iter() {
-                        state.set_param(parameter.idx, parameter.value);
+    device
+        .build_output_stream(
+            &config,
+            move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
+                // Ensure the exchange buffers are large enough
+                let len = data.len();
+                if len > buffer_size {
+                    for input in &mut inputs {
+                        input.resize(len, 0.0);
                     }
-                    state.send();
-
-                    // Compute the DSP
-                    dsp.update_and_compute(len as i32, &buffer_input[..], &mut buffer_output[..]);
-
-                    // Send to audio buffer
-                    for (out, dsp_sample) in data.iter_mut().zip(&outputs[0]) {
-                        *out = *dsp_sample;
+                    for output in &mut outputs {
+                        output.resize(len, 0.0);
                     }
-                },
-                err_fn,
-                None,
-            )
-            .unwrap()
-    } else {
-        panic!("only looked as f32 rn");
-    }
+                    buffer_size = len;
+                }
+
+                // Retrieve the parameter updates
+                for parameter in parameter_rx.try_iter() {
+                    state.set_param(parameter.idx, parameter.value);
+                }
+                state.send();
+
+                // Compute the DSP
+                // Map our Vec<Vec<f32>> to a Vec<&f[32]> to create a buffer for the faust lib
+                let buffer_input: Vec<&[f32]> = inputs
+                    .iter()
+                    .map(|input| unsafe { slice::from_raw_parts(input.as_ptr(), buffer_size) })
+                    .collect();
+                // Map our Vec<Vec<f32>> to a Vec<&f[32]> to create a buffer for the faust lib
+                let mut buffer_output: Vec<&mut [f32]> = outputs
+                    .iter_mut()
+                    .map(|output| unsafe {
+                        slice::from_raw_parts_mut(output.as_mut_ptr(), buffer_size)
+                    })
+                    .collect();
+                dsp.update_and_compute(len as i32, &buffer_input[..], &mut buffer_output[..]);
+
+                // Send to audio buffer
+                for (out, dsp_sample) in data.iter_mut().zip(&outputs[0]) {
+                    *out = *dsp_sample;
+                }
+            },
+            |err| log::error!("an error occurred on the output audio stream: {err}"),
+            None,
+        )
+        .unwrap()
 }

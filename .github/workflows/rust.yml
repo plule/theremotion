@@ -11,13 +11,15 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  LEAPSDK_LIB_PATH: leap-sdk-redist/LeapSDK/lib/x64
   WIX_EXTRA_ARGS: ""
 
 jobs:
   tests:
+    strategy:
+      matrix:
+        runs-on: [windows-latest, ubuntu-latest]
     name: tests
-    runs-on: windows-latest
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
@@ -28,45 +30,67 @@ jobs:
       - name: Tests
         run: cargo test --no-default-features --features default-boxed
   build:
-    name: build
+    strategy:
+      matrix:
+        include:
+          - name: windows
+            runs-on: windows-latest
+            leapsdk-lib-path: LeapSDK/lib/x64
+            leapsdk-ref: windows-gemini
+            exe-name: theremotion.exe
+            wix: true
+            portable-type: zip
+            portable-name: theremotion-windows.zip
+          - linux:
+            runs-on: ubuntu-latest
+            leapsdk-lib-path: ultraleap-hand-tracking-service
+            leapsdk-ref: linux-gemini
+            exe-name: theremotion
+            portable-type: tar
+            portable-name: theremotion-linux.tar.gz
+    name: build-${{ matrix.name }}
     if: eq(${{ github.repository }}, "plule/theremotion") # no secrets in clones
-    runs-on: windows-latest
+    runs-on: ${{ matrix.runs-on }}
+    env:
+      LEAPSDK_LIB_PATH: leap-sdk-redist/${{ matrix.leapsdk-lib-path }}
 
     steps:
     - uses: actions/checkout@v4
     - uses: actions/checkout@v4
       with:
-        ref: gemini
+        ref: ${{ matrix.leapsdk-ref }}
         repository: plule/leap-sdk-redist
         token: ${{ secrets.LEAP_SDK_REDIST_PAT }}
         path: leap-sdk-redist
     - uses: Swatinem/rust-cache@v2
     - name: Install cargo wix
       run: cargo install cargo-wix
+      if: ${{ matrix.wix }}
     - name: Build
       run: cargo build --release
     - name: Outside of a release, override the version
       run: echo "WIX_EXTRA_ARGS=--install-version 0.0.0" >> $env:GITHUB_ENV
-      if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+      if: ${{ !startsWith(github.ref, 'refs/tags/v') }} && ${{ matrix.wix }}
     - name: Make installer
       run: cargo wix --nocapture --output . ${{ env.WIX_EXTRA_ARGS }}
+      if: ${{ matrix.wix }}
     - name: Prepare artifacts
       run: |
-        mkdir -p theremotion
-        cp leap-sdk-redist/LeapSDK/lib/x64/LeapC.dll theremotion
-        cp target/release/theremotion.exe theremotion
+        mkdir -p theremotion-${{ matrix.name }}
+        cp leap-sdk-redist/${{ matrix.leapsdk-lib-path }}/*LeapC.* theremotion-${{ matrix.name }}
+        cp target/release/${{ matrix.exe-name }} theremotion-${{ matrix.name }}
     - name: Archive portable version
       uses: thedoctor0/zip-release@main
       with:
-        type: 'zip'
-        filename: 'theremotion.zip'
-        path: theremotion
+        type: ${{ matrix.portable-type }}
+        filename: ${{ matrix.portable-name }}
+        path: theremotion-${{ matrix.name }}
     - name: Store portable version and installer
       uses: actions/upload-artifact@v3
       with:
         name: dist
         path: |
-          theremotion.zip
+          ${{ matrix.portable-name }}
           theremotion-*.msi
   release:
     needs:
@@ -83,7 +107,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         generateReleaseNotes: true
-        artifacts: dist/theremotion.zip,dist/theremotion-*.msi
+        artifacts: dist/*
         draft: true
 
   dependabot:

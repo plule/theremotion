@@ -52,14 +52,7 @@ fn main() {
     let settings = Settings::read();
 
     if settings.system.high_priority_process {
-        unsafe {
-            let process = windows::Win32::System::Threading::GetCurrentProcess();
-            windows::Win32::System::Threading::SetPriorityClass(
-                process,
-                windows::Win32::System::Threading::REALTIME_PRIORITY_CLASS,
-            )
-            .expect("Failed to set high priority");
-        }
+        set_high_priority();
     }
 
     // Init communication channels
@@ -128,4 +121,21 @@ fn main() {
     leap_worker
         .join()
         .expect("Error when stopping the leap worker");
+}
+
+#[cfg(target_os = "windows")]
+fn set_high_priority() {
+    unsafe {
+        let process = windows::Win32::System::Threading::GetCurrentProcess();
+        windows::Win32::System::Threading::SetPriorityClass(
+            process,
+            windows::Win32::System::Threading::REALTIME_PRIORITY_CLASS,
+        )
+        .expect("Failed to set high priority");
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn set_high_priority() {
+    log::warn!("High priority process is not supported on Linux yet");
 }
