@@ -72,8 +72,6 @@ jobs:
     - name: Install cargo wix
       run: cargo install cargo-wix
       if: ${{ matrix.wix }}
-    - name: despair
-      run: ls $LEAPSDK_LIB_PATH
     - name: Build
       run: cargo build --release
     - name: Outside of a release, override the version
