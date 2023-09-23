@@ -27,8 +27,8 @@ impl<'a> Widget for TabSettings<'a> {
                 "Start Theremotion with an elevated process priority. Requires restart.",
             );
             ui.toggle_value(
-                &mut self.settings.system.tabtip,
-                "Use Tabtip for text input",
+                &mut self.settings.system.force_touchscreen,
+                "Try to force a touchscreen to appear",
             )
             .on_hover_text("Enable if the visual keyboard is not opening when using a touchscreen");
             ui.horizontal(|ui| {
