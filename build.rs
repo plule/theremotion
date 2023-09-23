@@ -18,8 +18,7 @@ fn setup_leapsdk_link() {
     #[cfg(windows)]
     const DEFAULT_LEAPSDK_LIB_PATH: &str = r"C:\Program Files\Ultraleap\LeapSDK\lib\x64";
 
-    #[cfg(linux)]
-
+    #[cfg(not(windows))]
     const DEFAULT_LEAPSDK_LIB_PATH: &str = r"/usr/share/doc/ultraleap-hand-tracking-service";
     // Find Leap SDK
     println!(r"cargo:rerun-if-env-changed=LEAPSDK_LIB_PATH");
