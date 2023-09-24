@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use staff::{
     midi::{MidiNote, Octave},
     scale::ScaleIntervals,
-    Pitch,
+    Interval, Pitch,
 };
 
 /// Application settings
@@ -32,11 +32,47 @@ pub struct Settings {
 #[serde(deny_unknown_fields, default)]
 pub struct DroneSettings {
     /// List of notes of the drone
-    pub intervals: [Option<u8>; 4],
+    #[serde(with = "interval_list_serde")]
+    pub intervals: [Option<Interval>; 4],
     /// Detune amount (in midi note) between the notes
     pub detune: f32,
     /// Enable the pluck drone
     pub pluck_drone: bool,
+}
+
+/// Proxy the interval (de)serialization to flatten it
+mod interval_list_serde {
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use staff::Interval;
+
+    #[derive(Serialize, Deserialize)]
+    struct IntervalList([Option<u8>; 4]);
+
+    impl From<&[Option<Interval>; 4]> for IntervalList {
+        fn from(value: &[Option<Interval>; 4]) -> Self {
+            Self(value.map(|v| v.map(|v| v.semitones())))
+        }
+    }
+
+    impl From<IntervalList> for [Option<Interval>; 4] {
+        fn from(value: IntervalList) -> Self {
+            value.0.map(|i| i.map(Interval::new))
+        }
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<[Option<Interval>; 4], D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        IntervalList::deserialize(deserializer).map(|i| i.into())
+    }
+
+    pub fn serialize<S>(intervals: &[Option<Interval>; 4], serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        IntervalList::from(intervals).serialize(serializer)
+    }
 }
 
 /// Sound preset
@@ -93,7 +129,7 @@ impl From<v1::Preset> for Preset {
         let drone_intervals = value
             .drone
             .notes
-            .map(|note| note.map(|note| (note - root_note).semitones()));
+            .map(|note| note.map(|note| (note - root_note)));
         Self {
             name: value.name,
             lead_octave: value.octave,

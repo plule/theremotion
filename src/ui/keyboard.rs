@@ -103,7 +103,7 @@ impl<'a> Keyboard<'a> {
                 KeyboardEditMode::Drone => {
                     // Toggle the selected note
                     let note_interval = note - self.preset.root_note();
-                    let drone_intervals = &mut self.preset.drone.get_intervals();
+                    let drone_intervals = &mut self.preset.drone.intervals;
                     if let Some(existing_drone) = drone_intervals
                         .iter_mut()
                         .find(|n| n.iter().any(|n| *n == note_interval))

@@ -190,18 +190,12 @@ impl Preset {
     pub fn drone_notes(&self) -> [Option<MidiNote>; 4] {
         let root_note = self.root_note();
         self.drone
-            .get_intervals()
+            .intervals
             .map(|drone| drone.map(|drone| root_note + drone))
     }
 
     pub fn system_presets() -> &'static Vec<Self> {
         &PRESETS
-    }
-}
-
-impl DroneSettings {
-    pub fn get_intervals(&self) -> [Option<Interval>; 4] {
-        self.intervals.map(|i| i.map(Interval::new))
     }
 }
 
