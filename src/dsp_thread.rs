@@ -36,6 +36,11 @@ where
         .default_output_config()
         .expect("No default output config");
 
+    if config.sample_format() != cpal::SampleFormat::F32 {
+        // TODO config selection
+        panic!("Only F32 sample rate is supported");
+    }
+
     run_stream(config.into(), dsp, device, parameter_rx, state)
 }
 
