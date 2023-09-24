@@ -125,7 +125,7 @@ fn on_tracking_event(
 
         let pitch_bend = controls
             .pitch_bend
-            .get_scaled(velocity.x + velocity.y, &(-300.0..=300.0));
+            .get_scaled(velocity.x + velocity.z, &(-300.0..=300.0));
 
         // Send to dsp
         for (control, value) in controls.lead.iter().zip(lead_volumes) {
@@ -160,12 +160,13 @@ fn on_tracking_event(
     }
     if let Some(hand) = volume_hand {
         let position = hand.position_from_body();
-        let trumpet = controls
-            .drone_trumpet
-            .get_scaled(hand.grab_strength(), &(0.0..=1.0));
+        let velocity = hand.velocity_from_body();
         let palm_normal = Vector3::from(hand.palm().normal().array());
         let palm_dot = palm_normal.dot(&Vector3::y());
         let strum_ready = hand.pinch_strength() > 0.9;
+        let trumpet = controls
+            .drone_trumpet
+            .get_scaled(velocity.y.abs(), &(0.0..=350.0));
         if strum_ready {
             for (i, string) in &mut controls.strum.iter().enumerate() {
                 string
