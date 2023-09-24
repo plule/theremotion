@@ -1,7 +1,6 @@
 use std::slice;
 
 use cpal::traits::{DeviceTrait, HostTrait};
-use cpal::{SampleFormat, StreamConfig};
 use crossbeam_channel::Receiver;
 use faust_state::{DspHandle, StateHandle};
 use faust_types::FaustDsp;
@@ -33,19 +32,15 @@ where
     let device = host
         .default_output_device()
         .expect("no output device available");
-    let mut supported_configs_range = device
-        .supported_output_configs()
-        .expect("error while querying configs");
-    let supported_config = supported_configs_range
-        .find(|c| c.sample_format() == SampleFormat::F32)
-        .expect("No F32 supported config")
-        .with_max_sample_rate();
+    let config = device
+        .default_output_config()
+        .expect("No default output config");
 
-    run_stream(supported_config, dsp, device, parameter_rx, state)
+    run_stream(config.into(), dsp, device, parameter_rx, state)
 }
 
 fn run_stream<T>(
-    config: cpal::SupportedStreamConfig,
+    config: cpal::StreamConfig,
     mut dsp: DspHandle<T>,
     device: cpal::Device,
     parameter_rx: Receiver<ParameterUpdate>,
@@ -54,7 +49,6 @@ fn run_stream<T>(
 where
     T: FaustDsp<T = f32> + 'static + Send,
 {
-    let config: StreamConfig = config.into();
     // no way of knowing the buffer size in advance?
     let mut buffer_size: usize = 0;
     // Get number of inputs and ouputs
