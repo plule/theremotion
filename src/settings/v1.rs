@@ -5,7 +5,7 @@ use staff::{
     Pitch,
 };
 
-use crate::solfege::OctaveInterval;
+use crate::solfege::{OctaveInterval, Volume};
 
 /// Application settings
 #[derive(Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -84,22 +84,22 @@ impl Default for Preset {
 #[serde(deny_unknown_fields, default)]
 pub struct MixSettings {
     /// Master volume
-    pub master: f32,
+    pub master: Volume,
     /// Lead synthesizer volume
-    pub lead: f32,
+    pub lead: Volume,
     /// Guitar volume
-    pub guitar: f32,
+    pub guitar: Volume,
     /// Drone volume
-    pub drone: f32,
+    pub drone: Volume,
 }
 
 impl Default for MixSettings {
     fn default() -> Self {
         Self {
-            master: 1.0,
-            lead: 1.0,
-            guitar: 1.0,
-            drone: 0.14,
+            master: Volume(1.0),
+            lead: Volume(1.0),
+            guitar: Volume(1.0),
+            drone: Volume(0.14),
         }
     }
 }
@@ -119,7 +119,7 @@ pub struct FxSettings {
 /// Echo settings
 pub struct EchoSettings {
     /// Echo amount
-    pub mix: f32,
+    pub mix: Volume,
     /// Echo duration (seconds)
     pub duration: f32,
     /// Echo feedback (0-1)
@@ -129,7 +129,7 @@ pub struct EchoSettings {
 impl Default for EchoSettings {
     fn default() -> Self {
         Self {
-            mix: 1.0,
+            mix: Volume(1.0),
             duration: 0.3,
             feedback: 0.3,
         }
@@ -141,7 +141,7 @@ impl Default for EchoSettings {
 #[serde(deny_unknown_fields, default)]
 pub struct ReverbSettings {
     /// Reverb amount
-    pub mix: f32,
+    pub mix: Volume,
     /// Reverb time
     pub time: f32,
     /// Reverb damp amount
@@ -153,7 +153,7 @@ pub struct ReverbSettings {
 impl Default for ReverbSettings {
     fn default() -> Self {
         Self {
-            mix: 0.11,
+            mix: Volume(0.11),
             time: 3.5,
             damp: 0.88,
             size: 5.0,

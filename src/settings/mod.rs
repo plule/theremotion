@@ -241,6 +241,8 @@ mod tests {
     use rstest::rstest;
     use staff::midi::{MidiNote, Octave};
 
+    use crate::solfege::Volume;
+
     use super::*;
 
     #[rstest]
@@ -257,9 +259,9 @@ mod tests {
                 + settings.current_preset.drone_interval()
         );
         assert_eq!(None, settings.current_preset.drone.intervals[1]);
-        assert_eq!(0.1, settings.current_preset.mix.drone);
-        assert_eq!(0.9, settings.current_preset.fx.echo.mix);
-        assert_eq!(0.8, settings.current_preset.fx.reverb.mix);
+        assert_eq!(Volume(0.1), settings.current_preset.mix.drone);
+        assert_eq!(Volume(0.9), settings.current_preset.fx.echo.mix);
+        assert_eq!(Volume(0.8), settings.current_preset.fx.reverb.mix);
     }
 
     #[rstest]

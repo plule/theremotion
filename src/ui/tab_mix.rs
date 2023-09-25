@@ -1,6 +1,6 @@
 use egui::{Slider, Widget};
 
-use crate::settings::Preset;
+use crate::{settings::Preset, solfege::Volume};
 
 use super::NamedGroup;
 
@@ -39,15 +39,15 @@ impl Widget for TabMix<'_> {
     }
 }
 
-fn mix_slider(ui: &mut egui::Ui, name: &str, value: &mut f32) {
+fn mix_slider(ui: &mut egui::Ui, name: &str, value: &mut Volume) {
     let icon = match &value {
-        value if **value <= 0.0 => "🔇",
-        value if **value <= 0.33 => "🔈",
-        value if **value <= 0.66 => "🔉",
+        value if **value <= Volume(0.0) => "🔇",
+        value if **value <= Volume(0.33) => "🔈",
+        value if **value <= Volume(0.66) => "🔉",
         _ => "🔊",
     };
     ui.add(
-        Slider::new(value, 0.0..=1.0)
+        Slider::new(&mut value.0, 0.0..=1.0)
             .vertical()
             .min_decimals(2)
             .max_decimals(2)

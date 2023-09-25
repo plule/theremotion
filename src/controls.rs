@@ -143,10 +143,10 @@ impl Control {
     pub fn send(
         &self,
         dsp_tx: &Sender<ParameterUpdate>,
-        value: f32,
+        value: impl Into<f32>,
     ) -> Result<(), SendError<ParameterUpdate>> {
         let range = &self.input.range;
-        let value = value.clamp(*range.start(), *range.end());
+        let value = value.into().clamp(*range.start(), *range.end());
         dsp_tx.send(ParameterUpdate::new(self.idx, value))
     }
 

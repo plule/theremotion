@@ -8,7 +8,7 @@ use nalgebra::{UnitQuaternion, Vector2, Vector3};
 use crate::{
     controls, dsp_thread,
     settings::{Handedness, Settings},
-    solfege::IntervalF,
+    solfege::{IntervalF, Volume},
     ui::{self, UiUpdate},
 };
 
@@ -45,7 +45,7 @@ struct LeapReader<'a> {
     ui_tx: &'a Sender<UiUpdate>,
     dsp_tx: &'a Sender<dsp_thread::ParameterUpdate>,
 
-    drone_grab_state: Option<(f32, f32)>,
+    drone_grab_state: Option<(Volume, f32)>,
 }
 
 impl<'a> LeapReader<'a> {
@@ -247,7 +247,7 @@ impl<'a> LeapReader<'a> {
                         .drone_grab_state
                         .get_or_insert((preset.mix.drone, drone_volume_angle));
                     let offset = drone_volume_angle - init_drone_volume_angle;
-                    let new_volume = (init_drone_volume + offset / 5.0).min(1.0).max(0.0);
+                    let new_volume = (init_drone_volume + Volume(offset / 5.0)).clamped();
                     preset.mix.drone = new_volume;
                     self.controls
                         .mix_drone_volume

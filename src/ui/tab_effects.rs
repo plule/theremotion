@@ -23,7 +23,7 @@ impl Widget for TabEffects<'_> {
         ui.horizontal(|ui| {
             ui.named_group("Echo", |ui| {
                 ui.add(
-                    Slider::from_control(&controls.echo_mix, &mut preset.fx.echo.mix)
+                    Slider::from_control(&controls.echo_mix, &mut preset.fx.echo.mix.0)
                         .text("Amount"),
                 );
                 ui.add(
@@ -40,7 +40,7 @@ impl Widget for TabEffects<'_> {
 
             ui.named_group("Reverb", |ui| {
                 ui.add(
-                    Slider::from_control(&controls.reverb_mix, &mut preset.fx.reverb.mix)
+                    Slider::from_control(&controls.reverb_mix, &mut preset.fx.reverb.mix.0)
                         .text("Amount"),
                 );
                 ui.add(
