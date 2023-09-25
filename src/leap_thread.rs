@@ -3,7 +3,7 @@ use std::thread;
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
 use leaprs::*;
-use nalgebra::{Vector2, Vector3};
+use nalgebra::{UnitQuaternion, Vector2, Vector3};
 
 use crate::{
     controls, dsp_thread,
@@ -42,6 +42,8 @@ struct LeapReader<'a> {
     controls: &'a controls::Controls,
     ui_tx: &'a Sender<UiUpdate>,
     dsp_tx: &'a Sender<dsp_thread::ParameterUpdate>,
+
+    drone_grab_state: Option<(f32, f32)>,
 }
 
 impl<'a> LeapReader<'a> {
@@ -54,6 +56,7 @@ impl<'a> LeapReader<'a> {
             controls,
             ui_tx,
             dsp_tx,
+            drone_grab_state: None,
         }
     }
 }
@@ -75,7 +78,7 @@ impl<'a> LeapReader<'a> {
     }
 
     fn on_tracking_event(&mut self, e: TrackingEvent<'_>, settings: &Settings) -> Result<()> {
-        let preset = &settings.current_preset;
+        let mut preset = settings.current_preset.clone();
         let handedness = &settings.system.handedness;
 
         // Retrieve the current scale 2 by 2 windows
@@ -229,14 +232,32 @@ impl<'a> LeapReader<'a> {
             self.ui_tx.send(UiUpdate::TrumpetStrength(trumpet))?;
         }
 
-        if let (Some(p), Some(v)) = (pitch_hand, volume_hand) {
-            if p.grab_strength() > 0.9 && v.grab_strength() > 0.9 {}
+        if let (Some(pitch_hand), Some(volume_hand)) = (pitch_hand, volume_hand) {
+            if pitch_hand.grab_strength() > 0.95 && volume_hand.grab_strength() > 0.95 {
+                if let Some(drone_volume_angle) = volume_hand.rotation_from_body() {
+                    let (init_drone_volume, init_drone_volume_angle) = *self
+                        .drone_grab_state
+                        .get_or_insert((preset.mix.drone, drone_volume_angle));
+                    let offset = drone_volume_angle - init_drone_volume_angle;
+                    let new_volume = (init_drone_volume + offset / 5.0).min(1.0).max(0.0);
+                    preset.mix.drone = new_volume;
+                    self.controls
+                        .mix_drone_volume
+                        .send(self.dsp_tx, new_volume)?;
+                }
+            } else {
+                self.drone_grab_state = None;
+            }
         }
 
         self.ui_tx.send(UiUpdate::HasHands(
             hands.iter().any(|h| h.hand_type() == HandType::Left),
             hands.iter().any(|h| h.hand_type() == HandType::Right),
         ))?;
+
+        if preset != settings.current_preset {
+            self.ui_tx.send(UiUpdate::Settings(preset))?;
+        }
 
         Ok(())
     }
@@ -267,6 +288,8 @@ trait DirectionFromBody {
     /// Palm velocity where the left/right position is normalized:
     /// positive x means arms more open.
     fn velocity_from_body(&self) -> Vector3<f32>;
+    /// Hand twist angle
+    fn rotation_from_body(&self) -> Option<f32>;
 }
 
 impl DirectionFromBody for Hand<'_> {
@@ -287,5 +310,21 @@ impl DirectionFromBody for Hand<'_> {
     fn velocity_from_body(&self) -> Vector3<f32> {
         let velocity = self.palm().velocity();
         Vector3::new(self.x_factor() * velocity.x(), velocity.y(), velocity.z())
+    }
+
+    fn rotation_from_body(&self) -> Option<f32> {
+        let rotation = self.arm().rotation();
+        let rotation = UnitQuaternion::from_quaternion(nalgebra::Quaternion::new(
+            rotation.w(),
+            rotation.x(),
+            rotation.y(),
+            rotation.z(),
+        ));
+        let angle = -rotation.euler_angles().2 * self.x_factor();
+        if angle < std::f32::consts::PI && angle > -std::f32::consts::PI / 2.0 {
+            Some(angle)
+        } else {
+            None
+        }
     }
 }

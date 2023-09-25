@@ -19,7 +19,7 @@ pub use tab_root_note::*;
 pub use tab_scale::*;
 pub use tab_settings::*;
 
-use crate::{controls, solfege::MidiNoteF};
+use crate::{controls, settings::Preset, solfege::MidiNoteF};
 
 /// Message to update externally the UI
 pub enum UiUpdate {
@@ -50,6 +50,8 @@ pub enum UiUpdate {
     StrumReady(bool),
     /// Trumpet string strength (0-1)
     TrumpetStrength(f32),
+    /// Settings update from leap
+    Settings(Preset),
 }
 
 trait FromControl<'a> {

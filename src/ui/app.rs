@@ -219,6 +219,7 @@ impl App {
                 UiUpdate::PitchXY(x, y) => self.pitch_xy = (x, y),
                 UiUpdate::StrumReady(x) => self.strum_ready = x,
                 UiUpdate::TrumpetStrength(x) => self.trumpet_strength = x,
+                UiUpdate::Settings(settings) => self.settings.current_preset = settings,
             }
         }
     }
