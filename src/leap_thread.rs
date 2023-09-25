@@ -143,6 +143,11 @@ impl<'a> LeapReader<'a> {
                 .pitch_bend
                 .get_scaled(velocity.x + velocity.z, &(-300.0..=300.0));
 
+            let trumpet = self
+                .controls
+                .drone_trumpet
+                .get_scaled(velocity.y.abs(), &(0.0..=250.0));
+
             // Send to dsp
             for (control, value) in self.controls.lead.iter().zip(lead_volumes) {
                 control.volume.send(self.dsp_tx, value)?;
@@ -160,6 +165,7 @@ impl<'a> LeapReader<'a> {
             )?;
 
             self.controls.pitch_bend.send(self.dsp_tx, pitch_bend)?;
+            self.controls.drone_trumpet.send(self.dsp_tx, trumpet)?;
 
             // Send to UI
             self.ui_tx.send(UiUpdate::AutotuneAmount(autotune))?;
@@ -174,16 +180,12 @@ impl<'a> LeapReader<'a> {
             ))?;
             self.ui_tx
                 .send(UiUpdate::ChordsNumber(note_number_height))?;
+            self.ui_tx.send(UiUpdate::TrumpetStrength(trumpet))?;
         }
         if let Some(hand) = volume_hand {
             let position = hand.position_from_body();
-            let velocity = hand.velocity_from_body();
             let rotation = hand.rotation_from_body();
             let strum_ready = hand.pinch_strength() > 0.9;
-            let trumpet = self
-                .controls
-                .drone_trumpet
-                .get_scaled(velocity.y.abs(), &(0.0..=350.0));
             if let Some(rotation) = rotation {
                 if strum_ready {
                     for (i, string) in &mut self.controls.strum.iter().enumerate() {
@@ -202,7 +204,7 @@ impl<'a> LeapReader<'a> {
             let pluck_mute = self
                 .controls
                 .pluck_mute
-                .get_scaled(rotation.unwrap_or_default(), &(0.0..=HALF_PI));
+                .get_scaled(rotation.unwrap_or_default(), &(0.0..=(HALF_PI - 0.2)));
 
             let cutoff_note_norm =
                 controls::convert_range(position.x, &(50.0..=200.0), &(-1.0..=1.0))
@@ -228,7 +230,6 @@ impl<'a> LeapReader<'a> {
             self.controls.cutoff_note.send(self.dsp_tx, cutoff_note)?;
             self.controls.lead_volume.send(self.dsp_tx, lead_volume)?;
             self.controls.resonance.send(self.dsp_tx, resonance)?;
-            self.controls.drone_trumpet.send(self.dsp_tx, trumpet)?;
 
             // Send to UI
             self.ui_tx.send(UiUpdate::Filter(
@@ -237,7 +238,6 @@ impl<'a> LeapReader<'a> {
             ))?;
             self.ui_tx.send(UiUpdate::LeadVolume(lead_volume))?;
             self.ui_tx.send(UiUpdate::StrumReady(strum_ready))?;
-            self.ui_tx.send(UiUpdate::TrumpetStrength(trumpet))?;
         }
 
         if let (Some(pitch_hand), Some(volume_hand)) = (pitch_hand, volume_hand) {
