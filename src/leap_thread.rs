@@ -1,4 +1,4 @@
-use std::thread;
+use std::{f32::consts::PI, thread};
 
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
@@ -11,6 +11,8 @@ use crate::{
     solfege::IntervalF,
     ui::{self, UiUpdate},
 };
+
+const HALF_PI: f32 = PI / 2.0;
 
 /// Start the leap motion thread
 pub fn run(
@@ -176,26 +178,32 @@ impl<'a> LeapReader<'a> {
         if let Some(hand) = volume_hand {
             let position = hand.position_from_body();
             let velocity = hand.velocity_from_body();
-            let palm_normal = Vector3::from(hand.palm().normal().array());
-            let palm_dot = palm_normal.dot(&Vector3::y());
+            let rotation = hand.rotation_from_body();
             let strum_ready = hand.pinch_strength() > 0.9;
             let trumpet = self
                 .controls
                 .drone_trumpet
                 .get_scaled(velocity.y.abs(), &(0.0..=350.0));
-            if strum_ready {
-                for (i, string) in &mut self.controls.strum.iter().enumerate() {
-                    string.pluck.send(
+            if let Some(rotation) = rotation {
+                if strum_ready {
+                    for (i, string) in &mut self.controls.strum.iter().enumerate() {
+                        string.pluck.send(
+                            self.dsp_tx,
+                            rotation > HALF_PI + (i as f32) * 0.2 && guitar_gates[i],
+                        );
+                    }
+                    self.controls.strum_drone.pluck.send(
                         self.dsp_tx,
-                        palm_dot > 0.0 + (i as f32) * 0.2 && guitar_gates[i],
+                        preset.drone.pluck_drone && rotation > HALF_PI + 0.3,
                     );
                 }
-                self.controls
-                    .strum_drone
-                    .pluck
-                    .send(self.dsp_tx, preset.drone.pluck_drone && palm_dot > 0.1);
             }
-            let pluck_mute = self.controls.pluck_mute.get_scaled(palm_dot, &(-1.0..=0.0));
+
+            let pluck_mute = self
+                .controls
+                .pluck_mute
+                .get_scaled(rotation.unwrap_or_default(), &(0.0..=HALF_PI));
+
             let cutoff_note_norm =
                 controls::convert_range(position.x, &(50.0..=200.0), &(-1.0..=1.0))
                     .clamp(-1.0, 1.0);
@@ -321,7 +329,7 @@ impl DirectionFromBody for Hand<'_> {
             rotation.z(),
         ));
         let angle = -rotation.euler_angles().2 * self.x_factor();
-        if angle < std::f32::consts::PI && angle > -std::f32::consts::PI / 2.0 {
+        if angle < PI && angle > -HALF_PI {
             Some(angle)
         } else {
             None
