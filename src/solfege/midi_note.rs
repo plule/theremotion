@@ -1,14 +1,11 @@
+use derive_more::Into;
 use staff::midi::MidiNote;
 
 /// Floating midi note, from 0 to 127
-#[derive(Default, Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub struct MidiNoteF(f32);
+#[derive(Default, Debug, Clone, Copy, PartialEq, PartialOrd, Into)]
+pub struct MidiNoteF(pub f32);
 
 impl MidiNoteF {
-    /// Creates a new [`MidiNoteF`].
-    pub fn new(note: f32) -> Self {
-        Self(note)
-    }
     /// Returns the note of this [`MidiNoteF`].
     pub fn note(&self) -> f32 {
         self.0
@@ -29,12 +26,6 @@ impl MidiNoteF {
 impl From<MidiNote> for MidiNoteF {
     fn from(value: MidiNote) -> Self {
         Self(value.into_byte() as f32)
-    }
-}
-
-impl From<MidiNoteF> for f32 {
-    fn from(value: MidiNoteF) -> Self {
-        value.note()
     }
 }
 

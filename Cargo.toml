@@ -37,6 +37,7 @@ anyhow = "1"
 log = "0.4"
 itertools = "0.11"
 lazy_static = "1.4.0"
+derive_more = "0.99.17"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.51.1", features = [

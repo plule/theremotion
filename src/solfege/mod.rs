@@ -15,7 +15,7 @@ impl Add<IntervalF> for MidiNoteF {
     type Output = Self;
 
     fn add(self, rhs: IntervalF) -> Self::Output {
-        Self::new(self.note() + rhs.semitones())
+        Self(self.note() + rhs.semitones())
     }
 }
 
@@ -23,7 +23,7 @@ impl Sub<IntervalF> for MidiNoteF {
     type Output = Self;
 
     fn sub(self, rhs: IntervalF) -> Self::Output {
-        Self::new(self.note() - rhs.semitones())
+        Self(self.note() - rhs.semitones())
     }
 }
 
@@ -31,6 +31,6 @@ impl Sub for MidiNoteF {
     type Output = IntervalF;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        IntervalF::new(self.note() - rhs.note())
+        IntervalF(self.note() - rhs.note())
     }
 }

@@ -112,7 +112,7 @@ impl<'a> LeapReader<'a> {
             let pitch_coord_semitones =
                 Vector2::new(-pitch_coord_semitones.x, pitch_coord_semitones.y);
             // Hand distance from the antenna in semitones
-            let pitch_distance_semitones = IntervalF::new(pitch_coord_semitones.norm());
+            let pitch_distance_semitones = IntervalF(pitch_coord_semitones.norm());
             // Convert to note, based on the current note range
             let raw_note = (*note_range.end() - pitch_distance_semitones)
                 .clamp(*note_range.start(), *note_range.end());
@@ -156,7 +156,7 @@ impl<'a> LeapReader<'a> {
             }
             self.controls.strum_drone.send_note(
                 self.dsp_tx,
-                &(preset.root_note_f() + pluck_offset + IntervalF::new(12.0)),
+                &(preset.root_note_f() + pluck_offset + IntervalF(12.0)),
             )?;
 
             self.controls.pitch_bend.send(self.dsp_tx, pitch_bend)?;

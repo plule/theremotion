@@ -143,13 +143,10 @@ impl App {
             settings,
             error: None,
             lead_volume: controls.lead_volume.input.init,
-            lead_chord_notes: controls
-                .lead
-                .clone()
-                .map(|n| MidiNoteF::new(n.note.input.init)),
+            lead_chord_notes: controls.lead.clone().map(|n| MidiNoteF(n.note.input.init)),
             lead_chord_volumes: controls.lead.clone().map(|n| n.volume.input.init),
             chords_number: 0.0,
-            raw_note: MidiNoteF::new(controls.lead[0].note.input.init),
+            raw_note: MidiNoteF(controls.lead[0].note.input.init),
             filter_cutoff: controls.cutoff_note.input.init,
             filter_resonance: controls.resonance.input.init,
             autotune_amount: 0,

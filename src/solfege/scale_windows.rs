@@ -85,7 +85,7 @@ impl ScaleWindows {
 
         // Inverted weighted result (0 is the best match)
         // Todo: missing some operations here?
-        Some(MidiNoteF::new(
+        Some(MidiNoteF(
             (chord1.note() * dist2 + chord2.note() * dist1) / weight,
         ))
     }
@@ -165,14 +165,11 @@ mod tests {
     #[case(25.0, 20.0)]
     fn closest_in_scale_test(#[case] note: f32, #[case] expected: f32) {
         let scale = ScaleWindows::new(vec![
-            (MidiNoteF::new(10.0), MidiNoteF::new(11.0)),
-            (MidiNoteF::new(11.0), MidiNoteF::new(15.0)),
-            (MidiNoteF::new(15.0), MidiNoteF::new(20.0)),
+            (MidiNoteF(10.0), MidiNoteF(11.0)),
+            (MidiNoteF(11.0), MidiNoteF(15.0)),
+            (MidiNoteF(15.0), MidiNoteF(20.0)),
         ]);
-        assert_eq!(
-            MidiNoteF::new(expected),
-            scale.closest_in_scale(MidiNoteF::new(note))
-        );
+        assert_eq!(MidiNoteF(expected), scale.closest_in_scale(MidiNoteF(note)));
     }
 
     #[rstest]
@@ -181,7 +178,7 @@ mod tests {
     // Minor tierce
     #[case(midi!(D, 2), midi!(C, 2), ScaleIntervals::major(), 2, midi!(F, 2).into())]
     // Not in the scale, chord is not an exact note (sliding)
-    #[case(midi!(CSharp, 2), midi!(C, 2), ScaleIntervals::major(), 2, MidiNoteF::new(40.5))]
+    #[case(midi!(CSharp, 2), midi!(C, 2), ScaleIntervals::major(), 2, MidiNoteF(40.5))]
     fn auto_chord_test(
         #[case] note: MidiNote,
         #[case] root_note: MidiNote,
