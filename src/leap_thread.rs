@@ -199,12 +199,13 @@ impl<'a> LeapReader<'a> {
                         preset.drone.pluck_drone && rotation > HALF_PI + 0.3,
                     );
                 }
-            }
 
-            let pluck_mute = self
-                .controls
-                .pluck_mute
-                .get_scaled(rotation.unwrap_or_default(), &(0.0..=(HALF_PI - 0.2)));
+                let pluck_mute = self
+                    .controls
+                    .pluck_mute
+                    .get_scaled(rotation, &(0.0..=(HALF_PI - 0.2)));
+                self.controls.pluck_mute.send(self.dsp_tx, pluck_mute)?;
+            }
 
             let cutoff_note_norm =
                 controls::convert_range(position.x, &(50.0..=200.0), &(-1.0..=1.0))
@@ -226,7 +227,6 @@ impl<'a> LeapReader<'a> {
                 .get_scaled(position.y, &(300.0..=400.0));
 
             // Send to dsp
-            self.controls.pluck_mute.send(self.dsp_tx, pluck_mute)?;
             self.controls.cutoff_note.send(self.dsp_tx, cutoff_note)?;
             self.controls.lead_volume.send(self.dsp_tx, lead_volume)?;
             self.controls.resonance.send(self.dsp_tx, resonance)?;

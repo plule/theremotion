@@ -135,7 +135,7 @@ fn set_high_priority() {
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(not(target_os = "windows"))]
 fn set_high_priority() {
-    log::warn!("High priority process is not supported on Linux yet");
+    log::warn!("High priority process is not supported on this platform yet");
 }
