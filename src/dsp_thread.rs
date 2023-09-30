@@ -102,7 +102,6 @@ where
                     })
                     .collect();
                 dsp.update_and_compute(len as i32, &buffer_input[..], &mut buffer_output[..]);
-
                 // Send to audio buffer
                 for (out, dsp_sample) in data.iter_mut().zip(&outputs[0]) {
                     *out = *dsp_sample;
