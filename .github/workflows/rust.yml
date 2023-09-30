@@ -55,7 +55,7 @@ jobs:
     if: eq(${{ github.repository }}, "plule/theremotion") # no secrets in clones
     runs-on: ${{ matrix.runs-on }}
     env:
-      LEAPSDK_LIB_PATH: ${{ github.workspace }}/leap-sdk-redist/${{ matrix.leapsdk-lib-path }}
+      LEAPSDK_LIB_PATH: leap-sdk-redist/${{ matrix.leapsdk-lib-path }}
 
     steps:
     - uses: actions/checkout@v4
