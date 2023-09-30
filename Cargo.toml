@@ -10,7 +10,6 @@ repository = "https://github.com/plule/theremotion"
 homepage = "https://plule.github.io/theremotion"
 documentation = "https://plule.github.io/theremotion"
 description = "Theremotion is a synthesizer inspired by the Theremin controlled by a Leap Motion"
-links = "LeapC"
 
 [features]
 default = ["default-boxed", "leap"]
