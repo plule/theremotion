@@ -1,12 +1,9 @@
 use std::{f64::consts::TAU, ops::RangeInclusive};
 
-use egui::{
-    ecolor::Hsva,
-    plot::{
-        uniform_grid_spacer, Bar, BarChart, GridMark, Legend, Line, MarkerShape, PlotPoint,
-        PlotPoints, Points, VLine,
-    },
-    remap, Color32, TextStyle, Widget,
+use egui::{ecolor::Hsva, remap, Color32, TextStyle, Widget};
+use egui_plot::{
+    uniform_grid_spacer, Bar, BarChart, GridMark, Legend, Line, MarkerShape, PlotPoint, PlotPoints,
+    Points, VLine,
 };
 use nalgebra::Vector2;
 use staff::midi::MidiNote;
@@ -126,7 +123,7 @@ impl<'a> TabPlay<'a> {
             };
             // In any case, the hand is always on the negative y
             let y_range = -xy_range;
-            egui::plot::Plot::new(format!("{name}{x_range}"))
+            egui_plot::Plot::new(format!("{name}{x_range}"))
                 .allow_boxed_zoom(false)
                 .allow_drag(false)
                 .allow_scroll(false)
@@ -190,7 +187,7 @@ impl<'a> TabPlay<'a> {
 
     fn volume(&self, plot_name: &'a str, width: f32, height: f32) -> impl egui::Widget + '_ {
         move |ui: &mut egui::Ui| {
-            egui::plot::Plot::new(plot_name)
+            egui_plot::Plot::new(plot_name)
                 .allow_boxed_zoom(false)
                 .allow_drag(false)
                 .allow_scroll(false)
@@ -216,7 +213,7 @@ impl<'a> TabPlay<'a> {
 
     fn chords_number(&self, plot_name: &'a str, width: f32, height: f32) -> impl egui::Widget + '_ {
         move |ui: &mut egui::Ui| {
-            egui::plot::Plot::new(plot_name)
+            egui_plot::Plot::new(plot_name)
                 .allow_boxed_zoom(false)
                 .allow_drag(false)
                 .allow_scroll(false)
@@ -251,7 +248,7 @@ impl<'a> TabPlay<'a> {
 
             // hack: force the include_x/include_y to recenter on root note change
             let plot_id = format!("{plot_name}{}", closest.note());
-            egui::plot::Plot::new(plot_id)
+            egui_plot::Plot::new(plot_id)
                 .allow_boxed_zoom(false)
                 .allow_drag(false)
                 .allow_scroll(false)
@@ -291,7 +288,7 @@ impl<'a> TabPlay<'a> {
         };
         let color = intensity_color(self.trumpet_strength);
         move |ui: &mut egui::Ui| {
-            egui::plot::Plot::new(plot_name)
+            egui_plot::Plot::new(plot_name)
                 .allow_boxed_zoom(false)
                 .allow_drag(false)
                 .allow_scroll(false)
@@ -327,6 +324,6 @@ fn intensity_color(value: f32) -> Hsva {
     Hsva::new(18.0 / 360.0, saturation, 0.5, 1.0)
 }
 
-fn note_formatter(note: f64, _range: &RangeInclusive<f64>) -> String {
+fn note_formatter(note: f64, _nchar: usize, _range: &RangeInclusive<f64>) -> String {
     MidiNote::from_byte(note as u8).to_string()
 }
