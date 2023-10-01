@@ -95,6 +95,7 @@ process = hgroup("[2]drone", drone) * drone_volume
     + vgroup("[0]lead", leadChord)(pitchBend, res, cutoffNote) * lead_volume
     + hgroup("[1]pluck", guitar)(pitchBend, res, cutoffNote) * pluck_volume
     : hgroup("[2]fx", fx)
+    : co.compressor_mono(12,-4,800/1000000,0.5)
     : _ * master_volume
     <: _, _
 with {
