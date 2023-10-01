@@ -1,0 +1,37 @@
+import { CaptionedSlider, VerticalSplitter, Tab , TouchButton} from "common.slint";
+import { Slider } from "std-widgets.slint";
+
+export component MixTab inherits Tab {
+    in-out property mix-lead <=> lead.value;
+    in-out property mix-guitar <=> guitar.value;
+    in-out property mix-drone <=> drone.value;
+    in-out property mix-master <=> master.value;
+    in-out property enable-guitar-drone <=> gdrone.checked;
+
+    callback mix-lead-changed <=> lead.changed;
+    callback mix-guitar-changed <=> guitar.changed;
+    callback mix-drone-changed <=> drone.changed;
+    callback mix-master-changed <=> master.changed;
+    callback guitar-drone-clicked <=> gdrone.clicked;
+    
+    HorizontalLayout {
+        spacing: 50px;
+        lead := CaptionedSlider {
+            text: "Lead";
+        }
+        guitar := CaptionedSlider {
+            text: "Guitar";
+        }
+        drone := CaptionedSlider {
+            text: "Drone";
+        }
+        VerticalSplitter {  }
+        master := CaptionedSlider {
+            text: "Master";
+        }
+        VerticalSplitter {}
+        gdrone := TouchButton { 
+            text: "Guitar\nDrone";
+        }
+    }
+}

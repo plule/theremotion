@@ -1,0 +1,143 @@
+import { Palette, Tab , HorizontalSplitter} from "common.slint";
+
+component Key inherits Rectangle {
+    callback clicked;
+    in property <bool> is-root: false;
+    in property <float> drone;
+    in property <float> lead;
+    in property <bool> enabled: true;
+    in property <brush> background-enabled;
+    in property <brush> background-disabled;
+    clip: true;
+
+    background: enabled ? background-enabled : background-disabled;
+    border-radius: 5px;
+    border-color: Palette.root-note;
+    border-width: is-root ? 4px : 0px;
+    TouchArea {
+        clicked => {
+            root.clicked()
+        }
+    }
+    Rectangle {
+        opacity: drone;
+        background: Palette.key-drone-overlay;
+    }
+    Rectangle {
+        opacity: lead;
+        background: Palette.key-lead-overlay;
+    }
+}
+
+component WhiteKey inherits Key {
+    background-enabled: Palette.white-key;
+    background-disabled: Palette.white-key-disabled;
+}
+
+component BlackKey inherits Key {
+    background-enabled: Palette.black-key;
+    background-disabled: Palette.black-key-disabled;
+}
+
+export component Keyboard inherits Rectangle {
+    height: 80px;
+    clip: true;
+
+    property <int> octaves: 4;
+    property <int> size: octaves*12;
+    in property <int> root-pitch: 0;
+    in property <[float]> drones: [
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    ];
+    in property <[float]> leads: [
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.8, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    ];
+    in property <[bool]> scale-notes: [
+        false, false, false, false, false, false, false, false, false, false, false, false,
+        true, false, true, true, false, true, false, true, false, true, true, false,
+        true, false, true, true, false, true, false, true, false, true, true, false,
+        true, false, true, true, false, true, false, true, false, true, true, false,
+    ];
+
+    property <length> note-width: self.width / (7 * octaves);
+    callback clicked(int);
+    function index(octave: int, pitch: int) -> int {
+        octave * 12 + pitch
+    }
+    function pitch(octave: int, pitch: int) -> int {
+        mod(index(octave, pitch), 12)
+    }
+
+    HorizontalLayout {
+        spacing: 2px;
+        for octave in octaves: Rectangle {
+            HorizontalLayout {
+                y: -10px;
+                spacing: 2px;
+                for pitch in [0,2,4,5,7,9,11]: WhiteKey {
+                    lead: leads[index(octave, pitch)];
+                    drone: drones[index(octave, pitch)];
+                    enabled: scale-notes[index(octave, pitch)];
+                    is-root: pitch == root-pitch;
+                    clicked => {
+                        root.clicked(index(octave, pitch))
+                    }
+                }
+            }
+            HorizontalLayout {
+                spacing: 2px;
+                height: 60%;
+                y: -10px;
+        
+                Rectangle {width: note-width / 2;}
+        
+                for pitch in [1,3]: BlackKey {
+                    lead: leads[index(octave, pitch)];
+                    drone: drones[index(octave, pitch)];
+                    enabled: scale-notes[index(octave, pitch)];
+                    is-root: pitch == root-pitch;
+                    clicked => {
+                        root.clicked(index(octave, pitch))
+                    }
+                }
+        
+                Rectangle {width: note-width;}
+        
+                for pitch in [6,8,10]: BlackKey {
+                    lead: leads[index(octave, pitch)];
+                    drone: drones[index(octave, pitch)];
+                    enabled: scale-notes[index(octave, pitch)];
+                    is-root: pitch == root-pitch;
+                    clicked => {
+                        root.clicked(index(octave, pitch))
+                    }
+                }
+        
+                Rectangle {width: note-width / 2;}
+            }
+        }
+    }
+}
+
+export component KeyboardTab inherits Tab {
+    callback clicked <=> kb.clicked;
+    in property <[bool]> scale-notes <=> kb.scale-notes;
+    in property <[float]> leads <=> kb.leads;
+    in property <[float]> drones <=> kb.drones;
+    
+    in property <int> root-pitch <=> kb.root-pitch;
+    
+    VerticalLayout {
+        spacing: 5px;
+        padding: 5px;
+        kb := Keyboard {}
+        HorizontalSplitter { }
+        @children
+    }
+}

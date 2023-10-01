@@ -1,0 +1,328 @@
+import { Button, GroupBox, HorizontalBox, ListView, LineEdit} from "std-widgets.slint";
+import "./fonts/NotoEmoji-Bold.ttf";
+import "./fonts/NotoSans-Bold.ttf";
+
+export global Palette {
+    out property <color> tab-bg: #222222;
+    out property <color> plot-bg: #000000;
+    out property <color> win-bg: #FFFFFF;
+    out property <color> splitter: #9e9e9e;
+
+    out property <color> button-border: #000000;
+    out property <color> button-inactive: #222222;
+    out property <color> button-active: lead;
+
+    out property <color> plot-grad: #096E00;
+    out property <color> lead: #00E5E8;
+    out property <color> drone: #d484ca;
+    out property <color> raw: #E77728;
+    out property <color> root-note: #F0F600;
+
+    out property <color> white-key: raw;
+    out property <color> black-key: white-key.darker(0.5);
+
+    
+    out property <brush> white-key-active: @linear-gradient(0deg, #3f87a6 0%, #ffffff 75%, #ffffff 100%);
+    out property <brush> black-key-active: @linear-gradient(0deg, #3f87a6 0%, #000000 75%, #000000 100%);
+    out property <color> white-key-disabled: #7a7a7a;
+    out property <color> black-key-disabled: white-key-disabled.darker(0.5);
+
+    out property <brush> key-lead-overlay: @linear-gradient(0deg, lead 0%, lead.with-alpha(0) 75%, lead.with-alpha(0) 100%);
+    out property <brush> key-drone-overlay: @linear-gradient(0deg, drone 0%, drone 20%, drone.with-alpha(0) 75%, drone.with-alpha(0));
+}
+
+export global Style {
+    out property <length> area-corner-radius: 10px;
+    out property <length> grad-light-thickness: 2px;
+    out property <length> grad-strong-thickness: 5px;
+    out property <length> grad-font-size: 20px;
+}
+
+export component Tab inherits Rectangle {
+    in property <int> idx;
+    in property <int> current-idx;
+    clip: true;
+
+    y: current-idx == idx ? 0 : current-idx < idx ? self.height + 1px : - self.height - 1px;
+    animate y { duration: 125ms; easing: ease; }
+
+    @children
+}
+
+export component HorizontalSplitter inherits Rectangle {
+    in property <length> thickness: 2px;
+    height: 5px;
+
+    Rectangle {
+        background: Palette.splitter;
+        width: root.width * 0.9;
+        height: thickness;
+    }
+}
+
+export component VerticalSplitter inherits Rectangle {
+    in property <length> thickness: 2px;
+    width: 5px;
+
+    Rectangle {
+        background: Palette.splitter;
+        height: root.height * 0.9;
+        width: thickness;
+    }
+}
+
+export component Square inherits Rectangle {
+    height: self.width;
+}
+
+export component Circle inherits Square {
+    in property <length> radius;
+    in property <length> center-x;
+    in property <length> center-y;
+
+    function effective-radius() -> length {
+        radius + self.border-width / 2
+    }
+    width: effective-radius()*2;
+    border-radius: effective-radius();
+    x: center-x - effective-radius();
+    y: center-y - effective-radius();
+}
+
+export enum Handedness {
+    LeftHanded,
+    RightHanded,
+}
+
+export struct NotePoint {
+    x: float,
+    y: float,
+    volume: float,
+}
+
+export global Pitches {
+    out property <[{value: int, text: string}]> pitches: [
+        {value: 0, text: "C"},
+        {value: 1, text: "C#"},
+        {value: 2, text: "D"},
+        {value: 3, text: "D#"},
+        {value: 4, text: "E"},
+        {value: 5, text: "F"},
+        {value: 6, text: "F#"},
+        {value: 7, text: "G"},
+        {value: 8, text: "G#"},
+        {value: 9, text: "A"},
+        {value: 10, text: "A#"},
+        {value: 11, text: "B"},
+    ];
+}
+
+export component StdText inherits Text {
+    font-family: "Noto Sans";
+    font-size: 25px;
+    vertical-alignment: TextVerticalAlignment.bottom;
+    horizontal-alignment: TextHorizontalAlignment.center;
+}
+
+export component CaptionText inherits Text {
+    font-family: "Noto Sans";
+    font-size: 20px;
+    vertical-alignment: TextVerticalAlignment.bottom;
+    horizontal-alignment: TextHorizontalAlignment.center;
+}
+
+export component TitleText inherits Text {
+    font-family: "Noto Sans";
+    font-size: 60px;
+    vertical-alignment: TextVerticalAlignment.center;
+    horizontal-alignment: TextHorizontalAlignment.center;
+}
+
+export component IconText inherits Text {
+    font-family: "Noto Emoji";
+    font-size: 30px;
+    vertical-alignment: TextVerticalAlignment.center;
+    horizontal-alignment: TextHorizontalAlignment.center;
+}
+
+export component GradText inherits Text {
+    font-family: "Noto Emoji";
+    color: Palette.plot-grad;
+    font-size: 20px;
+}
+
+export component TouchButton inherits Rectangle {
+    callback clicked();
+    in-out property <bool> checked;
+    in property <string> text;
+    clip: true;
+    border-radius: 5px;
+    border-color: Palette.button-border;
+    border-width: 2px;
+    padding: 20px;
+
+    TouchArea {
+        Rectangle {
+            background: checked ? Palette.button-active : Palette.button-inactive;
+            animate background { duration: 250ms; easing: ease; }
+            Text {
+                font-family: "Noto Sans";
+                font-size: 30px;
+                text: text;
+            }
+        }
+        clicked => {clicked()}
+    }
+}
+
+export component TouchSlider inherits Rectangle {
+    in property<float> maximum: 1;
+    in property<float> minimum: 0;
+    in-out property<float> value;
+    callback changed(float);
+
+    min-height: 100px;
+    width: 40px;
+    horizontal-stretch: 0;
+    vertical-stretch: 1;
+
+    slider := Rectangle {
+        width: 20px;
+        border-radius: self.width/2;
+        background: touch.pressed ? #eee: #ddd;
+        border-width: 1px;
+        border-color: root.background.darker(25%);
+    }
+
+    handle := Rectangle {
+        width: parent.width;
+        height: parent.width;
+        border-width: 3px;
+        border-radius: self.width / 2;
+        background: touch.pressed ? #f8f: touch.has-hover ? #66f : #0000ff;
+        border-color: self.background.darker(15%);
+        y: (root.height - handle.height) * ( 1 - (root.value - root.minimum)/(root.maximum - root.minimum));
+    }
+    touch := TouchArea {
+        property <float> pressed-value;
+        pointer-event(event) => {
+            if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                self.pressed-value = root.value;
+            }
+        }
+        moved => {
+            if (self.enabled && self.pressed) {
+                root.value = max(root.minimum, min(root.maximum,
+                    self.pressed-value - (touch.mouse-y - touch.pressed-y) * (root.maximum - root.minimum) / (root.height - handle.height)));
+                changed(root.value)
+            }
+        }
+    }
+}
+
+export component CaptionedSlider {
+    in property <string> text;
+    in property<float> maximum: 1;
+    in property<float> minimum: 0;
+    in-out property<float> value: 0;
+    callback changed(float);
+    width: 80px;
+    VerticalLayout {
+        alignment: LayoutAlignment.stretch;
+        slider := TouchSlider {
+            x: root.width / 2 - self.width / 2;
+            maximum: maximum;
+            minimum: minimum;
+            value: value;
+            changed(v) => {changed(v)}
+        }
+        CaptionText { 
+            text: text;
+            font-size: 15px;
+        }
+    }
+}
+
+export component Group {
+    in property <string> name;
+    Rectangle {
+        border-width: 2px;
+        border-radius: 20px;
+        border-color: black;
+        VerticalLayout {
+            CaptionText { 
+                text: name;
+            }
+            HorizontalLayout {
+                @children
+            }
+        }
+
+    }
+}
+
+export struct Selectable {
+    name: string,
+    removable: bool,
+    id: int,
+    selected: bool,
+}
+
+export component SelectableButtons {
+    in property <[Selectable]> options: [
+        {name: "option 1", removable: true},
+        {name: "option 2", selected: true},
+        {name: "option 3"},
+        {name: "option 4"},
+        {name: "option 5", removable: true},
+        {name: "option 6", removable: true}
+    ];
+    
+    callback select-clicked(int);
+    callback delete-clicked(int);
+
+    ListView {
+        for option[index] in options: HorizontalLayout {
+            height: 90px;
+            TouchButton {
+                text: option.name;
+                checked: option.selected;
+                clicked => {select-clicked(option.id)}
+            }
+            if option.removable: TouchButton {
+                text: "🗑";
+                width: 80px;
+                clicked => {delete-clicked(option.id)}
+            }
+        }
+    }
+}
+
+export component SelectableButtonsWithSave {
+    in property options <=> btns.options;
+    callback select-clicked <=> btns.select-clicked;
+    callback delete-clicked <=> btns.delete-clicked;
+    callback save-clicked(string);
+
+    HorizontalLayout {
+        btns := SelectableButtons {
+            width: 50%;
+        }
+        VerticalSplitter { }
+        VerticalLayout {
+            padding: 5px;
+            HorizontalLayout {
+                height: 80px;
+                le:= LineEdit { 
+                    font-size: 32px;
+                }
+                TouchButton {
+                    text: "💾";
+                    width: 80px;
+                    clicked => {save-clicked(le.text)}
+                }
+            }
+            Rectangle {} // keeps the height of the scale selector, wat
+        }
+    }
+}

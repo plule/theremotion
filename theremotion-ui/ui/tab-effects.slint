@@ -1,0 +1,82 @@
+import { Tab , CaptionedSlider, Group} from "common.slint";
+
+export component EffectsTab inherits Tab {
+    in-out property <float> echo-amount;
+    in-out property <float> echo-duration;
+    in-out property <float> echo-feedback;
+    callback echo-amount-changed(float);
+    callback echo-duration-changed(float);
+    callback echo-feedback-changed(float);
+
+    in-out property <float> reverb-amount;
+    in-out property <float> reverb-time;
+    in-out property <float> reverb-damp;
+    in-out property <float> reverb-size;
+    callback reverb-amount-changed(float);
+    callback reverb-time-changed(float);
+    callback reverb-damp-changed(float);
+    callback reverb-size-changed(float);
+
+    in-out property <float> drone-detune;
+    callback drone-detune-changed(float);
+
+    HorizontalLayout {
+        Group {
+            name: "Echo";
+            CaptionedSlider { 
+                text: "Amount";
+                value: echo-amount;
+                changed(v) => {echo-amount-changed(v)}
+            }
+            CaptionedSlider {
+                text: "Duration";
+                value: echo-duration;
+                changed(v) => {echo-duration-changed(v)}
+            }
+            CaptionedSlider {
+                text: "Feedback";
+                value: echo-feedback;
+                changed(v) => {echo-feedback-changed(v)}
+            }
+        }
+
+        Group {
+            name: "Reverb";
+
+            CaptionedSlider {
+                text: "Amount";
+                value: reverb-amount;
+                changed(v) => {reverb-amount-changed(v)}
+            }
+            CaptionedSlider {
+                text: "Time";
+                value: reverb-time;
+                minimum: 0.1;
+                maximum: 60;
+                changed(v) => {reverb-time-changed(v)}
+            }
+            CaptionedSlider {
+                text: "Damp";
+                value: reverb-damp;
+                changed(v) => {reverb-damp-changed(v)}
+            }
+            CaptionedSlider {
+                text: "Size";
+                value: reverb-size;
+                minimum: 0.5;
+                maximum: 5;
+                changed(v) => {reverb-size-changed(v)}
+            }
+        }
+
+        Group {
+            name: "Drone";
+
+            CaptionedSlider {
+                text: "Detune";
+                value: drone-detune;
+                changed(v) => {drone-detune-changed(v)}
+            }
+        }
+    }
+}

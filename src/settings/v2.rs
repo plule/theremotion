@@ -7,7 +7,7 @@ use staff::{
 };
 
 /// Application settings
-#[derive(Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 #[serde(deny_unknown_fields)]
 pub struct Settings {
     /// Current sound settings
@@ -28,7 +28,7 @@ pub struct Settings {
 }
 
 /// Drone settings
-#[derive(Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 #[serde(deny_unknown_fields, default)]
 pub struct DroneSettings {
     /// List of notes of the drone
@@ -76,7 +76,7 @@ mod interval_list_serde {
 }
 
 /// Sound preset
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields, default)]
 pub struct Preset {
     /// Name of the preset

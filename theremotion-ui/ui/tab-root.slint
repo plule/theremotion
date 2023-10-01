@@ -1,0 +1,100 @@
+import { Palette, Style , HorizontalSplitter, Pitches, VerticalSplitter, StdText, TouchButton} from "common.slint";
+import { KeyboardTab } from "keyboard.slint";
+import { HorizontalBox , Button, GroupBox, GridBox} from "std-widgets.slint";
+
+
+component OctaveSelector inherits HorizontalLayout {
+    in property <int> octave;
+    callback clicked(int);
+    for octave in [0,1,2,3,4]: TouchButton  { 
+        text: octave;
+        checked: octave == root.octave;
+        clicked => {clicked(octave)}
+    }
+}
+
+component PitchSelector inherits Rectangle {
+    in property <int> pitch;
+    callback clicked(int);
+    property <length> button-width: self.width / 4;
+    property <length> button-height: self.height / 3;
+    property <[[int]]> pitches: [
+        [0,1,2,3],
+        [4,5,6,7],
+        [8,9,10,11]
+    ];
+
+    for row-pitches[row] in pitches: Rectangle {
+        for pitch[col] in row-pitches: TouchButton {
+            x: col * button-width;
+            width: button-width;
+            y: row * button-height;
+            height: button-height;
+            text: Pitches.pitches[pitch].text;
+            checked: root.pitch == pitch;
+            clicked => {clicked(pitch)}
+        }
+    }
+}
+
+export component RootTab inherits KeyboardTab {
+    in property <int> lead-octave;
+    in property <int> guitar-octave;
+    in property <int> drone-octave;
+    callback lead-octave-clicked(int);
+    callback guitar-octave-clicked(int);
+    callback drone-octave-clicked(int);
+
+    property <float> button-stretch: 0.5;
+    property <float> text-stretch: 0.1;
+    HorizontalLayout {
+        spacing: 5px;
+
+        VerticalLayout {
+
+            StdText {
+                vertical-stretch: 0.01;
+                text: "Root Note";
+            }
+
+            PitchSelector {
+                vertical-stretch: 1;
+                pitch: root.root-pitch;
+                clicked(n) => {root.clicked(n)}
+            }
+        }
+
+        VerticalSplitter {}
+
+        VerticalLayout {
+            width: root.width * 0.5;
+            StdText {
+                vertical-stretch:  text-stretch;
+                text: "Lead Octave";
+            }
+            OctaveSelector {
+                vertical-stretch: button-stretch;
+                octave: lead-octave;
+                clicked(o) => {lead-octave-clicked(o)}
+            }
+            StdText {
+                vertical-stretch: text-stretch;
+                text: "Guitar Octave";
+            }
+            OctaveSelector {
+                vertical-stretch: button-stretch;
+                octave: guitar-octave;
+                clicked(o) => {guitar-octave-clicked(o)}
+            }
+            StdText {
+                vertical-stretch:  text-stretch;
+                text: "Drone Octave";
+            }
+            OctaveSelector {
+                vertical-stretch: button-stretch;
+                octave: drone-octave;
+                clicked(o) => {drone-octave-clicked(o)}
+            }
+        }
+    }
+}

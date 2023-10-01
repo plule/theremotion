@@ -1,0 +1,132 @@
+import { Palette, Style , GradText} from "common.slint";
+
+export struct Graduation {
+    value: float,
+    text: string
+}
+
+export component Plot1D inherits Rectangle {
+    in property <float> min: 0;
+    in property <float> max: 2;
+    in property <float> value: 1.6;
+    in property <[Graduation]> graduations: [
+        {value: 1, text: "1"},
+        {value: 1.5, text: "1.5"},
+        {value: 1.7, text: "1.7"},
+    ];
+
+    clip: true;
+    border-radius: Style.area-corner-radius;
+    background: Palette.plot-bg;
+
+    public pure function to-px(len: float) -> length {
+        (len) * root.height / (max - min)
+    }
+
+    public pure function to-px-y(h: float) -> length {
+        (max - h) * root.height / (max - min)
+    }
+
+    for graduation in graduations: Rectangle {
+        background: Palette.plot-grad;
+        height: Style.grad-light-thickness;
+        y: to-px-y(graduation.value);
+        GradText {
+            text: graduation.text;
+            y: -self.font-size;
+        }
+    }
+
+    Rectangle {
+        background: Palette.raw;
+        opacity: 0.5;
+        height: root.height - to-px-y(value);
+        y: to-px-y(value);
+    }
+}
+
+
+export component Plot2D inherits Rectangle {
+    in property <float> min-x: 0;
+    in property <float> max-x: 1;
+    in property <float> min-y: 0;
+    in property <float> max-y: 1;
+    background: Palette.plot-bg;
+    clip: true;
+    border-radius: Style.area-corner-radius;
+
+    public pure function to-px(len: float) -> length {
+        len * root.width / (max-x - min-x)
+    }
+
+    public pure function to-px-x(pos: float) -> length {
+        root.width * (pos - min-x) / (max-x - min-x)
+    }
+
+    public pure function to-px-y(pos: float) -> length {
+        root.height * (pos - min-y) / (max-y - min-y)
+    }
+}
+
+export component Tuner inherits Rectangle {
+    in property <float> note: 47.4;
+    in property <float> note-tuned: 47.2;
+    in-out property <float> note-focus: 47;
+    in property <float> notes-on-screen: 4;
+    property <physical-length> note-width: self.width / notes-on-screen;
+
+    in property <[{value: int, text: string}]> note-names: [
+        {value: 0, text: "C"},
+        {value: 1, text: "C#"},
+        {value: 2, text: "D"},
+        {value: 3, text: "D#"},
+        {value: 4, text: "E"},
+        {value: 5, text: "F"},
+        {value: 6, text: "F#"},
+        {value: 7, text: "G"},
+        {value: 8, text: "G#"},
+        {value: 9, text: "A"},
+        {value: 10, text: "A#"},
+        {value: 11, text: "B"},
+    ];
+
+    clip: true;
+    border-radius: Style.area-corner-radius;
+    background: Palette.plot-bg;
+
+    animate note-focus {
+         duration: 150ms;
+         easing: ease-in-out;
+    }
+
+
+    function note-to-px(note: float) -> physical-length {
+        note-width * note - (note-focus - notes-on-screen / 2) * note-width
+    }
+
+    for octave in [0, 1, 2, 3, 4, 5, 6]: Rectangle {
+        for note in note-names: Rectangle {
+            background: Palette.plot-grad;
+            width: Style.grad-strong-thickness;
+            x: note-to-px(octave * 12 + note.value) - self.width / 2;
+            Text {
+                text: "\{note.text}\{octave}";
+                color: Palette.plot-grad;
+                font-size: 20px;
+                x: 15px;
+            }
+        }
+    }
+
+    Rectangle {
+        background: Palette.lead;
+        width: Style.grad-strong-thickness;
+        x: note-to-px(note-tuned) - self.width / 2;
+    }
+
+    Rectangle {
+        background: Palette.raw;
+        width: Style.grad-light-thickness;
+        x: note-to-px(note) - self.width / 2;
+    }
+}

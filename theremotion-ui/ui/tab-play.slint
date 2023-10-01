@@ -1,0 +1,130 @@
+import { Plot1D, Plot2D, Tuner } from "plot.slint";
+import { Tab, Circle, Palette, Style, NotePoint } from "common.slint";
+import { KeyboardTab } from "keyboard.slint";
+
+
+component PitchPlot inherits Plot2D {
+    in property <NotePoint> raw-note: {x: 16.7, y: 0, volume: 1};
+    in property <[NotePoint]> notes: [
+        {x: 12, y: 0, volume: 0.5},
+        {x: 14, y: 0, volume: 1},
+        {x: 17, y: 0, volume: 1},
+    ];
+    in property <[bool]> scale-notes: [
+        false, false, false, false, false, false, false, false, false, false, false, false,
+        true, false, true, true, false, true, false, true, false, true, true, false,
+        true, false, true, true, false, true, false, true, false, true, true, false,
+        true, false, true, true, false, true, false, true, false, true, true, false,
+    ];
+    in property <int> root-pitch;
+    in property <int> highest-note;
+
+    min-x: -2.0;
+    max-x: 30.0;
+    min-y: 2.0;
+    max-y: -30.0;
+
+    for index in 12*4: Circle {
+        border-color: Palette.plot-grad;
+        border-width: mod(index, 12) == root-pitch ? Style.grad-strong-thickness : Style.grad-light-thickness;
+        radius: parent.to-px(highest-note - index); // parent.width * scale-note / (parent.max-x - parent.min-x);
+        center-x: parent.to-px-x(0);
+        center-y: parent.to-px-y(0);
+        visible: scale-notes[index] && self.radius > 0;
+    }
+
+    for note in notes: Circle {
+        background: Palette.lead;
+        radius: note.volume * 5px;
+        center-x: parent.to-px-x(note.x);
+        center-y: parent.to-px-y(note.y);
+    }
+
+    Circle {
+        background: Palette.raw;
+        radius: raw-note.volume * 4px;
+        center-x: parent.to-px-x(raw-note.x);
+        center-y: parent.to-px-y(raw-note.y);
+    }
+}
+
+component FilterPlot inherits Plot2D {
+    in property <float> cutoff;
+    in property <float> resonance;
+    min-x: -1.0;
+    max-x: 1.0;
+    min-y: 1.0;
+    max-y: 0.0;
+
+    Circle {
+        background: Palette.raw;
+        radius: 5px;
+        center-x: parent.to-px-x(cutoff);
+        center-y: parent.to-px-y(resonance);
+    }
+}
+
+component VolumePlot inherits Plot1D {
+    graduations: [];
+    min: 0;
+    max: 1;
+}
+
+component ChordNumberPlot inherits Plot1D {
+    graduations: [
+        {value: 1, text: "1"},
+        {value: 2, text: "2"},
+        {value: 3, text: "3"},
+        {value: 4, text: "4"},
+    ];
+    min: 0;
+    max: 5;
+}
+
+export component PlayingTab inherits KeyboardTab {
+    in property <length> vertical-slider-width: 75px;
+    in property <float> filter-cutoff: 0.8;
+    in property <float> filter-resonance: 0.2;
+    in property <NotePoint> raw-note: {x: 16.7, y: 0, volume: 1};
+    in property <[NotePoint]> notes: [
+        {x: 12, y: 0, volume: 0.5},
+        {x: 14, y: 0, volume: 1},
+        {x: 17, y: 0, volume: 1},
+    ];
+    in property <float> volume: 0.7;
+    in property <float> chords_number: 2.8;
+    in property <float> tuner-note: 47.4;
+    in property <float> tuner-note-tuned: 47.2;
+    in-out property <float> tuner-note-focus: 47;
+    in property <int> highest-note;
+
+    HorizontalLayout {
+        spacing: 5px;
+        ChordNumberPlot {
+            width: vertical-slider-width;
+            value: chords-number;
+        }
+        PitchPlot {
+            notes: notes;
+            raw-note: raw-note;
+            height: self.width;
+            scale-notes: root.scale-notes;
+            root-pitch: root.root-pitch;
+            highest-note: highest-note;
+        }
+        FilterPlot {
+            cutoff: filter-cutoff;
+            resonance: filter-resonance;
+            height: self.width;
+        }
+        VolumePlot {
+            width: vertical-slider-width;
+            value: volume;
+        }
+    }
+    Tuner {
+        note: root.tuner-note;
+        note-tuned: root.tuner-note-tuned;
+        note-focus: root.tuner-note-focus;
+    }
+}

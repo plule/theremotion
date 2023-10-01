@@ -1,0 +1,21 @@
+import { Tab , TouchButton, VerticalSplitter, Selectable, SelectableButtons, SelectableButtonsWithSave} from "common.slint";
+import { KeyboardTab } from "keyboard.slint";
+import { ScrollView , LineEdit, ListView} from "std-widgets.slint";
+
+export component ScaleTab inherits KeyboardTab {
+    in property <[Selectable]> scale-presets: [
+        {name: "Major thing"},
+        {name: "Minor stuff"},
+        {name: "Euclidian",},
+        {name: "Frichti"},
+        {name: "something else", removable: true},
+        {name: "other", removable: true}
+    ];
+    callback select-scale <=> btns.select-clicked;
+    callback delete-scale <=> btns.delete-clicked;
+    callback save-scale <=> btns.save-clicked;
+
+    btns := SelectableButtonsWithSave { 
+        options: scale-presets;
+    }
+}
