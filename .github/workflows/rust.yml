@@ -44,6 +44,7 @@ jobs:
             wix: true
             portable-type: zip
             portable-name: theremotion-windows.zip
+            redists: LeapC.dll
           - name: linux
             runs-on: ubuntu-latest
             leapsdk-lib-path: ultraleap-hand-tracking-service
@@ -80,11 +81,13 @@ jobs:
     - name: Make installer
       run: cargo wix --nocapture --output . ${{ env.WIX_EXTRA_ARGS }}
       if: ${{ matrix.wix }}
-    - name: Prepare artifacts
-      run: |
-        mkdir -p theremotion-${{ matrix.name }}
-        cp leap-sdk-redist/${{ matrix.leapsdk-lib-path }}/*LeapC.* theremotion-${{ matrix.name }}
-        cp target/release/${{ matrix.exe-name }} theremotion-${{ matrix.name }}
+    - name: Prepare artifacts folder
+      run: mkdir -p theremotion-${{ matrix.name }}
+    - name: copy exe
+      run: cp target/release/${{ matrix.exe-name }} theremotion-${{ matrix.name }}
+    - name: copy redists
+      if: ${{ matrix.redists }}
+      run: cp leap-sdk-redist/${{ matrix.leapsdk-lib-path }}/${{ matrix.redists }} theremotion-${{ matrix.name }}  
     - name: Archive portable version
       uses: thedoctor0/zip-release@main
       with:
