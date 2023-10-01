@@ -1,0 +1,209 @@
+import { Palette, Tab , BevelRectangle, Led, SmallText} from "common.slint";
+
+component Key inherits BevelRectangle {
+    callback clicked;
+    in property <bool> is-root: false;
+    in property <float> drone;
+    in property <float> lead;
+    in property <bool> enabled: true;
+    in property <brush> background-enabled;
+    in property <brush> background-disabled;
+    property <brush> background-color: enabled ? background-enabled : background-disabled;
+    clip: true;
+
+    background: ta.has-hover ? background-color.brighter(30%) : background-color;
+    border-radius: 5px;
+    border-width: 3px;
+    ta := TouchArea {
+        clicked => {
+            root.clicked()
+        }
+    }
+
+    Rectangle {
+        opacity: lead;
+        background: Palette.key-lead-overlay;
+    }
+
+    Led {
+        y: root.height - 20px;
+        light: is-root ? 1 : 0;
+        //glass-color: Palette.root-note.darker(90%);
+        light-color: Palette.root-note;
+    }
+
+    Led {
+        y: root.height - 10px;
+        light: drone;
+        //glass-color: Palette.drone.darker(90%);
+        light-color: Palette.drone;
+    }
+}
+
+component WhiteKey inherits Key {
+    background-enabled: Palette.white-key;
+    background-disabled: Palette.white-key-disabled;
+}
+
+component BlackKey inherits Key {
+    background-enabled: Palette.black-key;
+    background-disabled: Palette.black-key-disabled;
+}
+
+export component Keyboard inherits Rectangle {
+    height: 80px;
+    clip: true;
+
+    property <int> octaves: 4;
+    property <int> size: octaves*12;
+    in property <int> root-pitch: 0;
+    in property <[float]> drones: [
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    ];
+    in property <[float]> leads: [
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.8, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    ];
+    in property <[bool]> scale-notes: [
+        false, false, false, false, false, false, false, false, false, false, false, false,
+        true, false, true, true, false, true, false, true, false, true, true, false,
+        true, false, true, true, false, true, false, true, false, true, true, false,
+        true, false, true, true, false, true, false, true, false, true, true, false,
+    ];
+
+    property <length> note-width: self.width / (7 * octaves);
+    callback clicked(int);
+    function index(octave: int, pitch: int) -> int {
+        octave * 12 + pitch
+    }
+    function pitch(octave: int, pitch: int) -> int {
+        mod(index(octave, pitch), 12)
+    }
+
+    HorizontalLayout {
+        spacing: 2px;
+        for octave in octaves: Rectangle {
+            HorizontalLayout {
+                y: -10px;
+                height: root.height + 10px;
+                spacing: 2px;
+                for pitch in [0,2,4,5,7,9,11]: WhiteKey {
+                    lead: leads[index(octave, pitch)];
+                    drone: drones[index(octave, pitch)];
+                    enabled: scale-notes[index(octave, pitch)];
+                    is-root: pitch == root-pitch;
+                    clicked => {
+                        root.clicked(index(octave, pitch))
+                    }
+                }
+            }
+            HorizontalLayout {
+                spacing: 2px;
+                height: 70%;
+                y: -10px;
+        
+                Rectangle {width: note-width / 2;}
+        
+                for pitch in [1,3]: BlackKey {
+                    lead: leads[index(octave, pitch)];
+                    drone: drones[index(octave, pitch)];
+                    enabled: scale-notes[index(octave, pitch)];
+                    is-root: pitch == root-pitch;
+                    clicked => {
+                        root.clicked(index(octave, pitch))
+                    }
+                }
+        
+                Rectangle {width: note-width;}
+        
+                for pitch in [6,8,10]: BlackKey {
+                    lead: leads[index(octave, pitch)];
+                    drone: drones[index(octave, pitch)];
+                    enabled: scale-notes[index(octave, pitch)];
+                    is-root: pitch == root-pitch;
+                    clicked => {
+                        root.clicked(index(octave, pitch))
+                    }
+                }
+        
+                Rectangle {width: note-width / 2;}
+            }
+        }
+    }
+}
+
+component Indicator inherits VerticalLayout {
+    in property <string> text;
+    in property <bool> active;
+    in property <color> color;
+    width: 60px;
+    Rectangle {
+
+        Led {
+            light: active ? 1.0 : 0.0;
+            glass-color: color.darker(90%);
+            light-color: color;
+            y: root.height - 10px;
+        }
+        SmallText {
+            vertical-alignment: TextVerticalAlignment.top;
+            text: text;
+            y: 0px;
+        }
+    }
+}
+
+export enum EditMode {
+    Drone,
+    Root,
+    Scale
+}
+
+export component KeyboardTab inherits Tab {
+    callback clicked <=> kb.clicked;
+    in property <[bool]> scale-notes <=> kb.scale-notes;
+    in property <[float]> leads <=> kb.leads;
+    in property <[float]> drones <=> kb.drones;
+    in property <int> root-pitch <=> kb.root-pitch;
+    in property <EditMode> edit-mode: EditMode.Drone;
+    property <length> item-width: 75px;
+    
+    VerticalLayout {
+        //spacing: 5px;
+        //padding: 5px;
+        padding: 5px;
+        
+        kb := Keyboard {
+            height: 80px;
+        }
+
+        HorizontalLayout {
+            height: 30px;
+            alignment: LayoutAlignment.center;
+            Indicator {
+                text: "Drone";
+                active: edit-mode == EditMode.Drone;
+                color: Palette.drone;
+            }
+            Indicator {
+                text: "Root";
+                active: edit-mode == EditMode.Root;
+                color: Palette.root-note;
+            }
+            Indicator {
+                text: "Scale";
+                active: edit-mode == EditMode.Scale;
+                color: Palette.active;
+            }
+        }
+
+        Rectangle {
+            @children
+        }
+    }
+}

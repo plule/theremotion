@@ -1,0 +1,55 @@
+import { HorizontalBox, VerticalBox } from "std-widgets.slint";
+import { Tab, Handedness , Group, TextTouchButton} from "common.slint";
+
+
+export component SettingsTab inherits Tab {
+    in property<Handedness> handedness;
+    in property<bool> fullscreen;
+    in property<bool> high_priority;
+    in property<bool> use_on_screen_keyboard;
+
+    callback fullscreen-clicked;
+    callback high-priority-clicked;
+    callback on-screen-kbd-clicked;
+    callback lh-clicked;
+    callback rh-clicked;
+
+    VerticalBox {
+        Group {
+            name: "System";
+            VerticalBox {
+                TextTouchButton {
+                    text: "Fullscreen";
+                    checked: fullscreen;
+                    clicked => {fullscreen-clicked()}
+                }
+                TextTouchButton {
+                    text: "High Priority Process";
+                    checked: high-priority;
+                    clicked => {high-priority-clicked()}
+                }
+                TextTouchButton {
+                    text: "On-screen keyboard";
+                    checked: use-on-screen-keyboard;
+                    clicked => {on-screen-kbd-clicked()}
+                }
+            }
+        }
+
+        Group {
+            name: "Handedness";
+            HorizontalBox { 
+                TextTouchButton { 
+                    text: "Left Handed";
+                    checked: handedness == Handedness.LeftHanded;
+                    clicked => {lh-clicked()}
+                }
+                TextTouchButton {
+                    text: "Right Handed";
+                    checked: handedness == Handedness.RightHanded;
+                    clicked => {rh-clicked()}
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,40 @@
+import { CaptionedFader, Tab , Group} from "common.slint";
+import { HorizontalBox} from "std-widgets.slint";
+
+export component MixTab inherits Tab {
+    in-out property mix-lead <=> lead.value;
+    in-out property mix-guitar <=> guitar.value;
+    in-out property mix-drone <=> drone.value;
+    in-out property mix-master <=> master.value;
+    
+
+    callback mix-lead-changed <=> lead.changed;
+    callback mix-guitar-changed <=> guitar.changed;
+    callback mix-drone-changed <=> drone.changed;
+    callback mix-master-changed <=> master.changed;
+
+    
+    HorizontalBox {
+        alignment: LayoutAlignment.space-around;
+        Group {
+            HorizontalLayout {
+                lead := CaptionedFader {
+                    text: "Lead";
+                }
+                guitar := CaptionedFader {
+                    text: "Guitar";
+                }
+                drone := CaptionedFader {
+                    text: "Drone";
+                }
+            }
+        }
+        Group {
+            HorizontalLayout {
+                master := CaptionedFader {
+                    text: "Master";
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,27 @@
+import { Tab, Selectable, SelectableButtonsWithSave} from "common.slint";
+import { EditMode , KeyboardTab} from "keyboard.slint";
+
+export component ScaleTab inherits KeyboardTab {
+    edit-mode: EditMode.Scale;
+    in property <[Selectable]> scale-presets: [
+        {name: "Major thing", removable: true},
+        {name: "Minor stuff"},
+        {name: "Euclidian",},
+        {name: "Frichti"},
+        {name: "something else", removable: true},
+        {name: "other", removable: true},
+        {name: "other", removable: true},
+        {name: "other", removable: true},
+        {name: "other", removable: true}
+    ];
+    callback select-scale <=> btns.select-clicked;
+    callback delete-scale <=> btns.delete-clicked;
+    callback save-scale <=> btns.save-clicked;
+
+        btns := SelectableButtonsWithSave {
+            preferred-width: 100%;
+            preferred-height: 100%;
+            vertical-stretch: 1;
+            options: scale-presets;
+        }
+}

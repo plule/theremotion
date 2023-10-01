@@ -12,14 +12,16 @@ documentation = "https://plule.github.io/theremotion"
 description = "Theremotion is a synthesizer inspired by the Theremin controlled by a Leap Motion"
 links = "LeapC"
 
+[workspace]
+members = ["theremotion-ui", "theremotion-dsp"]
+
 [features]
-default = ["default-boxed", "leap"]
+default = ["leap"]
 leap = ["leaprs"]
-default-boxed = []
 
 [dependencies]
-egui = "0.22"
-eframe = { version = "0.22" }
+theremotion-ui = { path = "./theremotion-ui" }
+theremotion-dsp = { path = "./theremotion-dsp" }
 tracing-subscriber = "0.3"
 cpal = "0.15"
 faust-types = { git = "https://github.com/Frando/rust-faust", branch = "main" }
@@ -38,6 +40,15 @@ log = "0.4"
 itertools = "0.11"
 lazy_static = "1.4.0"
 derive_more = "0.99.17"
+slint = { version = "1.2.1", default-features = false }
+tracing = "0.1.39"
+
+[profile.dev.package.theremotion-ui]
+# Generated code, and tends to overflow
+opt-level = 3
+
+[profile.dev.package.theremotion-dsp]
+opt-level = 3
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.51.1", features = [
@@ -47,10 +58,6 @@ windows = { version = "0.51.1", features = [
 
 [dev-dependencies]
 rstest = "0.18.2"
-
-[build-dependencies]
-faust-build = { git = "https://github.com/Frando/rust-faust", branch = "main" }
-image = "0.24"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

@@ -24,6 +24,12 @@ impl Volume {
     }
 }
 
+impl From<f32> for Volume {
+    fn from(value: f32) -> Self {
+        Self(value)
+    }
+}
+
 impl Add<IntervalF> for MidiNoteF {
     type Output = Self;
 

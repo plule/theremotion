@@ -1,19 +1,25 @@
 mod v1;
 mod v2;
-use std::{ops::RangeInclusive, path::PathBuf};
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+    ops::RangeInclusive,
+    path::PathBuf,
+};
 
 use anyhow::{Context, Ok, Result};
 use crossbeam_channel::Sender;
 use serde::{Deserialize, Serialize};
 use staff::{
     midi::{MidiNote, Octave},
+    scale::ScaleIntervals,
     Interval,
 };
 
 use crate::{
     controls::Controls,
     dsp_thread::ParameterUpdate,
-    solfege::{IntervalF, MidiNoteF, OctaveInterval, ScaleWindows},
+    solfege::{IntervalF, MidiNoteF, MoreScales, OctaveInterval, ScaleWindows},
 };
 
 pub use self::v1::{EchoSettings, FxSettings, Handedness, MixSettings, NamedScale, ReverbSettings};
@@ -98,15 +104,38 @@ impl Settings {
         serde_yaml::to_writer(f, &settings)?;
         Ok(())
     }
+
+    pub fn system_and_user_scales(&self) -> impl Iterator<Item = (NamedScale, bool)> {
+        let user_scales = self.scales.clone().into_iter().map(|s| (s, true));
+        let system_scales = [
+            ("Chromatic", ScaleIntervals::all()),
+            ("Major", ScaleIntervals::major()),
+            ("Melodic Minor", ScaleIntervals::melodic_minor()),
+            ("Harmonic Minor", ScaleIntervals::harmonic_minor()),
+            ("Natural Minor", ScaleIntervals::natural_minor()),
+            ("Dorian", ScaleIntervals::dorian()),
+            ("Blues", ScaleIntervals::blues()),
+            ("Freygish", ScaleIntervals::freygish()),
+            ("Altered Dorian", ScaleIntervals::altered_dorian()),
+        ]
+        .map(|(name, scale)| (NamedScale::new(name.to_string(), scale), false));
+        user_scales.chain(system_scales)
+    }
+
+    pub fn system_and_user_presets(&self) -> impl Iterator<Item = (&Preset, bool)> {
+        let user_presets = self.presets.iter().map(|p| (p, true));
+        let system_presets = Preset::system_presets().iter().map(|p| (p, false));
+        user_presets.chain(system_presets)
+    }
 }
 
 impl Preset {
     pub fn octave_range() -> OctaveInterval {
         OctaveInterval::new(3)
     }
-    /// Root note from the zero octave
+    /// Root note from the first octave
     pub fn root_note(&self) -> MidiNote {
-        MidiNote::new(self.pitch, Octave::ZERO)
+        MidiNote::new(self.pitch, Octave::NEGATIVE_ONE)
     }
 
     pub fn root_note_f(&self) -> MidiNoteF {
@@ -114,7 +143,7 @@ impl Preset {
     }
 
     pub fn lead_interval(&self) -> Interval {
-        OctaveInterval::from_octaves(Octave::ZERO, self.lead_octave).into()
+        OctaveInterval::from_octaves(Octave::NEGATIVE_ONE, self.lead_octave).into()
     }
 
     pub fn lead_interval_f(&self) -> IntervalF {
@@ -122,7 +151,7 @@ impl Preset {
     }
 
     pub fn pluck_interval(&self) -> Interval {
-        OctaveInterval::from_octaves(Octave::ZERO, self.guitar_octave).into()
+        OctaveInterval::from_octaves(Octave::NEGATIVE_ONE, self.guitar_octave).into()
     }
 
     pub fn pluck_interval_f(&self) -> IntervalF {
@@ -130,7 +159,7 @@ impl Preset {
     }
 
     pub fn drone_interval(&self) -> Interval {
-        OctaveInterval::from_octaves(Octave::ZERO, self.drone_octave).into()
+        OctaveInterval::from_octaves(Octave::NEGATIVE_ONE, self.drone_octave).into()
     }
 
     pub fn note_range(&self) -> RangeInclusive<MidiNote> {
@@ -175,7 +204,7 @@ impl Preset {
             if let Some(drone) = drone {
                 control
                     .note
-                    .send(tx, (drone + drone_interval).into_byte() as f32)?;
+                    .send(tx, ((drone + drone_interval).into_byte()) as f32)?;
                 control.volume.send(tx, 1.0)?;
             } else {
                 control.volume.send(tx, 0.0)?;
@@ -196,6 +225,12 @@ impl Preset {
 
     pub fn system_presets() -> &'static Vec<Self> {
         &PRESETS
+    }
+
+    pub fn id(&self) -> i32 {
+        let mut hasher = DefaultHasher::default();
+        self.name.hash(&mut hasher);
+        hasher.finish() as i32
     }
 }
 

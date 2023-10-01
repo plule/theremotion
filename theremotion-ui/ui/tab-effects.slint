@@ -1,0 +1,130 @@
+import { Tab , CaptionedRotaryKnob, Group, TouchButton} from "common.slint";
+import { GridBox } from "std-widgets.slint";
+
+export component EffectsTab inherits Tab {
+    in-out property <float> echo-amount: 0.5;
+    in-out property <float> echo-duration: 0.5;
+    in-out property <float> echo-feedback: 0.5;
+    callback echo-amount-changed(float);
+    callback echo-duration-changed(float);
+    callback echo-feedback-changed(float);
+
+    in-out property <float> reverb-amount: 0.5;
+    in-out property <float> reverb-time: 0.5;
+    in-out property <float> reverb-damp: 0.5;
+    in-out property <float> reverb-size: 0.5;
+    callback reverb-amount-changed(float);
+    callback reverb-time-changed(float);
+    callback reverb-damp-changed(float);
+    callback reverb-size-changed(float);
+
+    in-out property <float> drone-detune: 0.5;
+    callback drone-detune-changed(float);
+
+    in-out property enable-guitar-drone <=> gdrone.checked;
+    callback guitar-drone-clicked <=> gdrone.clicked;
+
+    property <length> inner-padding: 10px;
+    property <length> inner-spacing: 40px;
+
+    GridBox {
+        Group {
+            col: 0;
+            rowspan: 2;
+            name: "Echo";
+            GridBox {
+                CaptionedRotaryKnob { 
+                    text: "Amount";
+                    value: echo-amount;
+                    changed(v) => {echo-amount-changed(v)}
+                    row: 0;
+                    col: 0;
+                }
+                CaptionedRotaryKnob {
+                    text: "Duration";
+                    value: echo-duration;
+                    changed(v) => {echo-duration-changed(v)}
+                    row: 0;
+                    col: 1;
+                }
+                CaptionedRotaryKnob {
+                    text: "Feedback";
+                    value: echo-feedback;
+                    changed(v) => {echo-feedback-changed(v)}
+                    row: 1;
+                    col: 0;
+                    rowspan: 2;
+                }
+            }
+
+        }
+
+        Group {
+            col: 1;
+            rowspan: 2;
+            name: "Reverb";
+
+            GridBox {
+                spacing: inner-spacing;
+                padding: inner-padding;
+                CaptionedRotaryKnob {
+                    text: "Amount";
+                    value: reverb-amount;
+                    changed(v) => {reverb-amount-changed(v)}
+                    row: 0;
+                    col: 0;
+                }
+                CaptionedRotaryKnob {
+                    text: "Time";
+                    value: reverb-time;
+                    minimum: 0.1;
+                    maximum: 60;
+                    changed(v) => {reverb-time-changed(v)}
+                    row: 0;
+                    col: 1;
+                }
+                CaptionedRotaryKnob {
+                    text: "Damp";
+                    value: reverb-damp;
+                    changed(v) => {reverb-damp-changed(v)}
+                    row: 1;
+                    col: 0;
+                }
+                CaptionedRotaryKnob {
+                    text: "Size";
+                    value: reverb-size;
+                    minimum: 0.5;
+                    maximum: 5;
+                    changed(v) => {reverb-size-changed(v)}
+                    row: 1;
+                    col: 1;
+                }
+            }
+        }
+        Group {
+            col: 2;
+            name: "Drone";
+            height: 50%;
+            HorizontalLayout {
+                alignment: LayoutAlignment.center;
+                spacing: inner-spacing;
+                padding: inner-padding;
+                CaptionedRotaryKnob {
+                    text: "Detune";
+                    value: drone-detune;
+                    changed(v) => {drone-detune-changed(v)}
+                }
+            }
+        }
+
+        Group {
+            col: 2;
+            row: 1;
+            name: "Pluck Drone";
+            gdrone := TouchButton { 
+                text: "Enable";
+            }
+        }
+
+    }
+}

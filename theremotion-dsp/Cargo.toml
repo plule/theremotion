@@ -1,0 +1,15 @@
+[package]
+name = "theremotion-dsp"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["default-boxed"]
+default-boxed = []
+
+[dependencies]
+faust-types = { git = "https://github.com/Frando/rust-faust", branch = "main" }
+default-boxed = "0.2"
+
+[build-dependencies]
+faust-build = { git = "https://github.com/Frando/rust-faust", branch = "main" }

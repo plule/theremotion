@@ -1,0 +1,98 @@
+import { Pitches, TouchButton, Group} from "common.slint";
+import { KeyboardTab, EditMode } from "keyboard.slint";
+import { GridBox} from "std-widgets.slint";
+
+
+component OctaveSelector inherits HorizontalLayout {
+    in property <int> octave;
+    callback clicked(int);
+    spacing: 4px;
+    for octave in [0,1,2,3,4]: TouchButton  {
+        text: octave;
+        checked: octave == root.octave;
+        clicked => {clicked(octave)}
+    }
+}
+
+component PitchSelector inherits Rectangle {
+    in property <int> pitch;
+    callback clicked(int);
+    property <length> spacing: 4px;
+    property <length> button-width: self.width / 4;
+    property <length> button-height: self.height / 3;
+    property <[[int]]> pitches: [
+        [0,1,2,3],
+        [4,5,6,7],
+        [8,9,10,11]
+    ];
+
+    for row-pitches[row] in pitches: Rectangle {
+        for pitch[col] in row-pitches: TouchButton {
+            x: col * button-width + spacing / 2;
+            width: (button-width - spacing);
+            y: row * button-height + spacing / 2;
+            height: (button-height - spacing);
+            text: Pitches.pitches[pitch].text;
+            checked: root.pitch == pitch;
+            clicked => {clicked(pitch)}
+        }
+    }
+}
+
+export component RootTab inherits KeyboardTab {
+    edit-mode: EditMode.Root;
+    in property <int> lead-octave;
+    in property <int> guitar-octave;
+    in property <int> drone-octave;
+    callback lead-octave-clicked(int);
+    callback guitar-octave-clicked(int);
+    callback drone-octave-clicked(int);
+
+    property <float> button-stretch: 0.5;
+    property <float> text-stretch: 0.1;
+    GridBox {
+        spacing: 2px;
+        Group {
+            col: 0;
+            row: 0;
+            rowspan: 3;
+            name: "Root Note";
+            PitchSelector {
+                vertical-stretch: 1;
+                pitch: root.root-pitch;
+                clicked(n) => {root.clicked(n)}
+            }
+        }
+
+        Group {
+            col: 1;
+            row: 0;
+            name: "Lead Octave";
+            OctaveSelector {
+                vertical-stretch: button-stretch;
+                octave: lead-octave;
+                clicked(o) => {lead-octave-clicked(o)}
+            }
+        }
+        Group {
+            col: 1;
+            row: 1;
+            name: "Guitar Octave";
+            OctaveSelector {
+                vertical-stretch: button-stretch;
+                octave: guitar-octave;
+                clicked(o) => {guitar-octave-clicked(o)}
+            }
+        }
+        Group {
+            col: 1;
+            row: 2;
+            name: "Drone Octave";
+            OctaveSelector {
+                vertical-stretch: button-stretch;
+                octave: drone-octave;
+                clicked(o) => {drone-octave-clicked(o)}
+            }
+        }
+    }
+}
