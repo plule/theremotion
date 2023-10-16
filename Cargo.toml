@@ -18,8 +18,8 @@ leap = ["leaprs"]
 default-boxed = []
 
 [dependencies]
-egui = "0.22"
-eframe = { version = "0.22" }
+egui = "0.23"
+eframe = { version = "0.23" }
 tracing-subscriber = "0.3"
 cpal = "0.15"
 faust-types = { git = "https://github.com/Frando/rust-faust", branch = "main" }
