@@ -56,6 +56,14 @@ Building on Linux requires to install some development libraries including:
 
 - `libasound2-dev`
 
+### Crates
+
+The source code is divided into 3 crates:
+
+- **theremotion** is the main crate
+- **theremotion-dsp** contains the DSP producing the audio, generated with Faust
+- **theremotion-ui** contains the user interface, generated with Slint
+
 ## License
 
 With the exception of any third-parties (such as the Rust, Faust and Ultraleap
