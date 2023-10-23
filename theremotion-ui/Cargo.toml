@@ -1,0 +1,19 @@
+[package]
+name = "theremotion-ui"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+slint = { version = "1.2.1", default-features = false, features = [
+    "std",
+    "backend-winit",
+    "accessibility",
+    "compat-1-2",
+    "log",
+    "renderer-skia",
+] }
+
+[build-dependencies]
+slint-build = "1.2.1"

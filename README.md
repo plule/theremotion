@@ -27,6 +27,8 @@ The hand tracking is provided by Ultraleap's [Leap Motion Controller](https://ww
 
 The sound generation is created with Grame's [Faust](https://faust.grame.fr/).
 
+The UI is built with [Slint](https://slint.dev).
+
 The program is built with [Rust](https://www.rust-lang.org).
 
 ## Development
@@ -57,5 +59,6 @@ Building on Linux requires to install some development libraries including:
 ## License
 
 With the exception of any third-parties (such as the Rust, Faust and Ultraleap
-logos, the Ultraleap redistributables, the Noto Emoji font), Theremotion is
-distributed under the GPLv3 license.
+logos, the Ultraleap redistributables, the Noto Emoji fonts), Theremotion is
+distributed under the GPLv3 license. Its DSP ("theremotion-dsp") is distributed
+under the BSD license.

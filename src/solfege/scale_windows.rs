@@ -1,6 +1,5 @@
-use std::{cmp::Ordering, ops::RangeInclusive};
+use std::{cmp::Ordering, collections::HashSet, ops::RangeInclusive};
 
-use eframe::epaint::ahash::HashSet;
 use itertools::Itertools;
 use staff::{midi::MidiNote, scale::ScaleIntervals, Pitch};
 

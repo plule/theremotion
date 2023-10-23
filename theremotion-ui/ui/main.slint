@@ -1,0 +1,303 @@
+import { Palette, Style, Handedness, TitleText, BevelRectangle} from "common.slint";
+import { PlayingTab } from "tab-play.slint";
+import { SettingsTab } from "tab-settings.slint";
+import { RootTab } from "tab-root.slint";
+import { MixTab } from "tab-mix.slint";
+import { ScaleTab } from "tab-scale.slint";
+import { EffectsTab } from "tab-effects.slint";
+import { PresetsTab } from "tab-presets.slint";
+
+struct TabData {
+    title: string,
+    icon: string,
+}
+
+export component MainWindow inherits Window {
+    title: "Theremotion";
+    icon: @image-url("./icon.svg");
+    background: Palette.win-bg;
+    preferred-width: 800px;
+    preferred-height: 480px;
+    //width: 800px;
+    //height: 480px;
+    property <int> active-tab;
+    property <[TabData]> tabs: [
+        {
+            title: "Play",
+            icon: "👐"
+        },
+        {
+            title: "Root",
+            icon: "🎵"
+        },
+        {
+            title: "Scale",
+            icon: "🎼",
+        },
+        {
+            title: "Mix",
+            icon: "🎚️",
+        },
+        {
+            title: "Effects",
+            icon: "🎛️",
+        },
+        {
+            title: "Presets",
+            icon: "💾",
+        },
+        {
+            title: "Settings",
+            icon: "⚙️"
+        },
+    ];
+
+    // Common properties
+    in property<bool> has-left-hand: true;
+    in property<bool> has-right-hand: true;
+
+    // Keyboard tabs
+    in property <[float]> leads: [
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.8, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    ];
+    in property<[float]> drones: [
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    ];
+    in property<int> root-pitch: 6;
+    in property <[bool]> scale-notes: [
+        false, false, false, false, false, false, false, false, false, false, false, false,
+        true, false, true, true, false, true, false, true, false, true, true, false,
+        true, false, true, true, false, true, false, true, false, true, true, false,
+        true, false, true, true, false, true, false, true, false, true, true, false,
+    ];
+
+    // Play tab
+    callback drone-clicked <=> tplay.clicked;
+
+    in property lead-volume <=> tplay.volume;
+    in property chords-number <=> tplay.chords-number;
+    in property raw-note <=> tplay.tuner-note;
+    in property tuned-note <=> tplay.tuner-note-tuned;
+    in property tuner-note-focus <=> tplay.tuner-note-focus;
+    in property filter-cutoff <=> tplay.filter-cutoff;
+    in property filter-resonance <=> tplay.filter-resonance;
+    in property lead-raw-note <=> tplay.raw-note;
+    in property lead-notes <=> tplay.notes;
+    in property highest-note <=> tplay.highest-note;
+    in property<int> autotune-amount: 2; // todo
+    in property<bool> strum-ready: true; // todo
+    in property<float> trumpet-strength: 0.5; // todo
+
+    // Root tab
+    callback root-pitch-clicked <=> troot.clicked;
+    in property lead-octave <=> troot.lead-octave;
+    in property guitar-octave <=> troot.guitar-octave;
+    in property drone-octave <=> troot.drone-octave;
+
+    callback lead-octave-clicked <=> troot.lead-octave-clicked;
+    callback guitar-octave-clicked <=> troot.guitar-octave-clicked;
+    callback drone-octave-clicked <=> troot.drone-octave-clicked;
+    
+
+    // Scale tab
+    callback scale-clicked <=> tscale.clicked;
+
+    in property scale-presets <=> tscale.scale-presets;
+    callback select-scale <=> tscale.select-scale;
+    callback delete-scale <=> tscale.delete-scale;
+    callback save-scale <=> tscale.save-scale;
+
+    // Mix tab
+    in-out property mix-lead <=> tmix.mix-lead;
+    in-out property mix-guitar <=> tmix.mix-guitar;
+    in-out property mix-drone <=> tmix.mix-drone;
+    in-out property mix-master <=> tmix.mix-master;
+
+    callback mix-lead-changed <=> tmix.mix-lead-changed;
+    callback mix-guitar-changed <=> tmix.mix-guitar-changed;
+    callback mix-drone-changed <=> tmix.mix-drone-changed;
+    callback mix-master-changed <=> tmix.mix-master-changed;
+
+    // Effects tab
+    in property echo-amount <=> teffects.echo-amount;
+    in property echo-duration <=> teffects.echo-duration;
+    in property echo-feedback <=> teffects.echo-feedback;
+    callback echo-amount-changed <=> teffects.echo-amount-changed;
+    callback echo-duration-changed <=> teffects.echo-duration-changed;
+    callback echo-feedback-changed <=> teffects.echo-feedback-changed;
+
+    in property reverb-amount <=> teffects.reverb-amount;
+    in property reverb-time <=> teffects.reverb-time;
+    in property reverb-damp <=> teffects.reverb-damp;
+    in property reverb-size <=> teffects.reverb-size;
+    callback reverb-amount-changed <=> teffects.reverb-amount-changed;
+    callback reverb-time-changed <=> teffects.reverb-time-changed;
+    callback reverb-damp-changed <=> teffects.reverb-damp-changed;
+    callback reverb-size-changed <=> teffects.reverb-size-changed;
+
+    in property drone-detune <=> teffects.drone-detune;
+    callback drone-detune-changed <=> teffects.drone-detune-changed;
+
+    in-out property enable-guitar-drone <=> teffects.enable-guitar-drone;
+    callback guitar-drone-clicked <=> teffects.guitar-drone-clicked;
+
+    // Presets tab
+    in property presets <=> tpresets.presets;
+    callback select-preset <=> tpresets.select-preset;
+    callback delete-preset <=> tpresets.delete-preset;
+    callback save-preset <=> tpresets.save-preset;
+
+    // Settings tab
+    in property handedness <=> tsettings.handedness;
+    in property fullscreen <=> tsettings.fullscreen;
+    in property high-priority <=> tsettings.high-priority;
+    in property use-on-screen-keyboard <=> tsettings.use-on-screen-keyboard;
+
+    callback fullscreen-clicked <=> tsettings.fullscreen-clicked;
+    callback high-priority-clicked <=> tsettings.high-priority-clicked;
+    callback on-screen-kbd-clicked <=> tsettings.on-screen-kbd-clicked;
+    callback lh-clicked <=> tsettings.lh-clicked;
+    callback rh-clicked <=> tsettings.rh-clicked;
+
+    GridLayout {
+        spacing: 0px;
+        padding: 2px;
+
+        // Tab title
+        HorizontalLayout {
+            row: 0;
+            col: 0;
+
+            Rectangle {}
+            title := Rectangle {
+                clip: true;
+                height: 45px;
+                width: 50%;
+                BevelRectangle {
+                    height: title.height + self.border-radius;
+                    y: 0;
+                    background: Palette.tab-bg;
+                    border-radius: Style.area-corner-radius;
+                }
+                TitleText { text: tabs[active-tab].title; }
+            }
+            Rectangle {}
+        }
+
+        // Tab content
+        tab-content := BevelRectangle {
+            row: 1;
+            col: 0;
+            clip: true;
+            background: Palette.tab-bg;
+            border-radius: Style.area-corner-radius;
+
+            tplay := PlayingTab {
+                idx: 0;
+                current-idx: active-tab;
+
+                leads: leads;
+                drones: drones;
+                root-pitch: root-pitch;
+                scale-notes: scale-notes;
+
+                handedness: handedness;
+            }
+
+            troot := RootTab {
+                idx: 1;
+                current-idx: active-tab;
+
+                leads: leads;
+                drones: drones;
+                root-pitch: root-pitch;
+                scale-notes: scale-notes;
+            }
+
+            tscale := ScaleTab {
+                idx: 2;
+                current-idx: active-tab;
+
+                leads: leads;
+                drones: drones;
+                root-pitch: root-pitch;
+                scale-notes: scale-notes;
+            }
+
+            tmix := MixTab {
+                idx: 3;
+                current-idx: active-tab;
+            }
+
+            teffects := EffectsTab { 
+                idx: 4;
+                current-idx: active-tab;
+            }
+
+            tpresets := PresetsTab { 
+                idx: 5;
+                current-idx: active-tab;
+            }
+
+            tsettings := SettingsTab {
+                idx: 6;
+                current-idx: active-tab;
+            }
+        }
+
+        Rectangle {
+            row: 1;
+            col: 1;
+
+            private property <length> icon-size: 55px;
+
+            tab-bar := VerticalLayout {
+                padding-top: Style.area-corner-radius;
+                padding-bottom: Style.area-corner-radius;
+                alignment: LayoutAlignment.stretch;
+    
+                for tab[idx] in tabs: TouchArea { 
+                    width: icon-size;
+                    height: icon-size;
+                    Text {
+                        text: tab.icon;
+                        font-size: 35px;
+                        font-family: "Noto Emoji";
+                        vertical-alignment: TextVerticalAlignment.center;
+                        horizontal-alignment: TextHorizontalAlignment.center;
+                    }
+
+                    clicked => {
+                        root.active-tab = idx
+                    }
+                }
+
+                // Don't constraint height
+                Rectangle {}
+            }
+
+            Rectangle {
+                clip: true;
+                z: -1;
+                Rectangle {
+                    border-radius: Style.area-corner-radius;
+                    height: icon-size;
+                    width: icon-size + Style.area-corner-radius;
+                    x: tab-bar.x - Style.area-corner-radius;
+                    y: tab-bar.padding-top + icon-size*active-tab;
+                    animate y {
+                         duration: 250ms;
+                         easing: ease-out;
+                    }
+                    background: Palette.tab-bg;
+                }
+            }
+        }
+    }
+}

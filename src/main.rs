@@ -8,12 +8,18 @@
 /// DSP controllable parameters
 mod controls;
 
+/// Thread transforming and dispatching the messages from the others
+mod conductor_thread;
+
 /// Thread computing the DSP and sending parameter updates
 mod dsp_thread;
 
 /// Thread reading the hand positions
 #[cfg(feature = "leap")]
 mod leap_thread;
+
+/// Mod creating the main window and event loop
+mod ui_thread;
 
 /// Application settings
 mod settings;
@@ -24,25 +30,15 @@ mod solfege;
 /// Poor man's Step implementation
 mod step_iter;
 
-/// User interface
-pub mod ui;
-
-/// Generated Faust DSP
-#[allow(clippy::all)]
-#[rustfmt::skip]
-mod dsp;
-
 use cpal::traits::StreamTrait;
 use default_boxed::DefaultBoxed;
 use faust_state::DspHandle;
 use settings::Settings;
 pub use step_iter::StepIter;
+use theremotion_ui::*;
 
 /// Theremotion version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-/// Theremotion icon data
-const ICON: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/icon"));
 
 fn main() {
     // Log to stdout (if you run with `RUST_LOG=debug`).
@@ -56,23 +52,34 @@ fn main() {
     }
 
     // Init communication channels
-    let (settings_tx, settings_rx) = crossbeam_channel::unbounded(); // Settings update to leap thread
+    let (leap_tx, leap_rx) = crossbeam_channel::unbounded(); // Settings update to leap thread
     let (ui_tx, ui_rx) = crossbeam_channel::unbounded(); // UI update messages
     let (dsp_tx, dsp_rx) = crossbeam_channel::unbounded(); // DSP parameter update messages
+    let (co_tx, co_rx) = crossbeam_channel::unbounded(); // Conductor messages
 
     // Init DSP
-    let dsp = dsp::Instrument::default_boxed();
-    let (dsp, state) = DspHandle::<dsp::Instrument>::from_dsp(dsp);
+    let dsp = theremotion_dsp::Instrument::default_boxed();
+    let (dsp, state) = DspHandle::<theremotion_dsp::Instrument>::from_dsp(dsp);
 
     // Init the controls struct
     let controls = controls::Controls::from(&state);
 
     // Queue the initialization messages
-    settings_tx.send(settings.clone()).unwrap();
+    leap_tx.send(settings.clone()).unwrap();
     settings
         .current_preset
         .send_to_dsp(&controls, &dsp_tx)
         .unwrap();
+
+    // Start the conductor thread
+    let conductor = conductor_thread::run(
+        settings.clone(),
+        controls.clone(),
+        co_rx,
+        dsp_tx.clone(),
+        ui_tx.clone(),
+        leap_tx.clone(),
+    );
 
     // Init sound output
     let stream = dsp_thread::run(dsp, state, dsp_rx);
@@ -80,47 +87,21 @@ fn main() {
 
     // Init leap thread
     #[cfg(feature = "leap")]
-    let leap_worker = leap_thread::run(controls.clone(), settings_rx, ui_tx, dsp_tx.clone());
+    let leap_worker = leap_thread::run(leap_rx, co_tx.clone());
 
     // Start UI
-    let fullscreen = settings.system.fullscreen;
-    let initial_window_size = if fullscreen {
-        None
-    } else {
-        Some(egui::vec2(800.0, 480.0))
-    };
-    let native_options = eframe::NativeOptions {
-        initial_window_pos: Some(egui::Pos2 { x: 0.0, y: 0.0 }),
-        initial_window_size,
-        fullscreen,
-        icon_data: Some(eframe::IconData {
-            rgba: ICON.to_vec(),
-            width: 128,
-            height: 128,
-        }),
-        ..Default::default()
-    };
-
-    eframe::run_native(
-        format!("Theremotion v{VERSION}").as_str(),
-        native_options,
-        Box::new(move |cc| {
-            Box::new(ui::App::new(
-                cc,
-                ui_rx,
-                dsp_tx.clone(),
-                settings_tx,
-                controls.clone(),
-                settings,
-            ))
-        }),
-    )
-    .expect("Failed to run the UI");
+    let (window, window_timer) = ui_thread::run(co_tx.clone(), ui_rx, settings);
+    window.run().expect("Failed to start the UI");
+    drop(window_timer);
 
     #[cfg(feature = "leap")]
     leap_worker
         .join()
         .expect("Error when stopping the leap worker");
+
+    conductor
+        .join()
+        .expect("Error when stopping the conductor thread");
 }
 
 #[cfg(target_os = "windows")]

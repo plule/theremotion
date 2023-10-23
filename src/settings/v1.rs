@@ -1,3 +1,8 @@
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
+
 use serde::{Deserialize, Serialize};
 use staff::{
     midi::{MidiNote, Octave},
@@ -80,7 +85,7 @@ impl Default for Preset {
 }
 
 /// Mix table settings
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields, default)]
 pub struct MixSettings {
     /// Master volume
@@ -105,7 +110,7 @@ impl Default for MixSettings {
 }
 
 /// Effects settings
-#[derive(Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 #[serde(deny_unknown_fields, default)]
 pub struct FxSettings {
     /// Echo settings
@@ -114,7 +119,7 @@ pub struct FxSettings {
     pub reverb: ReverbSettings,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields, default)]
 /// Echo settings
 pub struct EchoSettings {
@@ -137,7 +142,7 @@ impl Default for EchoSettings {
 }
 
 /// Reverb settings
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields, default)]
 pub struct ReverbSettings {
     /// Reverb amount
@@ -180,7 +185,7 @@ impl Default for DroneSettings {
     }
 }
 
-#[derive(Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct System {
     /// Start theremotion in full screen
@@ -200,7 +205,7 @@ pub struct System {
 }
 
 /// Left or right handed mode
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub enum Handedness {
     /// Right handed mode
@@ -220,7 +225,7 @@ impl Default for Handedness {
 }
 
 /// Scale with a name
-#[derive(Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(deny_unknown_fields, default)]
 pub struct NamedScale {
     /// Human readable name
@@ -233,5 +238,13 @@ impl NamedScale {
     /// Creates a new [`NamedScale`].
     pub fn new(name: String, scale: ScaleIntervals) -> Self {
         Self { name, scale }
+    }
+
+    /// Pseudo hash for identification in the ui
+    pub fn id(&self) -> i32 {
+        let mut hasher = DefaultHasher::default();
+        self.name.hash(&mut hasher);
+        self.scale.bits.hash(&mut hasher);
+        hasher.finish() as i32
     }
 }
