@@ -41,7 +41,7 @@ itertools = "0.11"
 lazy_static = "1.4.0"
 derive_more = "0.99.17"
 slint = { version = "1.2.1", default-features = false }
-tracing = "0.1.39"
+tracing = "0.1.40"
 
 [profile.dev.package.theremotion-ui]
 # Generated code, and tends to overflow
