@@ -173,7 +173,7 @@
         </Feature>
 
         <SetProperty Id='ARPINSTALLLOCATION' Value='[APPLICATIONFOLDER]' After='CostFinalize'/>
-        <Icon Id='ProductICO.ico' SourceFile='assets\icon.ico'/>
+        <Icon Id='ProductICO.ico' SourceFile='theremotion\assets\icon.ico'/>
         <Property Id='ARPPRODUCTICON' Value='ProductICO.ico' />
 
         <Property Id='ARPHELPLINK' Value='https://plule.github.io/theremotion'/>
