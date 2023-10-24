@@ -2,6 +2,17 @@
 members = ["theremotion", "theremotion-dsp", "theremotion-ui"]
 resolver = "2"
 
+[workspace.package]
+version = "1.5.0"
+authors = ["Pierre Lulé <pierre@lule.fr>"]
+edition = "2021"
+license = "GPL-3.0-or-later"
+readme = "README.md"
+repository = "https://github.com/plule/theremotion"
+homepage = "https://plule.github.io/theremotion"
+documentation = "https://plule.github.io/theremotion"
+description = "Theremotion is a synthesizer inspired by the Theremin controlled by a Leap Motion"
+
 # Generated code - prone to stack overflow on debug
 [profile.dev.package.theremotion-ui]
 opt-level = 3
