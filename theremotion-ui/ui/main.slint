@@ -171,7 +171,7 @@ export component MainWindow inherits Window {
     callback close();
 
     // Internal
-    FocusScope {
+    fs := FocusScope {
         key-pressed(k) => {
             if(k.text == Key.Escape) {
                 close();
@@ -195,13 +195,21 @@ export component MainWindow inherits Window {
                 clip: true;
                 height: 45px;
                 width: 50%;
-                BevelRectangle {
+                br := BevelRectangle {
                     height: title.height + self.border-radius;
                     y: 0;
                     background: Palette.tab-bg;
                     border-radius: Style.area-corner-radius;
+                    HorizontalLayout {
+                        padding-bottom: 7px;
+                        padding-left: 20px;
+                        padding-right: 20px;
+                        alignment: LayoutAlignment.space-between;
+                        TitleText { text: has-left-hand ? "👈" : "⬜"; font-family: "Noto Emoji"; }
+                        TitleText { text: tabs[active-tab].title; }
+                        TitleText { text: has-right-hand ? "👉" : "⬜"; font-family: "Noto Emoji"; }
+                    }
                 }
-                TitleText { text: tabs[active-tab].title; }
             }
             Rectangle {}
         }
@@ -279,6 +287,7 @@ export component MainWindow inherits Window {
                 alignment: LayoutAlignment.stretch;
     
                 for tab[idx] in tabs: TouchArea { 
+                    forward-focus: fs;
                     width: icon-size;
                     height: icon-size;
                     Text {
