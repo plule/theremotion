@@ -269,12 +269,14 @@ export component TouchButton inherits BevelRectangle {
     callback clicked <=> ta.clicked;
     in-out property <bool> checked;
     in property <string> text;
+    in property <image> icon;
     in property <brush> active-color: Palette.button-active;
     in property <brush> inactive-color: Palette.button-inactive;
     in property <brush> hover-color: Palette.button-hover;
     in property <string> font-family: "Noto Sans";
     in property <length> font-size: 25px;
     in property <bool> checkable: true;
+
     background: ta.has-hover ? hover-color : inactive-color;
     
     contrast: checked ? 10% : 30%;
@@ -284,12 +286,17 @@ export component TouchButton inherits BevelRectangle {
 
     ScreenGlare {}
 
-    Text {
-        y: root.height / 2 - font-size;
+    if text != "": Text {
+        vertical-alignment: root.checkable ? TextVerticalAlignment.top : TextVerticalAlignment.center;
         font-family: font-family;
         font-size: font-size;
         text: text;
         color: Palette.button-text;
+    }
+
+    if text == "": Image {
+        source: root.icon;
+        colorize: Palette.button-text;
     }
 
     if checkable: Led {
