@@ -3870,7 +3870,7 @@ checksum = "f18aa187839b2bdb1ad2fa35ead8c4c2976b64e4363c386d45ac0f7ee85c9233"
 
 [[package]]
 name = "theremotion"
-version = "1.5.0"
+version = "1.6.0"
 dependencies = [
  "anyhow",
  "cpal",
@@ -3901,7 +3901,7 @@ dependencies = [
 
 [[package]]
 name = "theremotion-dsp"
-version = "1.5.0"
+version = "1.6.0"
 dependencies = [
  "default-boxed",
  "faust-build",
@@ -3910,7 +3910,7 @@ dependencies = [
 
 [[package]]
 name = "theremotion-ui"
-version = "1.5.0"
+version = "1.6.0"
 dependencies = [
  "slint",
  "slint-build",
