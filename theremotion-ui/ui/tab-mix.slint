@@ -1,5 +1,4 @@
-import { CaptionedFader, Tab , Group} from "common.slint";
-import { HorizontalBox} from "std-widgets.slint";
+import { CaptionedFader, Tab , Group, HL} from "common.slint";
 
 export component MixTab inherits Tab {
     in-out property mix-lead <=> lead.value;
@@ -14,10 +13,10 @@ export component MixTab inherits Tab {
     callback mix-master-changed <=> master.changed;
 
     
-    HorizontalBox {
+    HL {
         alignment: LayoutAlignment.space-around;
         Group {
-            HorizontalLayout {
+            HL {
                 lead := CaptionedFader {
                     text: "Lead";
                 }
@@ -30,7 +29,7 @@ export component MixTab inherits Tab {
             }
         }
         Group {
-            HorizontalLayout {
+            HL {
                 master := CaptionedFader {
                     text: "Master";
                 }

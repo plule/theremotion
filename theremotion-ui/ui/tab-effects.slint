@@ -1,5 +1,4 @@
-import { Tab , CaptionedRotaryKnob, Group, TouchButton, TextTouchButton} from "common.slint";
-import { GridBox , VerticalBox} from "std-widgets.slint";
+import { Tab , CaptionedRotaryKnob, Group, TouchButton, TextTouchButton, GL, HL, VL} from "common.slint";
 
 export component EffectsTab inherits Tab {
     in-out property <float> echo-amount: 0;
@@ -27,12 +26,14 @@ export component EffectsTab inherits Tab {
     property <length> inner-padding: 10px;
     property <length> inner-spacing: 40px;
 
-    GridBox {
+    GL {
         Group {
             col: 0;
             rowspan: 2;
             name: "Echo";
-            GridBox {
+            GL {
+                spacing: inner-spacing;
+                padding: inner-padding;
                 CaptionedRotaryKnob { 
                     text: "Amount";
                     value: echo-amount;
@@ -64,7 +65,7 @@ export component EffectsTab inherits Tab {
             rowspan: 2;
             name: "Reverb";
 
-            GridBox {
+            GL {
                 spacing: inner-spacing;
                 padding: inner-padding;
                 CaptionedRotaryKnob {
@@ -105,7 +106,7 @@ export component EffectsTab inherits Tab {
             col: 2;
             name: "Drone";
             height: 50%;
-            HorizontalLayout {
+            HL {
                 alignment: LayoutAlignment.center;
                 spacing: inner-spacing;
                 padding: inner-padding;
@@ -121,7 +122,7 @@ export component EffectsTab inherits Tab {
             col: 2;
             row: 1;
             name: "Pluck Drone";
-            VerticalBox {
+            VL {
                 gdrone := TextTouchButton { 
                     text: "Enable";
                 }

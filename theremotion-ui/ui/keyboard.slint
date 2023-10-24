@@ -1,4 +1,4 @@
-import { Palette, Tab , BevelRectangle, Led, SmallText, Group} from "common.slint";
+import { Palette, Tab , BevelRectangle, Led, SmallText, Group, VL} from "common.slint";
 
 component Key inherits BevelRectangle {
     callback clicked;
@@ -164,36 +164,28 @@ export enum EditMode {
     Scale
 }
 
-export component KeyboardTab inherits Tab {
+export component KeyboardFooter {
     callback clicked <=> kb.clicked;
     in property <[bool]> scale-notes <=> kb.scale-notes;
     in property <[float]> leads <=> kb.leads;
     in property <[float]> drones <=> kb.drones;
     in property <int> root-pitch <=> kb.root-pitch;
     in property <EditMode> edit-mode: EditMode.Drone;
-    property <length> item-width: 75px;
-    
-    VerticalLayout {
-        Rectangle {
-            @children
-        }
 
+    VerticalLayout {
         Group {
             has-name: false;
             height: 110px;
             VerticalLayout {
-                padding: 8px;
-                padding-top: 0px;
-
                 HorizontalLayout {
                     alignment: LayoutAlignment.center;
                     kb := Keyboard {
-                        height: 85px;
+                        y: -5px;
+                        height: 80px;
                         width: 700px;
                     }
                 }
 
-        
                 HorizontalLayout {
                     height: 30px;
                     alignment: LayoutAlignment.center;
@@ -216,6 +208,5 @@ export component KeyboardTab inherits Tab {
             }
             
         }
-        
     }
 }

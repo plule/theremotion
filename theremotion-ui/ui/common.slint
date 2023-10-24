@@ -1,4 +1,4 @@
-import { HorizontalBox, LineEdit } from "std-widgets.slint";
+import { LineEdit } from "std-widgets.slint";
 import "./fonts/NotoEmoji-Bold.ttf";
 import "./fonts/NotoSans-Bold.ttf";
 
@@ -14,20 +14,22 @@ export global Palette {
     out property <color> inactive: porange.darker(200%);
 
     out property <color> neutral-bright: pbeige;
-    out property <color> neutral-dark: black;
+    out property <color> neutral-dark: porange.darker(500%);
 
-    out property <color> win-bg: neutral-dark;
+    out property <color> win-bg: pbeige.darker(6);
+
     out property <color> tab-bg: neutral-bright;
     out property <color> plot-bg: group-bg;
-    out property <color> group-bg: porange.darker(500%);
+    out property <color> group-bg: neutral-dark;
     out property <brush> screen-bg: @radial-gradient(circle,#ffffff21 0%, #ffffff00 100%);
 
     out property <color> button-inactive: neutral-bright;
     out property <color> button-active: porange;
     out property <color> button-hover: button-inactive.brighter(20%);
-    out property <brush> button-text: @linear-gradient(0deg, neutral-dark 0%, neutral-dark 30%, #4b4b4b 50%, neutral-dark 70%, neutral-dark 100%);
+    out property <brush> button-text: neutral-dark;
 
     out property <color> plot-grad: pgreen;
+    out property <color> plot-grad-text: neutral-bright;
     out property <color> lead: pcyan;
     out property <color> drone: ppink;
     out property <color> raw: porange;
@@ -48,11 +50,44 @@ export global Palette {
 }
 
 export global Style {
+    out property <length> area-padding: 8px;
+    out property <length> area-spacing: 8px;
+
     out property <length> area-corner-radius: 10px;
     out property <length> grad-extralight-thickness: 1px;
     out property <length> grad-light-thickness: 2px;
     out property <length> grad-strong-thickness: 5px;
     out property <length> grad-font-size: 20px;
+}
+
+export component HL inherits HorizontalLayout {
+    padding: Style.area-padding;
+    spacing: Style.area-spacing;
+}
+
+export component VL inherits VerticalLayout {
+    padding: Style.area-padding;
+    spacing: Style.area-spacing;
+}
+
+export component GL inherits GridLayout {
+    padding: Style.area-padding;
+    spacing: Style.area-spacing;
+}
+
+export component IHL inherits HorizontalLayout {
+    padding: 0px;
+    spacing: Style.area-spacing;
+}
+
+export component IVL inherits VerticalLayout {
+    padding: 0px;
+    spacing: Style.area-spacing;
+}
+
+export component IGL inherits GridLayout {
+    padding: 0px;
+    spacing: Style.area-spacing;
 }
 
 export component ScreenGlare {
@@ -203,8 +238,8 @@ export component TitleText inherits Text {
 }
 
 export component GradText inherits Text {
-    font-family: "Noto Emoji";
-    color: Palette.plot-grad;
+    font-family: "Noto Sans";
+    color: Palette.plot-grad-text;
     font-size: 20px;
 }
 
@@ -238,7 +273,7 @@ export component TouchButton inherits BevelRectangle {
     in property <brush> inactive-color: Palette.button-inactive;
     in property <brush> hover-color: Palette.button-hover;
     in property <string> font-family: "Noto Sans";
-    in property <length> font-size: 30px;
+    in property <length> font-size: 25px;
     in property <bool> checkable: true;
     background: ta.has-hover ? hover-color : inactive-color;
     
@@ -502,8 +537,9 @@ export component Group inherits Rectangle {
                 }
                 Rectangle {}
             }
+
     
-            Rectangle {
+            GL {
                 padding: 4px;
                 padding-top: 0px;
                 @children
@@ -536,7 +572,7 @@ export component SelectableButtons {
         interactive: true;
         viewport-height: options.length * 84px;
         //height: 100%;
-        for option[index] in options: HorizontalLayout {
+        for option[index] in options: HL {
             padding: 2px;
             spacing: 4px;
             height: 84px;
@@ -560,7 +596,7 @@ export component SelectableButtonsWithSave {
     callback delete-clicked <=> btns.delete-clicked;
     callback save-clicked(string);
 
-    HorizontalBox {
+    IHL {
         Group {
             width: 50%;
             //height: 10%;
@@ -569,11 +605,10 @@ export component SelectableButtonsWithSave {
         }
         Group {
             name: "Save new";
-            padding: 5px;
 
             //height: 78%;
-            VerticalLayout {
-                HorizontalBox {
+            IVL {
+                HL {
                     //height: 80px;
                     le:= LineEdit { 
                         font-size: 32px;
@@ -588,3 +623,4 @@ export component SelectableButtonsWithSave {
         }
     }
 }
+

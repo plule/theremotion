@@ -1,14 +1,12 @@
-import { Selectable, SelectableButtonsWithSave, Tab } from "common.slint";
+import { Selectable, SelectableButtonsWithSave, Tab , GL} from "common.slint";
 
 export component PresetsTab inherits Tab {
-    in property <[Selectable]> presets: [];
+    in property <[Selectable]> presets <=> btns.options;
     callback select-preset <=> btns.select-clicked;
     callback delete-preset <=> btns.delete-clicked;
     callback save-preset <=> btns.save-clicked;
 
-    btns := SelectableButtonsWithSave {
-        height: 100%;
-        width: 100%;
-        options: presets;
+    GL {
+        btns := SelectableButtonsWithSave {}
     }
 }

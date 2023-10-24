@@ -1,12 +1,10 @@
-import { Pitches, TouchButton, Group} from "common.slint";
-import { KeyboardTab, EditMode } from "keyboard.slint";
-import { GridBox} from "std-widgets.slint";
+import { Pitches, TouchButton, Group, GL, Style, HL, Tab} from "common.slint";
+import { EditMode , KeyboardFooter} from "keyboard.slint";
 
 
-component OctaveSelector inherits HorizontalLayout {
+component OctaveSelector inherits HL {
     in property <int> octave;
     callback clicked(int);
-    spacing: 4px;
     for octave in [0,1,2,3,4]: TouchButton  {
         text: octave;
         checked: octave == root.octave;
@@ -17,7 +15,8 @@ component OctaveSelector inherits HorizontalLayout {
 component PitchSelector inherits Rectangle {
     in property <int> pitch;
     callback clicked(int);
-    property <length> spacing: 4px;
+    property <length> spacing: Style.area-spacing;
+    padding: Style.area-padding;
     property <length> button-width: self.width / 4;
     property <length> button-height: self.height / 3;
     property <[[int]]> pitches: [
@@ -39,8 +38,7 @@ component PitchSelector inherits Rectangle {
     }
 }
 
-export component RootTab inherits KeyboardTab {
-    edit-mode: EditMode.Root;
+export component RootTab inherits Tab {
     in property <int> lead-octave;
     in property <int> guitar-octave;
     in property <int> drone-octave;
@@ -48,10 +46,15 @@ export component RootTab inherits KeyboardTab {
     callback guitar-octave-clicked(int);
     callback drone-octave-clicked(int);
 
+    callback clicked <=> kb.clicked;
+    in property <[bool]> scale-notes <=> kb.scale-notes;
+    in property <[float]> leads <=> kb.leads;
+    in property <[float]> drones <=> kb.drones;
+    in property <int> root-pitch <=> kb.root-pitch;
+
     property <float> button-stretch: 0.5;
     property <float> text-stretch: 0.1;
-    GridBox {
-        spacing: 2px;
+    GL {
         Group {
             col: 0;
             row: 0;
@@ -93,6 +96,11 @@ export component RootTab inherits KeyboardTab {
                 octave: drone-octave;
                 clicked(o) => {drone-octave-clicked(o)}
             }
+        }
+        kb := KeyboardFooter {
+            row: 3;
+            colspan: 2;
+            edit-mode: EditMode.Scale;
         }
     }
 }

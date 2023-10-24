@@ -1,5 +1,4 @@
-import { HorizontalBox, VerticalBox } from "std-widgets.slint";
-import { Tab, Handedness , Group, TextTouchButton} from "common.slint";
+import { Tab, Handedness , Group, TextTouchButton, VL, HL} from "common.slint";
 
 
 export component SettingsTab inherits Tab {
@@ -14,10 +13,10 @@ export component SettingsTab inherits Tab {
     callback lh-clicked;
     callback rh-clicked;
 
-    VerticalBox {
+    VL {
         Group {
             name: "System";
-            VerticalBox {
+            VL {
                 TextTouchButton {
                     text: "Fullscreen";
                     checked: fullscreen;
@@ -38,7 +37,7 @@ export component SettingsTab inherits Tab {
 
         Group {
             name: "Handedness";
-            HorizontalBox { 
+            HL { 
                 TextTouchButton { 
                     text: "Left Handed";
                     checked: handedness == Handedness.LeftHanded;

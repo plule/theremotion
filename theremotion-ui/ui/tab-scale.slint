@@ -1,17 +1,25 @@
-import { Tab, Selectable, SelectableButtonsWithSave} from "common.slint";
-import { EditMode , KeyboardTab} from "keyboard.slint";
+import { Tab, Selectable, SelectableButtonsWithSave, VL} from "common.slint";
+import { EditMode , KeyboardFooter} from "keyboard.slint";
 
-export component ScaleTab inherits KeyboardTab {
-    edit-mode: EditMode.Scale;
+export component ScaleTab inherits Tab {
+    callback clicked <=> kb.clicked;
+    in property <[bool]> scale-notes <=> kb.scale-notes;
+    in property <[float]> leads <=> kb.leads;
+    in property <[float]> drones <=> kb.drones;
+    in property <int> root-pitch <=> kb.root-pitch;
+
     in property <[Selectable]> scale-presets: [];
     callback select-scale <=> btns.select-clicked;
     callback delete-scale <=> btns.delete-clicked;
     callback save-scale <=> btns.save-clicked;
 
+    VL {
         btns := SelectableButtonsWithSave {
-            preferred-width: 100%;
-            preferred-height: 100%;
-            vertical-stretch: 1;
             options: scale-presets;
         }
+
+        kb := KeyboardFooter {
+            edit-mode: EditMode.Scale;
+        }
+    }
 }

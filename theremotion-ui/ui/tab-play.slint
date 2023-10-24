@@ -1,8 +1,6 @@
 import { Plot1D, Plot2D, Tuner } from "plot.slint";
-import { Tab, Circle, Palette, Style, NotePoint, Handedness } from "common.slint";
-import { KeyboardTab, EditMode } from "keyboard.slint";
-import { VerticalBox, HorizontalBox} from "std-widgets.slint";
-
+import { Tab, Circle, Palette, Style, NotePoint, Handedness , VL, HL, IHL} from "common.slint";
+import { EditMode , KeyboardFooter} from "keyboard.slint";
 
 component PitchPlot inherits Plot2D {
     text: "Pitch";
@@ -83,17 +81,24 @@ component VolumePlot inherits Plot1D {
 component ChordNumberPlot inherits Plot1D {
     text: "Chord";
     graduations: [
-        {value: 1, text: "1"},
-        {value: 2, text: "2"},
-        {value: 3, text: "3"},
-        {value: 4, text: "4"},
+        // Graduations are offset by one:
+        // 1 note and half is heard like two notes
+        {value: 1, text: "2"},
+        {value: 2, text: "3"},
+        {value: 3, text: "4"},
     ];
     min: 0;
-    max: 5;
+    max: 4;
 }
 
-export component PlayingTab inherits KeyboardTab {
-    edit-mode: EditMode.Drone;
+export component PlayingTab inherits Tab {
+    // keyboard
+    callback clicked <=> kb.clicked;
+    in property <[bool]> scale-notes <=> kb.scale-notes;
+    in property <[float]> leads <=> kb.leads;
+    in property <[float]> drones <=> kb.drones;
+    in property <int> root-pitch <=> kb.root-pitch;
+
     in property <length> gauge-width: 100px;
     in property <float> filter-cutoff: 0;
     in property <float> filter-resonance: 0;
@@ -107,10 +112,8 @@ export component PlayingTab inherits KeyboardTab {
     in property <int> highest-note: 45;
     in property <Handedness> handedness;
 
-    VerticalLayout {
-        padding: 4px;
-        spacing: 4px;
-        if handedness == Handedness.RightHanded: HorizontalLayout {
+    VL {
+        if handedness == Handedness.RightHanded: IHL {
             VolumePlot {
                 width: gauge-width;
                 value: volume;
@@ -137,7 +140,7 @@ export component PlayingTab inherits KeyboardTab {
                 value: chords-number;
             }
         }
-        if handedness == Handedness.LeftHanded: HorizontalLayout {
+        if handedness == Handedness.LeftHanded: IHL {
             spacing: 4px;
             ChordNumberPlot {
                 width: gauge-width;
@@ -173,6 +176,9 @@ export component PlayingTab inherits KeyboardTab {
             note-tuned: root.tuner-note-tuned;
             note-focus: root.tuner-note-focus;
             height: 40px;
+        }
+        kb := KeyboardFooter {
+            edit-mode: EditMode.Drone;
         }
     }
 }

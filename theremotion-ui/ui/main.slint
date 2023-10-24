@@ -1,4 +1,4 @@
-import { Palette, Style, Handedness, TitleText, BevelRectangle} from "common.slint";
+import { Palette, Style, Handedness, TitleText, BevelRectangle, GL} from "common.slint";
 import { PlayingTab } from "tab-play.slint";
 import { SettingsTab } from "tab-settings.slint";
 import { RootTab } from "tab-root.slint";
@@ -178,7 +178,7 @@ export component MainWindow inherits Window {
         }
     }
 
-    GridLayout {
+    GL {
         spacing: 0px;
         padding: 2px;
 
@@ -280,7 +280,7 @@ export component MainWindow inherits Window {
                     height: icon-size;
                     Text {
                         text: tab.icon;
-                        color: active-tab == idx ? Palette.button-text : Palette.neutral-bright;
+                        color: active-tab == idx ? Palette.win-bg : Palette.neutral-bright;
                         animate color {
                              easing: ease-out;
                              duration: 100ms;

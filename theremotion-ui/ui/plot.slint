@@ -1,4 +1,4 @@
-import { Palette, Style , GradText, BevelRectangle, ScreenGlare , CaptionText} from "common.slint";
+import { Palette, Style , GradText, BevelRectangle, ScreenGlare } from "common.slint";
 
 export struct Graduation {
     value: float,
@@ -14,10 +14,10 @@ export component Plot inherits BevelRectangle {
     clip: true;
     @children
 
-    CaptionText {
+    GradText {
+        z: 1;
         y: root.height - self.font-size*2;
         text: text;
-        color: Palette.plot-grad.darker(50%);
     }
     ScreenGlare {}
 }
@@ -54,7 +54,7 @@ export component Plot1D inherits Plot {
             y: to-px-y(graduation.value);
             GradText {
                 text: graduation.text;
-                y: -self.font-size;
+                y: -self.font-size - 10px;
             }
         }
 
@@ -130,10 +130,8 @@ export component Tuner inherits Plot {
                 background: Palette.plot-grad;
                 width: Style.grad-strong-thickness;
                 x: note-to-px(octave * 12 + note.value) - self.width / 2;
-                Text {
+                GradText {
                     text: "\{note.text}\{octave}";
-                    color: Palette.plot-grad;
-                    font-size: 20px;
                     x: 15px;
                 }
             }
