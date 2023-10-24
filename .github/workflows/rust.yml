@@ -73,13 +73,9 @@ jobs:
       if: ${{ matrix.wix }}
     - name: Build
       run: cargo build --release
-    - name: dbg
-      run: echo ${{ github.ref }}
-    - name: dbg2
-      run: echo ${{ github.ref_type }}
     - name: Outside of a release, override the wix version
       run: echo "WIX_EXTRA_ARGS=--install-version 0.0.0" >> $env:GITHUB_ENV
-      if: ${{ !startsWith(github.ref, 'refs/tags/v') }} && ${{ matrix.wix }}
+      if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
     - name: Make installer
       run: cargo wix --nocapture --package theremotion --output . ${{ env.WIX_EXTRA_ARGS }}
       if: ${{ matrix.wix }}
