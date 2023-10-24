@@ -6,6 +6,9 @@ import { MixTab } from "tab-mix.slint";
 import { ScaleTab } from "tab-scale.slint";
 import { EffectsTab } from "tab-effects.slint";
 import { PresetsTab } from "tab-presets.slint";
+import { VirtualKeyboard, VirtualKeyboardHandler, KeyModel } from "virtual_keyboard.slint";
+
+export { VirtualKeyboardHandler, KeyModel }
 
 struct TabData {
     title: string,
@@ -317,5 +320,10 @@ export component MainWindow inherits Window {
                 }
             }
         }
+    }
+
+    VirtualKeyboard {
+        height: 250px;
+        y: TextInputInterface.text-input-focused && use-on-screen-keyboard ? root.height - self.height : root.height;
     }
 }

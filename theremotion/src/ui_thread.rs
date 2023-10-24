@@ -84,6 +84,22 @@ pub fn run(
         }
     });
 
+    window
+        .global::<theremotion_ui::VirtualKeyboardHandler<'_>>()
+        .on_key_pressed({
+            let window_weak = window_weak.clone();
+            move |key| {
+                window_weak
+                    .unwrap()
+                    .window()
+                    .dispatch_event(slint::platform::WindowEvent::KeyPressed { text: key.clone() });
+                window_weak
+                    .unwrap()
+                    .window()
+                    .dispatch_event(slint::platform::WindowEvent::KeyReleased { text: key });
+            }
+        });
+
     // Play tab
     window.on_drone_clicked(c.send(CM::DroneClicked));
 
