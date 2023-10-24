@@ -1,4 +1,4 @@
-import { Palette, Tab , BevelRectangle, Led, SmallText} from "common.slint";
+import { Palette, Tab , BevelRectangle, Led, SmallText, Group} from "common.slint";
 
 component Key inherits BevelRectangle {
     callback clicked;
@@ -60,20 +60,20 @@ export component Keyboard inherits Rectangle {
     in property <[float]> drones: [
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     ];
     in property <[float]> leads: [
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.8, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     ];
     in property <[bool]> scale-notes: [
         false, false, false, false, false, false, false, false, false, false, false, false,
-        true, false, true, true, false, true, false, true, false, true, true, false,
-        true, false, true, true, false, true, false, true, false, true, true, false,
-        true, false, true, true, false, true, false, true, false, true, true, false,
+        false, false, false, false, false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, false, false, false, false, false, false,
     ];
 
     property <length> note-width: self.width / (7 * octaves);
@@ -174,36 +174,48 @@ export component KeyboardTab inherits Tab {
     property <length> item-width: 75px;
     
     VerticalLayout {
-        //spacing: 5px;
-        //padding: 5px;
-        padding: 5px;
-        
-        kb := Keyboard {
-            height: 80px;
-        }
-
-        HorizontalLayout {
-            height: 30px;
-            alignment: LayoutAlignment.center;
-            Indicator {
-                text: "Drone";
-                active: edit-mode == EditMode.Drone;
-                color: Palette.drone;
-            }
-            Indicator {
-                text: "Root";
-                active: edit-mode == EditMode.Root;
-                color: Palette.root-note;
-            }
-            Indicator {
-                text: "Scale";
-                active: edit-mode == EditMode.Scale;
-                color: Palette.active;
-            }
-        }
-
         Rectangle {
             @children
         }
+
+        Group {
+            has-name: false;
+            height: 110px;
+            VerticalLayout {
+                padding: 8px;
+                padding-top: 0px;
+
+                HorizontalLayout {
+                    alignment: LayoutAlignment.center;
+                    kb := Keyboard {
+                        height: 85px;
+                        width: 700px;
+                    }
+                }
+
+        
+                HorizontalLayout {
+                    height: 30px;
+                    alignment: LayoutAlignment.center;
+                    Indicator {
+                        text: "Drone";
+                        active: edit-mode == EditMode.Drone;
+                        color: Palette.drone;
+                    }
+                    Indicator {
+                        text: "Root";
+                        active: edit-mode == EditMode.Root;
+                        color: Palette.root-note;
+                    }
+                    Indicator {
+                        text: "Scale";
+                        active: edit-mode == EditMode.Scale;
+                        color: Palette.active;
+                    }
+                }
+            }
+            
+        }
+        
     }
 }

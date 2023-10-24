@@ -1,15 +1,7 @@
 import { Selectable, SelectableButtonsWithSave, Tab } from "common.slint";
 
 export component PresetsTab inherits Tab {
-    in property <[Selectable]> presets: [
-        {name:"my preset", selected: true, removable: true},
-        {name:"other"},
-        {name:"other"},
-        {name:"other"},
-        {name:"other"},
-        {name:"other"},
-        {name:"last"},
-    ];
+    in property <[Selectable]> presets: [];
     callback select-preset <=> btns.select-clicked;
     callback delete-preset <=> btns.delete-clicked;
     callback save-preset <=> btns.save-clicked;

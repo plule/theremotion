@@ -3,39 +3,44 @@ import "./fonts/NotoEmoji-Bold.ttf";
 import "./fonts/NotoSans-Bold.ttf";
 
 export global Palette {
-    property <color> pgreen: #096E00;
-    property <color> pcyan: #00E5E8;
-    property <color> ppink: #d484ca;
-    property <color> porange: #E77728;
-    property <color> pyellow: #F0F600;
-
-    out property <color> win-bg: #141414;
-    out property <color> tab-bg: #2e2e2e;
-    out property <color> plot-bg: #000000;
-    out property <color> group-bg: #272727;
-    out property <brush> screen-bg: @radial-gradient(circle,#ffffff21 0%, #ffffff00 100%);
-    out property <color> splitter: #505050;
+    out property <color> pgreen: #096E00;
+    out property <color> pcyan: #048A81;
+    out property <color> ppink: #d484ca;
+    out property <color> porange: #E77728;
+    out property <color> pyellow: #F0F600;
+    out property <color> pbeige: #f3e1bf;
 
     out property <color> active: porange;
+    out property <color> inactive: porange.darker(200%);
 
-    out property <color> button-border: #000000;
-    out property <color> button-inactive: #575757;
+    out property <color> neutral-bright: pbeige;
+    out property <color> neutral-dark: black;
+
+    out property <color> win-bg: neutral-dark;
+    out property <color> tab-bg: neutral-bright;
+    out property <color> plot-bg: group-bg;
+    out property <color> group-bg: porange.darker(500%);
+    out property <brush> screen-bg: @radial-gradient(circle,#ffffff21 0%, #ffffff00 100%);
+
+    out property <color> button-inactive: neutral-bright;
     out property <color> button-active: porange;
     out property <color> button-hover: button-inactive.brighter(20%);
+    out property <brush> button-text: @linear-gradient(0deg, neutral-dark 0%, neutral-dark 30%, #4b4b4b 50%, neutral-dark 70%, neutral-dark 100%);
 
     out property <color> plot-grad: pgreen;
     out property <color> lead: pcyan;
     out property <color> drone: ppink;
     out property <color> raw: porange;
     out property <color> root-note: pyellow;
+    out property <color> guitar: pgreen;
 
     out property <color> white-key: raw;
     out property <color> black-key: white-key.darker(0.5);
 
     
-    out property <brush> white-key-active: @linear-gradient(0deg, #3f87a6 0%, #ffffff 75%, #ffffff 100%);
-    out property <brush> black-key-active: @linear-gradient(0deg, #3f87a6 0%, #000000 75%, #000000 100%);
-    out property <color> white-key-disabled: #7a7a7a;
+    out property <brush> white-key-active: @linear-gradient(0deg, pcyan 0%, pcyan 25%, neutral-bright 75%, neutral-bright 100%);
+    out property <brush> black-key-active: @linear-gradient(0deg, pcyan 0%, pcyan 25%, neutral-dark 75%, neutral-dark 100%);
+    out property <color> white-key-disabled: neutral-bright;
     out property <color> black-key-disabled: white-key-disabled.darker(0.5);
 
     out property <brush> key-lead-overlay: @linear-gradient(0deg, lead 0%, lead.with-alpha(0) 75%, lead.with-alpha(0) 100%);
@@ -44,6 +49,7 @@ export global Palette {
 
 export global Style {
     out property <length> area-corner-radius: 10px;
+    out property <length> grad-extralight-thickness: 1px;
     out property <length> grad-light-thickness: 2px;
     out property <length> grad-strong-thickness: 5px;
     out property <length> grad-font-size: 20px;
@@ -81,23 +87,12 @@ export component BevelRectangle inherits Rectangle {
     property <color> bevel-color-1: extruded ? bevel-color-dark : bevel-color-bright;
     property <color> bevel-color-2: extruded ? bevel-color-bright : bevel-color-dark;
 
-
     border-width: 4px;
     border-radius: Style.area-corner-radius;
     border-color: @linear-gradient(bevel-angle, bevel-color-1 0%, bevel-color-1 40%, bevel-color-2 60%, bevel-color-2 100%);
 }
 
-export component Tab inherits Rectangle {
-    background: Palette.tab-bg;
-    in property <int> idx;
-    in property <int> current-idx;
-    //clip: true;
 
-    y: current-idx == idx ? 0 : current-idx < idx ? self.height + 1px : - self.height - 1px;
-    animate y { duration: 125ms; easing: ease; }
-
-    @children
-}
 
 export component Circle inherits Rectangle {
     in property <length> radius;
@@ -127,6 +122,30 @@ export component BevelCircle inherits BevelRectangle {
     border-radius: effective-radius();
     x: center-x - effective-radius();
     y: center-y - effective-radius();
+}
+
+export component Tab inherits Rectangle {
+    background: Palette.tab-bg;
+    in property <int> idx;
+    in property <int> current-idx;
+    clip: true;
+
+    y: current-idx == idx ? 0 : current-idx < idx ? self.height + 1px : - self.height - 1px;
+    animate y { duration: 125ms; easing: ease; }
+
+    property <length> cx: 0px;
+    property <length> cy: self.height;
+    for color[idx] in [Palette.pcyan, Palette.pgreen, Palette.porange, Palette.ppink, Palette.pyellow]: Circle {
+        Circle {
+            center-x: cx;
+            center-y: cy;
+            radius: root.height + self.border-width*idx + 10px;
+            border-color: color;
+            border-width: 50px;
+        }
+    }
+
+    @children
 }
 
 export enum Handedness {
@@ -162,7 +181,7 @@ export global Pitches {
 export component SmallText inherits Text {
     font-family: "Noto Sans";
     font-size: 15px;
-    color: white;
+    color: Palette.neutral-bright;
     vertical-alignment: TextVerticalAlignment.bottom;
     horizontal-alignment: TextHorizontalAlignment.center;
 }
@@ -170,7 +189,7 @@ export component SmallText inherits Text {
 export component CaptionText inherits Text {
     font-family: "Noto Sans";
     font-size: 20px;
-    color: white;
+    color: Palette.neutral-bright;
     vertical-alignment: TextVerticalAlignment.bottom;
     horizontal-alignment: TextHorizontalAlignment.center;
 }
@@ -178,7 +197,7 @@ export component CaptionText inherits Text {
 export component TitleText inherits Text {
     font-family: "Noto Sans";
     font-size: 35px;
-    color: white;
+    color: Palette.button-text;
     vertical-alignment: TextVerticalAlignment.center;
     horizontal-alignment: TextHorizontalAlignment.center;
 }
@@ -190,7 +209,7 @@ export component GradText inherits Text {
 }
 
 export component Led inherits BevelRectangle {
-    in property <color> glass-color: Palette.button-inactive.darker(25%);
+    in property <color> glass-color: Palette.inactive;
     in property <color> light-color: Palette.active;
     in property <float> light;
     border-width: 2px;
@@ -235,7 +254,7 @@ export component TouchButton inherits BevelRectangle {
         font-family: font-family;
         font-size: font-size;
         text: text;
-        color: white;
+        color: Palette.button-text;
     }
 
     if checkable: Led {
@@ -256,34 +275,6 @@ export component IconTouchButton inherits TouchButton {
 
 export component TextTouchButton inherits TouchButton {
     height: 70px;
-}
-
-export component FlatIconTouchButton {
-    width: 80px;
-    height: 80px;
-
-    callback clicked();
-    in property <string> text;
-    in property <brush> active-color: Palette.button-active;
-    in property <brush> inactive-color: Palette.button-inactive;
-    in property <brush> hover-color: Palette.button-hover;
-    padding: 20px;
-
-    ta:=TouchArea {
-        btn:=Rectangle {
-            background: ta.has-hover ? hover-color : inactive-color;
-            animate background { duration: 100ms; easing: ease; }
-
-            Text {
-                font-family: "Noto Emoji";
-                y: root.height * 15%;
-                font-size: 30px;
-                text: text;
-                color: white;
-            }
-        }
-        clicked => {root.clicked()}
-    }
 }
 
 component FaderInteraction inherits TouchArea {
@@ -323,29 +314,27 @@ component Fader inherits Rectangle {
         clip: true;
         width: 10px;
         border-radius: self.width/2;
-        background: touch.pressed ? #eee: #ddd;
+        background: touch.pressed ? Palette.button-inactive.brighter(50%) : Palette.button-inactive;
         border-width: 1px;
         border-color: root.background.darker(80%);
 
         Rectangle {
             height: root.height - handle.y;
             y: handle.y;
-            background: Palette.raw;
+            background: Palette.active;
         }
     }
 
     handle := BevelRectangle {
         width: parent.width;
         height: 60px;
-        background: touch.pressed ? Palette.button-active : touch.has-hover ? Palette.button-hover : Palette.button-inactive;
-        //bevel-angle: -48deg;
+        background: touch.has-hover ? Palette.button-hover : Palette.button-inactive;
+        border-width: 5px;
         y: (root.height - handle.height) * ( 1 - (root.value - root.minimum)/(root.maximum - root.minimum));
 
-        Rectangle {
-            height: 5px;
-            width: 80%;
-            border-radius: self.height / 2;
+        Led {
             background: Palette.raw;
+            light: touch.pressed ? 1.0 : 0.0;
         }
     }
     touch := FaderInteraction {
@@ -353,11 +342,9 @@ component Fader inherits Rectangle {
     }
 }
 
-export component RotaryKnob inherits Rectangle {
+export component RotaryKnob {
     height: 80px;
     width: self.height;
-    border-radius: self.height / 2;
-    background: white;
     in property<float> maximum <=> touch.maximum;
     in property<float> minimum <=> touch.minimum;
     in-out property<float> value <=> touch.value;
@@ -366,13 +353,15 @@ export component RotaryKnob inherits Rectangle {
     property <angle> angle: getangle(touch.value);
     property <angle> deadzone: 30deg;
     callback changed <=> touch.changed;
+    property <float> radius-in: 0.4;
+    property <float> radius-out: 0.7;
     touch := FaderInteraction {
         handle-height: 0;
         move-speed: 0.5;
     }
 
     function getangle(value: float) -> angle {
-        deadzone + (360deg - deadzone * 2) * (touch.value - touch.minimum) / (touch.maximum - touch.minimum)
+        deadzone + (360deg - deadzone * 2) * (value - touch.minimum) / (touch.maximum - touch.minimum)
     }
 
     function getx(angle: angle) -> float {
@@ -381,6 +370,20 @@ export component RotaryKnob inherits Rectangle {
     function gety(angle: angle) -> float {
         sin(-angle + 90deg)
     }
+
+    Path {
+        fill: Palette.button-inactive;
+        viewbox-x: -1;
+        viewbox-y: -1;
+        viewbox-width: 2;
+        viewbox-height: 2;
+        MoveTo {x: 0; y: 0;}
+        LineTo {x: getx(deadzone); y: gety(deadzone);}
+        ArcTo  {x: getx(-deadzone); y: gety(-deadzone); radius-x: 1; radius-y: 1; sweep: true; large-arc: true;}
+        LineTo {x: 0; y: 0;}
+    }
+
+    // Active amount indicator
     Path {
         fill: Palette.active;
         viewbox-x: -1;
@@ -393,6 +396,21 @@ export component RotaryKnob inherits Rectangle {
         LineTo {x: 0; y: 0;}
     }
 
+    for inc in 11: Path {
+        private property <float> in: 0;
+        private property <float> out: 1.1;
+        private property <float> v: minimum + (maximum - minimum) * inc / 10;
+        private property <angle> a: getangle(v);
+        stroke: Palette.active.darker(50%);
+        stroke-width: 4px;
+        viewbox-x: -1;
+        viewbox-y: -1;
+        viewbox-width: 2;
+        viewbox-height: 2;
+        MoveTo {x: getx(a) * in; y: gety(a) * in;}
+        LineTo {x: getx(a) * out; y: gety(a) * out;}
+    }
+
     knob := BevelCircle {
         center-x: root.width/2;
         center-y: root.width/2;
@@ -401,9 +419,17 @@ export component RotaryKnob inherits Rectangle {
         background: touch.has-hover ? Palette.button-hover : Palette.button-inactive;
     }
 
+    BevelCircle {
+        center-x: root.width/2;
+        center-y: root.height/2;
+        radius: 0.1*root.width;
+        border-width: 2px;
+        background: knob.background;
+        extruded: true;
+    }
+
+    // Value indicator
     Path {
-        property <float> radius-in: 0.3;
-        property <float> radius-out: 0.75;
         stroke: Palette.active;
         stroke-width: 4px;
         viewbox-x: -1;
@@ -456,6 +482,7 @@ export component CaptionedRotaryKnob {
 
 export component Group inherits Rectangle {
     in property <string> name;
+    in property <bool> has-name: true;
     preferred-height: 100px;
     preferred-width: 100px;
 
@@ -466,9 +493,8 @@ export component Group inherits Rectangle {
         ScreenGlare {}
 
         VerticalLayout {
-            padding: 4px;
-            //spacing: 4px;
-            HorizontalLayout {
+            padding: has-name ? 4px : 0px;
+            if has-name: HorizontalLayout {
                 Rectangle {}
                 txt:=CaptionText {
                     height: 25px;
@@ -477,7 +503,7 @@ export component Group inherits Rectangle {
                 Rectangle {}
             }
     
-            GridLayout {
+            Rectangle {
                 padding: 4px;
                 padding-top: 0px;
                 @children

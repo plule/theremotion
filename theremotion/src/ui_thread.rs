@@ -48,6 +48,9 @@ pub fn run(
     mut ui_rx: crossbeam_channel::Receiver<UiUpdate>,
     mut settings: Settings,
 ) -> (MainWindow, slint::Timer) {
+    if settings.system.fullscreen {
+        std::env::set_var("SLINT_FULLSCREEN", "1");
+    }
     let mut window = theremotion_ui::MainWindow::new().expect("Failed to create the UI");
     let window_weak = window.as_weak();
 
@@ -73,6 +76,13 @@ pub fn run(
         }
     }
     let c = Connector(tx.clone());
+
+    window.on_close({
+        let window_weak = window_weak.clone();
+        move || {
+            window_weak.unwrap().hide().unwrap();
+        }
+    });
 
     // Play tab
     window.on_drone_clicked(c.send(CM::DroneClicked));

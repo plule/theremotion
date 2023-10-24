@@ -1,24 +1,24 @@
-import { Tab , CaptionedRotaryKnob, Group, TouchButton} from "common.slint";
-import { GridBox } from "std-widgets.slint";
+import { Tab , CaptionedRotaryKnob, Group, TouchButton, TextTouchButton} from "common.slint";
+import { GridBox , VerticalBox} from "std-widgets.slint";
 
 export component EffectsTab inherits Tab {
-    in-out property <float> echo-amount: 0.5;
-    in-out property <float> echo-duration: 0.5;
-    in-out property <float> echo-feedback: 0.5;
+    in-out property <float> echo-amount: 0;
+    in-out property <float> echo-duration: 0;
+    in-out property <float> echo-feedback: 0;
     callback echo-amount-changed(float);
     callback echo-duration-changed(float);
     callback echo-feedback-changed(float);
 
-    in-out property <float> reverb-amount: 0.5;
-    in-out property <float> reverb-time: 0.5;
-    in-out property <float> reverb-damp: 0.5;
-    in-out property <float> reverb-size: 0.5;
+    in-out property <float> reverb-amount: 0;
+    in-out property <float> reverb-time: 0;
+    in-out property <float> reverb-damp: 0;
+    in-out property <float> reverb-size: 0;
     callback reverb-amount-changed(float);
     callback reverb-time-changed(float);
     callback reverb-damp-changed(float);
     callback reverb-size-changed(float);
 
-    in-out property <float> drone-detune: 0.5;
+    in-out property <float> drone-detune: 0;
     callback drone-detune-changed(float);
 
     in-out property enable-guitar-drone <=> gdrone.checked;
@@ -121,10 +121,13 @@ export component EffectsTab inherits Tab {
             col: 2;
             row: 1;
             name: "Pluck Drone";
-            gdrone := TouchButton { 
-                text: "Enable";
+            VerticalBox {
+                gdrone := TextTouchButton { 
+                    text: "Enable";
+                }
+                Rectangle {}
             }
-        }
 
+        }
     }
 }

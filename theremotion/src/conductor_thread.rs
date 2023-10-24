@@ -227,8 +227,6 @@ fn toggle_scale_note(preset: &mut Preset, note_index: i32) {
             preset.scale.push(interval);
         }
 
-        dbg!(preset.scale.count());
-
         tracing::debug!("Scale {} clicked", note_index);
     }
 }

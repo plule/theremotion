@@ -13,6 +13,7 @@ export component Plot inherits BevelRectangle {
     border-width: 3px;
     clip: true;
     @children
+
     CaptionText {
         y: root.height - self.font-size*2;
         text: text;
@@ -37,24 +38,33 @@ export component Plot1D inherits Plot {
     }
 
     public pure function to-px-y(h: float) -> length {
-        (max - h) * root.height / (max - min)
+        (max - h) * (root.height) / (max - min)
     }
 
-    for graduation in graduations: Rectangle {
-        background: Palette.plot-grad;
-        height: Style.grad-light-thickness;
-        y: to-px-y(graduation.value);
-        GradText {
-            text: graduation.text;
-            y: -self.font-size;
+    Rectangle { // Workaround for border not clipping
+        clip: true;
+        y: root.border-width * 2;
+        width: root.width - root.border-width * 4;
+        height: root.height - root.border-width * 2;
+
+        for graduation in graduations: Rectangle {
+            width: 60%;
+            background: Palette.plot-grad;
+            height: Style.grad-light-thickness;
+            y: to-px-y(graduation.value);
+            GradText {
+                text: graduation.text;
+                y: -self.font-size;
+            }
         }
-    }
 
-    Rectangle {
-        background: Palette.raw;
-        opacity: 0.5;
-        height: root.height - to-px-y(value);
-        y: to-px-y(value);
+        Rectangle {
+            border-radius: Style.area-corner-radius;
+            background: Palette.raw;
+            opacity: 0.5;
+            height: root.height - self.y;
+            y: to-px-y(value);
+        }
     }
 }
 
@@ -106,33 +116,41 @@ export component Tuner inherits Plot {
     }
 
 
-    function note-to-px(note: float) -> physical-length {
-        note-width * note - (note-focus - notes-on-screen / 2) * note-width
-    }
+    Rectangle { // Workaround for border not clipping
+        clip: true;
+        width: root.width - root.border-width * 4;
+        height: root.height - root.border-width * 4;
+        function note-to-px(note: float) -> physical-length {
+            note-width * note - (note-focus - notes-on-screen / 2) * note-width
+        }
 
-    for octave in [0, 1, 2, 3, 4, 5, 6]: Rectangle {
-        for note in note-names: Rectangle {
-            background: Palette.plot-grad;
-            width: Style.grad-strong-thickness;
-            x: note-to-px(octave * 12 + note.value) - self.width / 2;
-            Text {
-                text: "\{note.text}\{octave}";
-                color: Palette.plot-grad;
-                font-size: 20px;
-                x: 15px;
+        for octave in [0, 1, 2, 3, 4, 5, 6]: Rectangle {
+            for note in note-names: Rectangle {
+                border-radius: self.width / 2;
+                background: Palette.plot-grad;
+                width: Style.grad-strong-thickness;
+                x: note-to-px(octave * 12 + note.value) - self.width / 2;
+                Text {
+                    text: "\{note.text}\{octave}";
+                    color: Palette.plot-grad;
+                    font-size: 20px;
+                    x: 15px;
+                }
             }
         }
-    }
 
-    Rectangle {
-        background: Palette.lead;
-        width: Style.grad-strong-thickness;
-        x: note-to-px(note-tuned) - self.width / 2;
-    }
+        Rectangle {
+            border-radius: self.width / 2;
+            background: Palette.lead;
+            width: Style.grad-strong-thickness;
+            x: note-to-px(note-tuned) - self.width / 2;
+        }
 
-    Rectangle {
-        background: Palette.raw;
-        width: Style.grad-light-thickness;
-        x: note-to-px(note) - self.width / 2;
+        Rectangle {
+            border-radius: self.width / 2;
+            background: Palette.raw;
+            width: Style.grad-strong-thickness;
+            x: note-to-px(note) - self.width / 2;
+        }
     }
 }

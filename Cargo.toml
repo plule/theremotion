@@ -2,9 +2,14 @@
 members = ["theremotion", "theremotion-dsp", "theremotion-ui"]
 resolver = "2"
 
+# Generated code - prone to stack overflow on debug
 [profile.dev.package.theremotion-ui]
-# Generated code, and tends to overflow
 opt-level = 3
 
+# Generated code - high perf needed anyway
 [profile.dev.package.theremotion-dsp]
 opt-level = 3
+
+[profile.dev.package.i-slint-renderer-skia]
+# Workaround for https://github.com/slint-ui/slint/issues/3747
+debug-assertions = false

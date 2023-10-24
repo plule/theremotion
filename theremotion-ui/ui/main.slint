@@ -18,8 +18,8 @@ export component MainWindow inherits Window {
     background: Palette.win-bg;
     preferred-width: 800px;
     preferred-height: 480px;
-    //width: 800px;
-    //height: 480px;
+    min-width: 800px;
+    min-height: 480px;
     property <int> active-tab;
     property <[TabData]> tabs: [
         {
@@ -59,22 +59,22 @@ export component MainWindow inherits Window {
     // Keyboard tabs
     in property <[float]> leads: [
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.8, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     ];
     in property<[float]> drones: [
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
     ];
-    in property<int> root-pitch: 6;
+    in property<int> root-pitch: 0;
     in property <[bool]> scale-notes: [
         false, false, false, false, false, false, false, false, false, false, false, false,
-        true, false, true, true, false, true, false, true, false, true, true, false,
-        true, false, true, true, false, true, false, true, false, true, true, false,
-        true, false, true, true, false, true, false, true, false, true, true, false,
+        false, false, false, false, false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, false, false, false, false, false, false,
     ];
 
     // Play tab
@@ -164,6 +164,19 @@ export component MainWindow inherits Window {
     callback on-screen-kbd-clicked <=> tsettings.on-screen-kbd-clicked;
     callback lh-clicked <=> tsettings.lh-clicked;
     callback rh-clicked <=> tsettings.rh-clicked;
+
+    callback close();
+
+    // Internal
+    FocusScope {
+        key-pressed(k) => {
+            if(k.text == Key.Escape) {
+                close();
+                return accept;
+            }
+            return reject;
+        }
+    }
 
     GridLayout {
         spacing: 0px;
@@ -267,6 +280,11 @@ export component MainWindow inherits Window {
                     height: icon-size;
                     Text {
                         text: tab.icon;
+                        color: active-tab == idx ? Palette.button-text : Palette.neutral-bright;
+                        animate color {
+                             easing: ease-out;
+                             duration: 100ms;
+                        }
                         font-size: 35px;
                         font-family: "Noto Emoji";
                         vertical-alignment: TextVerticalAlignment.center;
@@ -285,7 +303,7 @@ export component MainWindow inherits Window {
             Rectangle {
                 clip: true;
                 z: -1;
-                Rectangle {
+                BevelRectangle {
                     border-radius: Style.area-corner-radius;
                     height: icon-size;
                     width: icon-size + Style.area-corner-radius;
