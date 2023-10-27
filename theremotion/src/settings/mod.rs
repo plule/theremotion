@@ -205,9 +205,6 @@ impl Preset {
                 control
                     .note
                     .send(tx, ((drone + drone_interval).into_byte()) as f32)?;
-                control.volume.send(tx, 1.0)?;
-            } else {
-                control.volume.send(tx, 0.0)?;
             }
         }
 

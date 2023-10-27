@@ -1,4 +1,4 @@
-use std::{f32::consts::PI, thread};
+use std::{cmp::Ordering, f32::consts::PI, thread};
 
 use crossbeam_channel::{Receiver, Sender};
 use itertools::Itertools;
@@ -83,7 +83,8 @@ fn conductor(
 ) -> anyhow::Result<()> {
     // Guitar gates
     let mut guitar_gates = [false, false, false, false];
-    let mut drone_grab_state: Option<(Volume, f32)> = None;
+    let mut drone_grab_state: Option<(f32, f32)> = None;
+    let mut drone_state: f32 = 0.0;
 
     let controls = &controls;
     let dsp_tx: &mut Sender<dsp_thread::ParameterUpdate> = &mut dsp_tx;
@@ -113,6 +114,7 @@ fn conductor(
                     dsp_tx,
                     ui_tx,
                     &guitar_gates,
+                    &mut drone_state,
                     &mut drone_grab_state,
                 )?;
             }
@@ -246,6 +248,19 @@ fn toggle_drone(preset: &mut Preset, note_index: i32) {
             *empty_slot = Some(interval);
         }
 
+        drone_intervals.sort_unstable_by(|a, b| match (a, b) {
+            (None, None) => Ordering::Equal,
+            (None, Some(_)) => Ordering::Less,
+            (Some(_), None) => Ordering::Greater,
+            (Some(a), Some(b)) => {
+                if a < b {
+                    Ordering::Less
+                } else {
+                    Ordering::Greater
+                }
+            }
+        });
+
         tracing::debug!(
             "Drone {} clicked, drone: {:?}",
             note_index,
@@ -261,7 +276,8 @@ fn on_volume_hand(
     dsp_tx: &mut Sender<dsp_thread::ParameterUpdate>,
     ui_tx: &mut Sender<UiUpdate>,
     guitar_gates: &[bool; 4],
-    drone_grab_state: &mut Option<(Volume, f32)>,
+    drone_state: &mut f32,
+    drone_grab_state: &mut Option<(f32, f32)>,
 ) -> Result<(), anyhow::Error> {
     let strum_ready = h.pinch > 0.9;
     if let Some(rotation) = h.rotation {
@@ -297,11 +313,28 @@ fn on_volume_hand(
     if h.grab >= 1.0 {
         if let Some(drone_volume_angle) = h.rotation {
             let (init_drone_volume, init_drone_volume_angle) =
-                *drone_grab_state.get_or_insert((preset.mix.drone, drone_volume_angle));
+                *drone_grab_state.get_or_insert((*drone_state, drone_volume_angle));
             let offset = drone_volume_angle - init_drone_volume_angle;
-            let new_volume = (init_drone_volume + Volume(offset / 5.0)).clamped();
-            preset.mix.drone = new_volume;
-            controls.mix_drone_volume.send(dsp_tx, new_volume)?;
+            *drone_state = (init_drone_volume + offset).clamp(0.0, 5.0);
+            let drone_state = *drone_state;
+            let drone_volumes =
+                [0.0, 1.0, 2.0, 3.0].map(|v| (drone_state.clamp(0.0, 4.0) - v).clamp(0.0, 1.0));
+            let drone_interval = preset.drone_interval();
+            for ((control, drone), volume) in controls
+                .drone_notes
+                .iter()
+                .zip(preset.drone_notes())
+                .zip(drone_volumes)
+            {
+                if let Some(drone) = drone {
+                    control
+                        .note
+                        .send(&dsp_tx, ((drone + drone_interval).into_byte()) as f32)?;
+                    control.volume.send(dsp_tx, volume)?;
+                } else {
+                    control.volume.send(dsp_tx, 0.0)?;
+                }
+            }
         }
     } else {
         *drone_grab_state = None;
