@@ -6,7 +6,7 @@ use leaprs::*;
 use nalgebra::{UnitQuaternion, Vector3};
 
 use crate::{
-    conductor_thread::{self, ConductorMessage, HandMessage},
+    conductor_thread::{self, ConductorMessage, HandMessage, LeapStatus},
     settings::{Handedness, Settings},
 };
 
@@ -42,49 +42,71 @@ fn read_and_update(
 ) -> Result<()> {
     match connection.poll(100) {
         Ok(message) => {
-            if let Event::Tracking(e) = message.event() {
-                let handedness = &settings.system.handedness;
+            match message.event() {
+                Event::Tracking(e) => {
+                    let handedness = &settings.system.handedness;
 
-                // List of visible hands
-                let hands = e.hands();
-                let pitch_hand = hands
-                    .iter()
-                    .find(|h| h.hand_type() == pitch_hand_type(handedness));
-                let volume_hand = hands
-                    .iter()
-                    .find(|h| h.hand_type() == volume_hand_type(handedness));
+                    // List of visible hands
+                    let hands = e.hands();
+                    let pitch_hand = hands
+                        .iter()
+                        .find(|h| h.hand_type() == pitch_hand_type(handedness));
+                    let volume_hand = hands
+                        .iter()
+                        .find(|h| h.hand_type() == volume_hand_type(handedness));
 
-                tx.send(ConductorMessage::VisibleHands {
-                    left: hands.iter().any(|h| h.hand_type() == HandType::Left),
-                    right: hands.iter().any(|h| h.hand_type() == HandType::Right),
-                })?;
+                    tx.send(ConductorMessage::VisibleHands {
+                        left: hands.iter().any(|h| h.hand_type() == HandType::Left),
+                        right: hands.iter().any(|h| h.hand_type() == HandType::Right),
+                    })?;
 
-                if let Some(hand) = pitch_hand {
-                    tx.send(ConductorMessage::PitchHand(HandMessage {
-                        x_factor: hand.x_factor(),
-                        position: hand.position_from_body(),
-                        velocity: hand.velocity_from_body(),
-                        rotation: hand.rotation_from_body(),
-                        pinch: hand.pinch_strength(),
-                        grab: hand.grab_strength(),
-                    }))?;
+                    if let Some(hand) = pitch_hand {
+                        tx.send(ConductorMessage::PitchHand(HandMessage {
+                            x_factor: hand.x_factor(),
+                            position: hand.position_from_body(),
+                            velocity: hand.velocity_from_body(),
+                            rotation: hand.rotation_from_body(),
+                            pinch: hand.pinch_strength(),
+                            grab: hand.grab_strength(),
+                        }))?;
+                    }
+                    if let Some(hand) = volume_hand {
+                        tx.send(ConductorMessage::VolumeHand(HandMessage {
+                            x_factor: hand.x_factor(),
+                            position: hand.position_from_body(),
+                            velocity: hand.velocity_from_body(),
+                            rotation: hand.rotation_from_body(),
+                            pinch: hand.pinch_strength(),
+                            grab: hand.grab_strength(),
+                        }))?;
+                    }
+                    tx.send(ConductorMessage::LeapStatus(LeapStatus::Ok))?;
                 }
-                if let Some(hand) = volume_hand {
-                    tx.send(ConductorMessage::VolumeHand(HandMessage {
-                        x_factor: hand.x_factor(),
-                        position: hand.position_from_body(),
-                        velocity: hand.velocity_from_body(),
-                        rotation: hand.rotation_from_body(),
-                        pinch: hand.pinch_strength(),
-                        grab: hand.grab_strength(),
-                    }))?;
-                }
+                Event::Connection(_) => tx.send(ConductorMessage::LeapStatus(
+                    LeapStatus::Warning("No device".to_string()),
+                ))?,
+                Event::ConnectionLost(_) => tx.send(ConductorMessage::LeapStatus(
+                    LeapStatus::Error("Connection lost".to_string()),
+                ))?,
+                Event::Device(_) => tx.send(ConductorMessage::LeapStatus(LeapStatus::Ok))?,
+                Event::DeviceFailure(_) => tx.send(ConductorMessage::LeapStatus(
+                    LeapStatus::Error("Device failure".to_string()),
+                ))?,
+                Event::DeviceLost => tx.send(ConductorMessage::LeapStatus(LeapStatus::Error(
+                    "Device disconnected".to_string(),
+                )))?,
+                _ => {}
             }
-            tx.send(ConductorMessage::LeapError(None))?;
         }
-        Err(err) => {
-            tx.send(ConductorMessage::LeapError(Some(err.to_string())))?;
-        }
+        Err(err) => match err {
+            Error::Timeout => {} // spammey without any device
+            Error::NotConnected => tx.send(ConductorMessage::LeapStatus(LeapStatus::Warning(
+                err.to_string(),
+            )))?,
+            _ => tx.send(ConductorMessage::LeapStatus(LeapStatus::Error(
+                err.to_string(),
+            )))?,
+        },
     }
     Ok(())
 }

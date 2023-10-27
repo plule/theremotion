@@ -8,7 +8,7 @@ use staff::midi::MidiNote;
 use theremotion_ui::MainWindow;
 
 use crate::{
-    conductor_thread::ConductorMessage as CM,
+    conductor_thread::{ConductorMessage as CM, LeapStatus},
     settings::{Handedness, Settings},
     solfege::{MidiNoteF, Volume},
 };
@@ -16,10 +16,8 @@ use crate::{
 /// Message to update externally the UI
 #[derive(Debug)]
 pub enum UiUpdate {
-    /// Display an error message
-    Error(String),
-    /// Remove the error message
-    ErrorReset,
+    ///Current application error status
+    Status(LeapStatus),
     /// Lead instrument volume (0-1)
     LeadVolume(f32),
     /// Lead notes, volume and raw horizontal coordinates
@@ -167,8 +165,18 @@ fn read_updates(
     for event in ui_rx.try_iter() {
         let restricted_scale_window = settings.current_preset.restricted_scale_floating_window();
         match event {
-            UiUpdate::Error(_) => {}
-            UiUpdate::ErrorReset => {}
+            UiUpdate::Status(LeapStatus::Ok) => {
+                window.set_status(theremotion_ui::Status::Ok);
+                window.set_status_message("Ok".into());
+            }
+            UiUpdate::Status(LeapStatus::Warning(text)) => {
+                window.set_status(theremotion_ui::Status::Warning);
+                window.set_status_message(text.into());
+            }
+            UiUpdate::Status(LeapStatus::Error(text)) => {
+                window.set_status(theremotion_ui::Status::Error);
+                window.set_status_message(text.into());
+            }
             UiUpdate::LeadVolume(v) => window.set_lead_volume(v),
             UiUpdate::Lead(notes, coords) => {
                 let coords_direction = coords.normalize();

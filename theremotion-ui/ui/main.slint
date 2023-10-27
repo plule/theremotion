@@ -1,4 +1,4 @@
-import { Palette, Style, Handedness, TitleText, BevelRectangle, GL} from "common.slint";
+import { Palette, Style, Handedness, TitleText, BevelRectangle, GL, Group, StatusText, CaptionText, HL, Status} from "common.slint";
 import { PlayingTab } from "tab-play.slint";
 import { SettingsTab } from "tab-settings.slint";
 import { RootTab } from "tab-root.slint";
@@ -56,8 +56,10 @@ export component MainWindow inherits Window {
     ];
 
     // Common properties
-    in property<bool> has-left-hand: true;
-    in property<bool> has-right-hand: true;
+    in property<bool> has-left-hand: false;
+    in property<bool> has-right-hand: false;
+    in property <string> status-message: "No status";
+    in property <Status> status: Status.Warning;
 
     // Keyboard tabs
     in property <[float]> leads: [
@@ -186,16 +188,18 @@ export component MainWindow inherits Window {
         padding: 2px;
 
         // Tab title
-        HorizontalLayout {
+        head := HorizontalLayout {
             row: 0;
             col: 0;
+            padding-left: Style.area-corner-radius;
+            spacing: 10px;
+            alignment: LayoutAlignment.space-around;
 
-            Rectangle {}
             title := Rectangle {
                 clip: true;
                 height: 45px;
                 width: 50%;
-                br := BevelRectangle {
+                BevelRectangle {
                     height: title.height + self.border-radius;
                     y: 0;
                     background: Palette.tab-bg;
@@ -211,7 +215,6 @@ export component MainWindow inherits Window {
                     }
                 }
             }
-            Rectangle {}
         }
 
         // Tab content
@@ -327,6 +330,40 @@ export component MainWindow inherits Window {
                     }
                     background: Palette.tab-bg;
                 }
+            }
+        }
+    }
+
+
+    BevelRectangle {
+        x: root.width - self.width - 30px;
+        y: root.height - (status == Status.Ok ? 0px : 30px);
+        width: 40%;
+        background: Palette.tab-bg;
+        border-radius: Style.area-corner-radius;
+        animate y {
+            easing: ease-in-out;
+            duration: 500ms;
+        }
+
+        Group {
+            has-name: false;
+            HL {
+                spacing: 4px;
+                CaptionText {
+                    text: "Tracking:";
+                    horizontal-alignment: TextHorizontalAlignment.left;
+                    vertical-alignment: TextVerticalAlignment.top;
+                    font-size: 11px;
+                }
+                StatusText {
+                    text: status-message;
+                    status: status;
+                    horizontal-alignment: TextHorizontalAlignment.left;
+                    vertical-alignment: TextVerticalAlignment.top;
+                    font-size: 11px;
+                }
+                Rectangle {}
             }
         }
     }

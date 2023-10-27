@@ -237,6 +237,21 @@ export component TitleText inherits Text {
     horizontal-alignment: TextHorizontalAlignment.center;
 }
 
+export enum Status {
+    Ok,
+    Warning,
+    Error,
+}
+
+export component StatusText inherits Text {
+    in property <Status> status;
+    font-family: "Noto Sans";
+    font-size: 20px;
+    color: status == Status.Ok ? green : status == Status.Warning ? orange : red;
+    vertical-alignment: TextVerticalAlignment.bottom;
+    horizontal-alignment: TextHorizontalAlignment.left;
+}
+
 export component GradText inherits Text {
     font-family: "Noto Sans";
     color: Palette.plot-grad-text;

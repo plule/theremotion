@@ -23,8 +23,15 @@ pub struct HandMessage {
     pub grab: f32,
 }
 
+#[derive(Debug)]
+pub enum LeapStatus {
+    Error(String),
+    Warning(String),
+    Ok,
+}
+
 pub enum ConductorMessage {
-    LeapError(Option<String>),
+    LeapStatus(LeapStatus),
     PitchHand(HandMessage),
     VolumeHand(HandMessage),
     VisibleHands { left: bool, right: bool },
@@ -96,12 +103,8 @@ fn conductor(
         let preset = &mut settings.current_preset;
 
         match msg {
-            ConductorMessage::LeapError(None) => {
-                ui_tx.send(UiUpdate::ErrorReset)?;
-            }
-            ConductorMessage::LeapError(Some(error)) => {
-                tracing::debug!("Leap error: {}", error);
-                ui_tx.send(UiUpdate::Error(error))?;
+            ConductorMessage::LeapStatus(status) => {
+                ui_tx.send(UiUpdate::Status(status))?;
             }
             ConductorMessage::PitchHand(h) => {
                 on_pitch_hand(h, controls, preset, dsp_tx, ui_tx, &mut guitar_gates)?;
@@ -329,7 +332,7 @@ fn on_volume_hand(
                 if let Some(drone) = drone {
                     control
                         .note
-                        .send(&dsp_tx, ((drone + drone_interval).into_byte()) as f32)?;
+                        .send(dsp_tx, ((drone + drone_interval).into_byte()) as f32)?;
                     control.volume.send(dsp_tx, volume)?;
                 } else {
                     control.volume.send(dsp_tx, 0.0)?;
