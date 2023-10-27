@@ -114,7 +114,7 @@
                                   WorkingDirectory="APPLICATIONFOLDER"
                                   Advertise="yes"
                                   IconIndex="0"
-                                  Icon="ProductICO.ico"
+                                  Icon="icon.exe"
                                 />
                             </File>
                             <RemoveFolder
@@ -173,8 +173,8 @@
         </Feature>
 
         <SetProperty Id='ARPINSTALLLOCATION' Value='[APPLICATIONFOLDER]' After='CostFinalize'/>
-        <Icon Id='ProductICO.ico' SourceFile='theremotion\assets\icon.ico'/>
-        <Property Id='ARPPRODUCTICON' Value='ProductICO.ico' />
+        <Icon Id='icon.exe' SourceFile='$(var.CargoTargetBinDir)\theremotion.ico'/>
+        <Property Id='ARPPRODUCTICON' Value='icon.exe' />
 
         <Property Id='ARPHELPLINK' Value='https://plule.github.io/theremotion'/>
         

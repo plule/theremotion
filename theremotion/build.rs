@@ -39,7 +39,22 @@ fn setup_leapsdk_link() {
 
 #[cfg(windows)]
 fn add_resources() {
-    let mut res = winres::WindowsResource::new();
-    res.set_icon("assets/icon.ico");
-    res.compile().unwrap();
+    use std::path::Path;
+
+    println!("cargo:rerun-if-changed=../assets/icon.svg");
+    let input = Path::new("../assets/icon.svg");
+    // hack: should be out_dir, but wix doesn't know about it
+    let output = PathBuf::from_iter([
+        env::var("CARGO_TARGET_DIR").unwrap(),
+        env::var("PROFILE").unwrap(),
+        "theremotion.ico".to_string(),
+    ]);
+
+    svg_to_ico::svg_to_ico(input, 96.0, &output, &[128]).expect("failed to convert svg to ico");
+
+    //std::fs::copy(&output, )
+    winres::WindowsResource::new()
+        .set_icon(output.to_str().unwrap())
+        .compile()
+        .unwrap();
 }
