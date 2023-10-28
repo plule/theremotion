@@ -61,7 +61,6 @@ fn main() {
     }
 
     // Init communication channels
-    let (leap_tx, leap_rx) = crossbeam_channel::unbounded(); // Settings update to leap thread
     let (ui_tx, ui_rx) = crossbeam_channel::unbounded(); // UI update messages
     let (dsp_tx, dsp_rx) = crossbeam_channel::unbounded(); // DSP parameter update messages
     let (co_tx, co_rx) = crossbeam_channel::unbounded(); // Conductor messages
@@ -86,7 +85,6 @@ fn main() {
         co_rx,
         dsp_tx.clone(),
         ui_tx.clone(),
-        leap_tx.clone(),
     );
 
     // Init sound output
@@ -95,13 +93,13 @@ fn main() {
 
     // Init leap thread
     #[cfg(feature = "leap")]
-    let leap_worker = leap_thread::run(leap_rx, co_tx.clone());
+    let leap_worker = leap_thread::run(co_tx.clone());
 
     // Start UI
     let (window, _window_timer) = ui_thread::run(co_tx.clone(), ui_rx, settings);
     window.run().expect("Failed to start the UI");
     co_tx
-        .send(conductor_thread::ConductorMessage::Exit)
+        .send(conductor_thread::Msg::Exit)
         .expect("Error when trying to exit");
 
     #[cfg(feature = "leap")]

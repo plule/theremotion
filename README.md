@@ -64,6 +64,24 @@ The source code is divided into 3 crates:
 - **theremotion-dsp** contains the DSP producing the audio, generated with Faust
 - **theremotion-ui** contains the user interface, generated with Slint
 
+### Architecture
+
+Theremotion is run by 4 main threads:
+
+- `conductor` receives the updates from all the other threads and transmits
+  them. It contains all the movement definitions and holds the settings
+- `leap` provides the hand tracking messages
+- `dsp` produces the sounds based on the input parameter messages
+- `ui` is the main thread and provides the user interface
+
+```mermaid
+flowchart TD
+leap -->|hand tracking| conductor
+ui -->|user input| conductor
+conductor -->|ui update| ui
+conductor -->|parameter update| dsp
+```
+
 ## License
 
 With the exception of any third-parties (such as the Rust, Faust and Ultraleap

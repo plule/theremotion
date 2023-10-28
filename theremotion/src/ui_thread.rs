@@ -8,14 +8,14 @@ use staff::midi::MidiNote;
 use theremotion_ui::MainWindow;
 
 use crate::{
-    conductor_thread::{ConductorMessage as CM, TrackingStatus},
+    conductor_thread::{Msg as CM, TrackingStatus},
     settings::{Handedness, Settings},
     {MidiNoteF, Volume},
 };
 
 /// Message to update externally the UI
 #[derive(Debug)]
-pub enum UiUpdate {
+pub enum Msg {
     ///Current application error status
     Status(TrackingStatus),
     /// Lead instrument volume (0-1)
@@ -43,7 +43,7 @@ pub enum UiUpdate {
 
 pub fn run(
     tx: Sender<CM>,
-    mut ui_rx: crossbeam_channel::Receiver<UiUpdate>,
+    mut ui_rx: crossbeam_channel::Receiver<Msg>,
     mut settings: Settings,
 ) -> (MainWindow, slint::Timer) {
     if settings.system.fullscreen {
@@ -158,27 +158,27 @@ pub fn run(
 }
 
 fn read_updates(
-    ui_rx: &mut crossbeam_channel::Receiver<UiUpdate>,
+    ui_rx: &mut crossbeam_channel::Receiver<Msg>,
     settings: &mut Settings,
     window: &mut MainWindow,
 ) {
     for event in ui_rx.try_iter() {
         let restricted_scale_window = settings.current_preset.restricted_scale_floating_window();
         match event {
-            UiUpdate::Status(TrackingStatus::Ok) => {
+            Msg::Status(TrackingStatus::Ok) => {
                 window.set_status(theremotion_ui::Status::Ok);
                 window.set_status_message("Ok".into());
             }
-            UiUpdate::Status(TrackingStatus::Warning(text)) => {
+            Msg::Status(TrackingStatus::Warning(text)) => {
                 window.set_status(theremotion_ui::Status::Warning);
                 window.set_status_message(text.into());
             }
-            UiUpdate::Status(TrackingStatus::Error(text)) => {
+            Msg::Status(TrackingStatus::Error(text)) => {
                 window.set_status(theremotion_ui::Status::Error);
                 window.set_status_message(text.into());
             }
-            UiUpdate::LeadVolume(v) => window.set_lead_volume(v),
-            UiUpdate::Lead(notes, coords) => {
+            Msg::LeadVolume(v) => window.set_lead_volume(v),
+            Msg::Lead(notes, coords) => {
                 let coords_direction = coords.normalize();
                 let range_end = *settings.current_preset.note_range_f().end();
                 window.set_tuned_note(notes[0].0 .0);
@@ -224,25 +224,23 @@ fn read_updates(
                     kb_leads.set_row_data(index, lead);
                 }
             }
-            UiUpdate::ChordsNumber(c) => window.set_chords_number(c),
-            UiUpdate::RawNote(n) => {
+            Msg::ChordsNumber(c) => window.set_chords_number(c),
+            Msg::RawNote(n) => {
                 window.set_tuner_note_focus(restricted_scale_window.closest_in_scale(n).0);
                 window.set_raw_note(n.0);
             }
-            UiUpdate::Filter(c, r) => {
+            Msg::Filter(c, r) => {
                 window.set_filter_cutoff(c);
                 window.set_filter_resonance(r);
             }
-            UiUpdate::AutotuneAmount(a) => {
-                window.set_autotune_amount(a.try_into().unwrap_or_default())
-            }
-            UiUpdate::HasHands(l, r) => {
+            Msg::AutotuneAmount(a) => window.set_autotune_amount(a.try_into().unwrap_or_default()),
+            Msg::HasHands(l, r) => {
                 window.set_has_left_hand(l);
                 window.set_has_right_hand(r);
             }
-            UiUpdate::StrumReady(s) => window.set_strum_ready(s),
-            UiUpdate::TrumpetStrength(s) => window.set_trumpet_strength(s),
-            UiUpdate::Settings(s) => {
+            Msg::StrumReady(s) => window.set_strum_ready(s),
+            Msg::TrumpetStrength(s) => window.set_trumpet_strength(s),
+            Msg::Settings(s) => {
                 *settings = s;
                 update_ui_from_settings(window, settings);
             }

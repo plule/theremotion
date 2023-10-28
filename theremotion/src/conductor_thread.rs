@@ -6,10 +6,9 @@ use nalgebra::Vector2;
 use staff::{midi::Octave, Interval, Pitch};
 
 use crate::{
-    controls, dsp_thread, leap_thread,
+    controls, dsp_thread,
     settings::{Handedness, NamedScale, Preset, Settings},
-    ui_thread::{self, UiUpdate},
-    HandMessage, {IntervalF, Volume},
+    ui_thread, HandMessage, {IntervalF, Volume},
 };
 
 const HALF_PI: f32 = PI / 2.0;
@@ -21,7 +20,8 @@ pub enum TrackingStatus {
     Ok,
 }
 
-pub enum ConductorMessage {
+/// Message received by the conductor thread
+pub enum Msg {
     Exit,
     TrackingStatus(TrackingStatus),
     HandUpdate(HandMessage),
@@ -61,22 +61,23 @@ pub enum ConductorMessage {
 pub fn run(
     settings: Settings,
     controls: controls::Controls,
-    rx: Receiver<ConductorMessage>,
+    rx: Receiver<Msg>,
     dsp_tx: Sender<dsp_thread::ParameterUpdate>,
-    ui_tx: Sender<ui_thread::UiUpdate>,
-    leap_tx: Sender<leap_thread::Message>,
+    ui_tx: Sender<ui_thread::Msg>,
 ) -> thread::JoinHandle<()> {
-    thread::spawn(move || {
-        let mut conductor = Conductor {
-            settings,
-            controls,
-            dsp_tx,
-            ui_tx,
-            leap_tx,
-            play_state: PlayState::default(),
-        };
-        conductor.run(rx).unwrap();
-    })
+    thread::Builder::new()
+        .name("conductor".to_string())
+        .spawn(move || {
+            let mut conductor = Conductor {
+                settings,
+                controls,
+                dsp_tx,
+                ui_tx,
+                play_state: PlayState::default(),
+            };
+            conductor.run(rx).unwrap();
+        })
+        .expect("Failed to spawn the conductor thread")
 }
 
 /// The conductor interprets and transmits the messages between
@@ -86,10 +87,7 @@ struct Conductor {
     pub dsp_tx: Sender<dsp_thread::ParameterUpdate>,
 
     /// Output: User interface updates
-    pub ui_tx: Sender<UiUpdate>,
-
-    /// Output: Setting updates sent to the leap thread
-    pub leap_tx: Sender<leap_thread::Message>,
+    pub ui_tx: Sender<ui_thread::Msg>,
 
     /// Application settings current state
     pub settings: Settings,
@@ -119,7 +117,7 @@ impl Default for PlayState {
 }
 
 impl Conductor {
-    pub fn run(&mut self, rx: Receiver<ConductorMessage>) -> anyhow::Result<()> {
+    pub fn run(&mut self, rx: Receiver<Msg>) -> anyhow::Result<()> {
         for msg in rx.iter() {
             let exit = self.on_conductor_message(msg)?;
             if exit {
@@ -129,7 +127,7 @@ impl Conductor {
         Ok(())
     }
 
-    fn on_conductor_message(&mut self, msg: ConductorMessage) -> anyhow::Result<bool> {
+    fn on_conductor_message(&mut self, msg: Msg) -> anyhow::Result<bool> {
         let mut settings = self.settings.clone();
 
         let pitch_hand_type = settings.pitch_hand_type();
@@ -138,60 +136,59 @@ impl Conductor {
         let preset = &mut settings.current_preset;
 
         match msg {
-            ConductorMessage::Exit => {
+            Msg::Exit => {
                 log::debug!("Conductor thread exiting");
-                self.leap_tx.send(leap_thread::Message::Exit)?;
                 return Ok(true);
             }
-            ConductorMessage::TrackingStatus(status) => {
-                self.ui_tx.send(UiUpdate::Status(status))?;
+            Msg::TrackingStatus(status) => {
+                self.ui_tx.send(ui_thread::Msg::Status(status))?;
             }
-            ConductorMessage::HandUpdate(h) => {
+            Msg::HandUpdate(h) => {
                 if h.hand_type == pitch_hand_type {
                     self.on_pitch_hand(h, preset)?;
                 } else if h.hand_type == volume_hand_type {
                     self.on_volume_hand(h, preset)?;
                 }
             }
-            ConductorMessage::VisibleHands { left, right } => {
-                self.ui_tx.send(UiUpdate::HasHands(left, right))?;
+            Msg::VisibleHands { left, right } => {
+                self.ui_tx.send(ui_thread::Msg::HasHands(left, right))?;
             }
-            ConductorMessage::DroneClicked(note_index) => {
+            Msg::DroneClicked(note_index) => {
                 toggle_drone(preset, note_index);
             }
-            ConductorMessage::RootClicked(p) => {
+            Msg::RootClicked(p) => {
                 let pitch = Pitch::from_byte((p % 12) as u8);
                 preset.pitch = pitch;
                 tracing::debug!("Root note {} clicked, pitch: {}", p, preset.pitch);
             }
-            ConductorMessage::ScaleClicked(note_index) => {
+            Msg::ScaleClicked(note_index) => {
                 toggle_scale_note(preset, note_index);
             }
-            ConductorMessage::FullscreenClicked => {
+            Msg::FullscreenClicked => {
                 settings.system.fullscreen = !settings.system.fullscreen;
             }
-            ConductorMessage::LHClicked => {
+            Msg::LHClicked => {
                 settings.system.handedness = Handedness::LeftHanded;
             }
-            ConductorMessage::RHClicked => {
+            Msg::RHClicked => {
                 settings.system.handedness = Handedness::RightHanded;
             }
-            ConductorMessage::HighPriorityClicked => {
+            Msg::HighPriorityClicked => {
                 settings.system.high_priority_process = !settings.system.high_priority_process;
             }
-            ConductorMessage::OnScreenKeyboardClicked => {
+            Msg::OnScreenKeyboardClicked => {
                 settings.system.force_touchscreen = !settings.system.force_touchscreen;
             }
-            ConductorMessage::LeadOctave(o) => {
+            Msg::LeadOctave(o) => {
                 preset.lead_octave = Octave::new_unchecked(o as i8);
             }
-            ConductorMessage::GuitarOctave(o) => {
+            Msg::GuitarOctave(o) => {
                 preset.guitar_octave = Octave::new_unchecked(o as i8);
             }
-            ConductorMessage::DroneOctave(o) => {
+            Msg::DroneOctave(o) => {
                 preset.drone_octave = Octave::new_unchecked(o as i8);
             }
-            ConductorMessage::SelectScale(id) => {
+            Msg::SelectScale(id) => {
                 if let Some((scale, _)) = settings
                     .system_and_user_scales()
                     .find(|(s, _)| s.id() == id)
@@ -199,15 +196,15 @@ impl Conductor {
                     settings.current_preset.scale = scale.scale;
                 }
             }
-            ConductorMessage::DeleteScale(id) => {
+            Msg::DeleteScale(id) => {
                 settings.scales.retain(|s| s.id() != id);
             }
-            ConductorMessage::SaveScale(name) => {
+            Msg::SaveScale(name) => {
                 settings
                     .scales
                     .push(NamedScale::new(name, settings.current_preset.scale));
             }
-            ConductorMessage::SelectPreset(id) => {
+            Msg::SelectPreset(id) => {
                 let preset = settings
                     .system_and_user_presets()
                     .find(|(p, _)| p.id() == id)
@@ -216,34 +213,33 @@ impl Conductor {
                     settings.current_preset = preset;
                 }
             }
-            ConductorMessage::DeletePreset(id) => {
+            Msg::DeletePreset(id) => {
                 settings.presets.retain(|p| p.id() != id);
             }
-            ConductorMessage::SavePreset(name) => {
+            Msg::SavePreset(name) => {
                 let mut preset = settings.current_preset.clone();
                 preset.name = name;
                 settings.presets.push(preset);
             }
-            ConductorMessage::LeadVolume(v) => preset.mix.lead = v,
-            ConductorMessage::GuitarVolume(v) => preset.mix.guitar = v,
-            ConductorMessage::DroneVolume(v) => preset.mix.drone = v,
-            ConductorMessage::MasterVolume(v) => preset.mix.master = v,
-            ConductorMessage::EchoAmount(v) => preset.fx.echo.mix = v,
-            ConductorMessage::EchoDuration(v) => preset.fx.echo.duration = v,
-            ConductorMessage::EchoFeedback(v) => preset.fx.echo.feedback = v,
-            ConductorMessage::ReverbAmount(v) => preset.fx.reverb.mix = v,
-            ConductorMessage::ReverbTime(v) => preset.fx.reverb.time = v,
-            ConductorMessage::ReverbDamp(v) => preset.fx.reverb.damp = v,
-            ConductorMessage::ReverbSize(v) => preset.fx.reverb.size = v,
-            ConductorMessage::DroneDetune(v) => preset.drone.detune = v,
-            ConductorMessage::GuitarDroneClicked => {
-                preset.drone.pluck_drone = !preset.drone.pluck_drone
-            }
+            Msg::LeadVolume(v) => preset.mix.lead = v,
+            Msg::GuitarVolume(v) => preset.mix.guitar = v,
+            Msg::DroneVolume(v) => preset.mix.drone = v,
+            Msg::MasterVolume(v) => preset.mix.master = v,
+            Msg::EchoAmount(v) => preset.fx.echo.mix = v,
+            Msg::EchoDuration(v) => preset.fx.echo.duration = v,
+            Msg::EchoFeedback(v) => preset.fx.echo.feedback = v,
+            Msg::ReverbAmount(v) => preset.fx.reverb.mix = v,
+            Msg::ReverbTime(v) => preset.fx.reverb.time = v,
+            Msg::ReverbDamp(v) => preset.fx.reverb.damp = v,
+            Msg::ReverbSize(v) => preset.fx.reverb.size = v,
+            Msg::DroneDetune(v) => preset.drone.detune = v,
+            Msg::GuitarDroneClicked => preset.drone.pluck_drone = !preset.drone.pluck_drone,
         }
 
         if settings != self.settings {
             tracing::debug!("Settings were updated");
-            self.ui_tx.send(UiUpdate::Settings(settings.clone()))?;
+            self.ui_tx
+                .send(ui_thread::Msg::Settings(settings.clone()))?;
             settings
                 .current_preset
                 .send_to_dsp(&self.controls, &self.dsp_tx)?;
@@ -310,17 +306,17 @@ impl Conductor {
             .zip(lead_volumes.into_iter().map(Volume))
             .collect_vec();
         let lead_chord = [lead_chord[0], lead_chord[1], lead_chord[2], lead_chord[3]];
-        ui_tx.send(UiUpdate::AutotuneAmount(autotune))?;
-        ui_tx.send(UiUpdate::Lead(
+        ui_tx.send(ui_thread::Msg::AutotuneAmount(autotune))?;
+        ui_tx.send(ui_thread::Msg::Lead(
             lead_chord,
             Vector2::new(
                 pitch_coord_semitones.x * h.x_factor(),
                 pitch_coord_semitones.y,
             ),
         ))?;
-        ui_tx.send(UiUpdate::RawNote(raw_note))?;
-        ui_tx.send(UiUpdate::ChordsNumber(note_number_height))?;
-        ui_tx.send(UiUpdate::TrumpetStrength(trumpet))?;
+        ui_tx.send(ui_thread::Msg::RawNote(raw_note))?;
+        ui_tx.send(ui_thread::Msg::ChordsNumber(note_number_height))?;
+        ui_tx.send(ui_thread::Msg::TrumpetStrength(trumpet))?;
         Ok(())
     }
 
@@ -402,12 +398,12 @@ impl Conductor {
         self.controls.cutoff_note.send(dsp_tx, cutoff_note)?;
         self.controls.lead_volume.send(dsp_tx, lead_volume)?;
         self.controls.resonance.send(dsp_tx, resonance)?;
-        ui_tx.send(UiUpdate::Filter(
+        ui_tx.send(ui_thread::Msg::Filter(
             cutoff_note_norm * h.x_factor(),
             resonance_norm,
         ))?;
-        ui_tx.send(UiUpdate::LeadVolume(lead_volume))?;
-        ui_tx.send(UiUpdate::StrumReady(strum_ready))?;
+        ui_tx.send(ui_thread::Msg::LeadVolume(lead_volume))?;
+        ui_tx.send(ui_thread::Msg::StrumReady(strum_ready))?;
         Ok(())
     }
 }

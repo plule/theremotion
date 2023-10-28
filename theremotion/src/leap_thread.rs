@@ -1,44 +1,33 @@
 use std::thread;
 
-use anyhow::Result;
-use crossbeam_channel::{Receiver, Sender};
+use crossbeam_channel::{SendError, Sender};
 use leaprs::{Connection, ConnectionConfig, Error, Event};
 use nalgebra::{UnitQuaternion, Vector3};
 
-use crate::conductor_thread::{self, ConductorMessage, TrackingStatus};
-
-pub enum Message {
-    Exit,
-}
+use crate::conductor_thread::{self, TrackingStatus};
 
 /// Start the leap motion thread
-pub fn run(
-    rx: Receiver<Message>,
-    mut tx: Sender<conductor_thread::ConductorMessage>,
-) -> thread::JoinHandle<()> {
-    thread::spawn(move || {
-        let mut connection =
-            Connection::create(ConnectionConfig::default()).expect("Failed to connect");
-        connection.open().expect("Failed to open the connection");
-        loop {
-            if let Some(update) = rx.try_iter().next() {
-                match update {
-                    Message::Exit => {
-                        log::debug!("Leap thread exiting");
-                        return;
-                    }
+pub fn run(mut tx: Sender<conductor_thread::Msg>) -> thread::JoinHandle<()> {
+    thread::Builder::new()
+        .name("leap".to_string())
+        .spawn(move || {
+            let mut connection =
+                Connection::create(ConnectionConfig::default()).expect("Failed to connect");
+            connection.open().expect("Failed to open the connection");
+            loop {
+                if read_and_update(&mut tx, &mut connection).is_err() {
+                    // Conductor thread is not running anymore, exit
+                    return;
                 }
             }
-
-            read_and_update(&mut tx, &mut connection).unwrap();
-        }
-    })
+        })
+        .expect("Failed to spawn the hand tracking thread")
 }
 
 fn read_and_update(
-    tx: &mut Sender<conductor_thread::ConductorMessage>,
+    tx: &mut Sender<conductor_thread::Msg>,
     connection: &mut Connection,
-) -> Result<()> {
+) -> Result<(), SendError<conductor_thread::Msg>> {
     match connection.poll(100) {
         Ok(message) => {
             match message.event() {
@@ -47,10 +36,12 @@ fn read_and_update(
                     let hands = e.hands();
 
                     for hand in hands.iter() {
-                        tx.send(ConductorMessage::HandUpdate(crate::HandMessage::from(hand)))?;
+                        tx.send(conductor_thread::Msg::HandUpdate(crate::HandMessage::from(
+                            hand,
+                        )))?;
                     }
 
-                    tx.send(ConductorMessage::VisibleHands {
+                    tx.send(conductor_thread::Msg::VisibleHands {
                         left: hands
                             .iter()
                             .any(|h| h.hand_type() == leaprs::HandType::Left),
@@ -59,21 +50,21 @@ fn read_and_update(
                             .any(|h| h.hand_type() == leaprs::HandType::Right),
                     })?;
 
-                    tx.send(ConductorMessage::TrackingStatus(TrackingStatus::Ok))?;
+                    tx.send(conductor_thread::Msg::TrackingStatus(TrackingStatus::Ok))?;
                 }
-                Event::Connection(_) => tx.send(ConductorMessage::TrackingStatus(
+                Event::Connection(_) => tx.send(conductor_thread::Msg::TrackingStatus(
                     TrackingStatus::Warning("No device".to_string()),
                 ))?,
-                Event::ConnectionLost(_) => tx.send(ConductorMessage::TrackingStatus(
+                Event::ConnectionLost(_) => tx.send(conductor_thread::Msg::TrackingStatus(
                     TrackingStatus::Error("Connection lost".to_string()),
                 ))?,
                 Event::Device(_) => {
-                    tx.send(ConductorMessage::TrackingStatus(TrackingStatus::Ok))?
+                    tx.send(conductor_thread::Msg::TrackingStatus(TrackingStatus::Ok))?
                 }
-                Event::DeviceFailure(_) => tx.send(ConductorMessage::TrackingStatus(
+                Event::DeviceFailure(_) => tx.send(conductor_thread::Msg::TrackingStatus(
                     TrackingStatus::Error("Device failure".to_string()),
                 ))?,
-                Event::DeviceLost => tx.send(ConductorMessage::TrackingStatus(
+                Event::DeviceLost => tx.send(conductor_thread::Msg::TrackingStatus(
                     TrackingStatus::Error("Device disconnected".to_string()),
                 ))?,
                 _ => {}
@@ -81,12 +72,12 @@ fn read_and_update(
         }
         Err(err) => match err {
             Error::Timeout => {} // spammey without any device
-            Error::NotConnected => tx.send(ConductorMessage::TrackingStatus(
+            Error::NotConnected => tx.send(conductor_thread::Msg::TrackingStatus(
                 TrackingStatus::Warning(err.to_string()),
             ))?,
-            _ => tx.send(ConductorMessage::TrackingStatus(TrackingStatus::Error(
-                err.to_string(),
-            )))?,
+            _ => tx.send(conductor_thread::Msg::TrackingStatus(
+                TrackingStatus::Error(err.to_string()),
+            ))?,
         },
     }
     Ok(())
