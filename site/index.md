@@ -31,7 +31,7 @@ play.
 - 👋 Move up your right hand to play a chord.
 - 👌 Pinch with your right hand to snap to a scale.
 - 🎸 Pinch with your left hand, and rotate it to play guitar.
-- 👊 Close both fists and rotate the left one to play a drone.
+- 👊 Close your right fist and rotate it to play a drone.
 
 A left handed mode is also included.
 
