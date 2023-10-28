@@ -6,7 +6,7 @@ use nalgebra::{Vector2, Vector3};
 use staff::{midi::Octave, Interval, Pitch};
 
 use crate::{
-    controls, dsp_thread,
+    controls, dsp_thread, leap_thread,
     settings::{Handedness, NamedScale, Preset, Settings},
     solfege::{IntervalF, Volume},
     ui_thread::{self, UiUpdate},
@@ -31,6 +31,7 @@ pub enum LeapStatus {
 }
 
 pub enum ConductorMessage {
+    Exit,
     LeapStatus(LeapStatus),
     PitchHand(HandMessage),
     VolumeHand(HandMessage),
@@ -73,7 +74,7 @@ pub fn run(
     rx: Receiver<ConductorMessage>,
     dsp_tx: Sender<dsp_thread::ParameterUpdate>,
     ui_tx: Sender<ui_thread::UiUpdate>,
-    leap_tx: Sender<Settings>,
+    leap_tx: Sender<leap_thread::Message>,
 ) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         let mut conductor = Conductor {
@@ -98,7 +99,7 @@ struct Conductor {
     pub ui_tx: Sender<UiUpdate>,
 
     /// Output: Setting updates sent to the leap thread
-    pub leap_tx: Sender<Settings>,
+    pub leap_tx: Sender<leap_thread::Message>,
 
     /// Application settings current state
     pub settings: Settings,
@@ -130,17 +131,25 @@ impl Default for PlayState {
 impl Conductor {
     pub fn run(&mut self, rx: Receiver<ConductorMessage>) -> anyhow::Result<()> {
         for msg in rx.iter() {
-            self.on_conductor_message(msg)?;
+            let exit = self.on_conductor_message(msg)?;
+            if exit {
+                return Ok(());
+            }
         }
         Ok(())
     }
 
-    fn on_conductor_message(&mut self, msg: ConductorMessage) -> anyhow::Result<()> {
+    fn on_conductor_message(&mut self, msg: ConductorMessage) -> anyhow::Result<bool> {
         let mut settings = self.settings.clone();
 
         let preset = &mut settings.current_preset;
 
         match msg {
+            ConductorMessage::Exit => {
+                log::debug!("Conductor thread exiting");
+                self.leap_tx.send(leap_thread::Message::Exit)?;
+                return Ok(true);
+            }
             ConductorMessage::LeapStatus(status) => {
                 self.ui_tx.send(UiUpdate::Status(status))?;
             }
@@ -241,7 +250,8 @@ impl Conductor {
         if settings != self.settings {
             tracing::debug!("Settings were updated");
             self.ui_tx.send(UiUpdate::Settings(settings.clone()))?;
-            self.leap_tx.send(settings.clone())?;
+            self.leap_tx
+                .send(leap_thread::Message::SettingsUpdate(settings.clone()))?;
             settings
                 .current_preset
                 .send_to_dsp(&self.controls, &self.dsp_tx)?;
@@ -249,7 +259,7 @@ impl Conductor {
             self.settings.save()?;
         }
 
-        Ok(())
+        Ok(false)
     }
 
     fn on_pitch_hand(&mut self, h: HandMessage, preset: &Preset) -> anyhow::Result<()> {

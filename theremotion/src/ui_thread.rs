@@ -75,13 +75,6 @@ pub fn run(
     }
     let c = Connector(tx.clone());
 
-    window.on_close({
-        let window_weak = window_weak.clone();
-        move || {
-            window_weak.unwrap().hide().unwrap();
-        }
-    });
-
     window
         .global::<theremotion_ui::VirtualKeyboardHandler<'_>>()
         .on_key_pressed({
@@ -98,6 +91,13 @@ pub fn run(
             }
         });
 
+    // Common
+    window.on_close({
+        let window_weak = window_weak.clone();
+        move || {
+            window_weak.unwrap().hide().unwrap();
+        }
+    });
     // Play tab
     window.on_drone_clicked(c.send(CM::DroneClicked));
 

@@ -65,7 +65,9 @@ fn main() {
     let controls = controls::Controls::from(&state);
 
     // Queue the initialization messages
-    leap_tx.send(settings.clone()).unwrap();
+    leap_tx
+        .send(leap_thread::Message::SettingsUpdate(settings.clone()))
+        .unwrap();
     settings
         .current_preset
         .send_to_dsp(&controls, &dsp_tx)
@@ -90,9 +92,11 @@ fn main() {
     let leap_worker = leap_thread::run(leap_rx, co_tx.clone());
 
     // Start UI
-    let (window, window_timer) = ui_thread::run(co_tx.clone(), ui_rx, settings);
+    let (window, _window_timer) = ui_thread::run(co_tx.clone(), ui_rx, settings);
     window.run().expect("Failed to start the UI");
-    drop(window_timer);
+    co_tx
+        .send(conductor_thread::ConductorMessage::Exit)
+        .expect("Error when trying to exit");
 
     #[cfg(feature = "leap")]
     leap_worker

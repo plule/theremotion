@@ -12,9 +12,14 @@ use crate::{
 
 const HALF_PI: f32 = PI / 2.0;
 
+pub enum Message {
+    Exit,
+    SettingsUpdate(Settings),
+}
+
 /// Start the leap motion thread
 pub fn run(
-    settings_rx: Receiver<Settings>,
+    rx: Receiver<Message>,
     mut tx: Sender<conductor_thread::ConductorMessage>,
 ) -> thread::JoinHandle<()> {
     thread::spawn(move || {
@@ -23,14 +28,17 @@ pub fn run(
         connection.open().expect("Failed to open the connection");
         let mut settings = Settings::default();
         loop {
-            if let Some(new_settings) = settings_rx.try_iter().last() {
-                settings = new_settings;
+            for update in rx.try_iter() {
+                match update {
+                    Message::Exit => {
+                        log::debug!("Leap thread exiting");
+                        return;
+                    }
+                    Message::SettingsUpdate(new_settings) => settings = new_settings,
+                }
             }
-            if read_and_update(&mut tx, &settings, &mut connection).is_err() {
-                // For the lack of better error handling, just assume
-                // that the gui thread quit
-                return;
-            }
+
+            read_and_update(&mut tx, &settings, &mut connection).unwrap();
         }
     })
 }
