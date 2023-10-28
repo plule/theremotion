@@ -1,4 +1,4 @@
-import { Palette, Style , GradText, BevelRectangle, ScreenGlare } from "common.slint";
+import { Palette, Style , GradText, BevelRectangle, ScreenGlare , CaptionText} from "common.slint";
 
 export struct Graduation {
     value: float,
@@ -7,6 +7,9 @@ export struct Graduation {
 
 export component Plot inherits BevelRectangle {
     in property <string> text;
+    in property <string> icon;
+    in property <bool> show-icon: false;
+    in property <float> icon-alpha: 1;
     background: Palette.plot-bg;
     bevel-color: Palette.tab-bg;
     extruded: false;
@@ -18,6 +21,14 @@ export component Plot inherits BevelRectangle {
         z: 1;
         y: root.height - self.font-size*2;
         text: text;
+    }
+    if show-icon: GradText {
+        vertical-alignment: TextVerticalAlignment.top;
+        horizontal-alignment: TextHorizontalAlignment.center;
+        height: 90%;
+        text: icon;
+        font-family: "Noto Emoji";
+        color: Palette.plot-grad-text.with-alpha(icon-alpha);
     }
     ScreenGlare {}
 }

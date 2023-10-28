@@ -302,7 +302,9 @@ export component TouchButton inherits BevelRectangle {
     ScreenGlare {}
 
     if text != "": Text {
-        vertical-alignment: root.checkable ? TextVerticalAlignment.top : TextVerticalAlignment.center;
+        y: root.height / 2 - self.font-size + 4px;
+        vertical-alignment: TextVerticalAlignment.center;
+        horizontal-alignment: TextHorizontalAlignment.center;
         font-family: font-family;
         font-size: font-size;
         text: text;

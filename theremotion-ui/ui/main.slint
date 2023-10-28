@@ -15,6 +15,28 @@ struct TabData {
     icon: string,
 }
 
+component GuitarIndicator inherits CaptionText {
+    in property <bool> ready;
+    text: "🎸";
+    font-family: "Noto Emoji";
+    opacity: ready ? 1 : 0;
+    animate opacity {
+        easing: ease-out;
+        duration: 100ms;
+    }
+}
+
+component AutotuneIndicator inherits CaptionText {
+    in property <int> autotune;
+    text: "🎹";
+    font-family: "Noto Emoji";
+    opacity: autotune / 5.0;
+    animate opacity {
+        easing: ease-out;
+        duration: 100ms;
+    }
+}
+
 export component MainWindow inherits Window {
     title: "Theremotion";
     icon: @image-url("../../assets/icon.svg");
@@ -95,8 +117,8 @@ export component MainWindow inherits Window {
     in property lead-raw-note <=> tplay.raw-note;
     in property lead-notes <=> tplay.notes;
     in property highest-note <=> tplay.highest-note;
-    in property<int> autotune-amount: 2; // todo
-    in property<bool> strum-ready: true; // todo
+    in property<int> autotune-amount: 0;
+    in property<bool> strum-ready: false;
     in property<float> trumpet-strength: 0.5; // todo
 
     // Root tab
@@ -193,12 +215,32 @@ export component MainWindow inherits Window {
             col: 0;
             padding-left: Style.area-corner-radius;
             spacing: 10px;
-            alignment: LayoutAlignment.space-around;
+            alignment: LayoutAlignment.center;
+            height: 45px;
+
+            Rectangle {
+                clip: true;
+                width: 70px;
+                BevelRectangle {
+                    y: 0px;
+                    height: head.height + Style.area-corner-radius;
+                    background: Palette.tab-bg;
+                    Group {
+                        has-name: false;
+                        HorizontalLayout {
+                            height: head.height;
+                            padding-bottom: Style.area-corner-radius;
+                            CaptionText { text: has-left-hand ? "👈" : "⬜"; font-family: "Noto Emoji"; }
+                            if handedness == Handedness.RightHanded: GuitarIndicator {ready: strum-ready;}
+                            if handedness == Handedness.LeftHanded: AutotuneIndicator {autotune: autotune-amount;}
+                        }
+                    }
+                }
+            }
 
             title := Rectangle {
                 clip: true;
-                height: 45px;
-                width: 50%;
+                width: 40%;
                 BevelRectangle {
                     height: title.height + self.border-radius;
                     y: 0;
@@ -208,10 +250,28 @@ export component MainWindow inherits Window {
                         padding-bottom: 7px;
                         padding-left: 20px;
                         padding-right: 20px;
-                        alignment: LayoutAlignment.space-between;
-                        TitleText { text: has-left-hand ? "👈" : "⬜"; font-family: "Noto Emoji"; }
+                        alignment: LayoutAlignment.center;
                         TitleText { text: tabs[active-tab].title; }
-                        TitleText { text: has-right-hand ? "👉" : "⬜"; font-family: "Noto Emoji"; }
+                    }
+                }
+            }
+
+            Rectangle {
+                clip: true;
+                width: 70px;
+                BevelRectangle {
+                    y: 0px;
+                    height: head.height + Style.area-corner-radius;
+                    background: Palette.tab-bg;
+                    Group {
+                        has-name: false;
+                        HorizontalLayout {
+                            height: head.height;
+                            padding-bottom: Style.area-corner-radius;
+                            if handedness == Handedness.LeftHanded: GuitarIndicator {ready: strum-ready;}
+                            if handedness == Handedness.RightHanded: AutotuneIndicator {autotune: autotune-amount;}
+                            CaptionText { text: has-right-hand? "👉" : "⬜"; font-family: "Noto Emoji"; }
+                        }
                     }
                 }
             }
@@ -334,14 +394,14 @@ export component MainWindow inherits Window {
         }
     }
 
-
     BevelRectangle {
+        property <length> y-off: (status == Status.Ok ? 0px : 30px);
         x: root.width - self.width - 30px;
-        y: root.height - (status == Status.Ok ? 0px : 30px);
+        y: root.height - y-off;
         width: 40%;
         background: Palette.tab-bg;
         border-radius: Style.area-corner-radius;
-        animate y {
+        animate y-off {
             easing: ease-in-out;
             duration: 500ms;
         }
@@ -369,7 +429,12 @@ export component MainWindow inherits Window {
     }
 
     VirtualKeyboard {
+        property <length> y-off: TextInputInterface.text-input-focused && use-on-screen-keyboard ? self.height : 0;
         height: 250px;
-        y: TextInputInterface.text-input-focused && use-on-screen-keyboard ? root.height - self.height : root.height;
+        y: root.height - y-off;
+        animate y-off {
+             easing: ease-out;
+             duration: 500ms;
+        }
     }
 }
