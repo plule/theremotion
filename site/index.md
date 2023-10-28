@@ -57,3 +57,4 @@ The hand tracking is provided by Ultraleap's [Leap Motion Controller](https://ww
 The sound generation is created with Grame's [Faust](https://faust.grame.fr/).
 
 The program is built with [Rust](https://www.rust-lang.org).
+
