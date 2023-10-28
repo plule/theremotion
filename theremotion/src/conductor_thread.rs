@@ -2,7 +2,7 @@ use std::{cmp::Ordering, f32::consts::PI, thread};
 
 use crossbeam_channel::{Receiver, Sender};
 use itertools::Itertools;
-use nalgebra::{Vector2, Vector3};
+use nalgebra::{UnitQuaternion, Vector2, Vector3};
 use staff::{midi::Octave, Interval, Pitch};
 
 use crate::{
@@ -14,13 +14,55 @@ use crate::{
 
 const HALF_PI: f32 = PI / 2.0;
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum HandType {
+    Left,
+    Right,
+}
+
 pub struct HandMessage {
-    pub x_factor: f32,
+    pub hand_type: HandType,
     pub position: Vector3<f32>,
     pub velocity: Vector3<f32>,
-    pub rotation: Option<f32>,
+    pub rotation: UnitQuaternion<f32>,
     pub pinch: f32,
     pub grab: f32,
+}
+
+impl HandMessage {
+    fn x_factor(&self) -> f32 {
+        match self.hand_type {
+            // The left hand goes away from the body in the negative x
+            HandType::Left => -1.0,
+            // The right hand goes away from the body in the positive x
+            HandType::Right => 1.0,
+        }
+    }
+
+    fn position_from_body(&self) -> Vector3<f32> {
+        Vector3::new(
+            self.x_factor() * self.position.x,
+            self.position.y,
+            self.position.z,
+        )
+    }
+
+    fn velocity_from_body(&self) -> Vector3<f32> {
+        Vector3::new(
+            self.x_factor() * self.velocity.x,
+            self.velocity.y,
+            self.velocity.z,
+        )
+    }
+
+    fn rotation_from_body(&self) -> Option<f32> {
+        let angle = -self.rotation.euler_angles().2 * self.x_factor();
+        if angle < PI && angle > -HALF_PI {
+            Some(angle)
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -33,8 +75,7 @@ pub enum LeapStatus {
 pub enum ConductorMessage {
     Exit,
     LeapStatus(LeapStatus),
-    PitchHand(HandMessage),
-    VolumeHand(HandMessage),
+    HandUpdate(HandMessage),
     VisibleHands { left: bool, right: bool },
     DroneClicked(i32),
     RootClicked(i32),
@@ -142,6 +183,9 @@ impl Conductor {
     fn on_conductor_message(&mut self, msg: ConductorMessage) -> anyhow::Result<bool> {
         let mut settings = self.settings.clone();
 
+        let pitch_hand_type = settings.pitch_hand_type();
+        let volume_hand_type = settings.volume_hand_type();
+
         let preset = &mut settings.current_preset;
 
         match msg {
@@ -153,11 +197,12 @@ impl Conductor {
             ConductorMessage::LeapStatus(status) => {
                 self.ui_tx.send(UiUpdate::Status(status))?;
             }
-            ConductorMessage::PitchHand(h) => {
-                self.on_pitch_hand(h, preset)?;
-            }
-            ConductorMessage::VolumeHand(h) => {
-                self.on_volume_hand(h, preset)?;
+            ConductorMessage::HandUpdate(h) => {
+                if h.hand_type == pitch_hand_type {
+                    self.on_pitch_hand(h, preset)?;
+                } else if h.hand_type == volume_hand_type {
+                    self.on_volume_hand(h, preset)?;
+                }
             }
             ConductorMessage::VisibleHands { left, right } => {
                 self.ui_tx.send(UiUpdate::HasHands(left, right))?;
@@ -250,8 +295,6 @@ impl Conductor {
         if settings != self.settings {
             tracing::debug!("Settings were updated");
             self.ui_tx.send(UiUpdate::Settings(settings.clone()))?;
-            self.leap_tx
-                .send(leap_thread::Message::SettingsUpdate(settings.clone()))?;
             settings
                 .current_preset
                 .send_to_dsp(&self.controls, &self.dsp_tx)?;
@@ -270,14 +313,16 @@ impl Conductor {
         let restricted_scale_window = preset.restricted_scale_floating_window();
         let note_range = preset.note_range_f();
         let antenna_coord = Vector2::new(400.0, -200.0);
-        let pitch_coord_mm = antenna_coord - Vector2::new(h.position.x, h.position.z);
+        let position_from_body = h.position_from_body();
+        let pitch_coord_mm =
+            antenna_coord - Vector2::new(position_from_body.x, position_from_body.z);
         let pitch_coord_semitones = pitch_coord_mm / 15.0;
         let pitch_coord_semitones = Vector2::new(-pitch_coord_semitones.x, pitch_coord_semitones.y);
         let pitch_distance_semitones = IntervalF(pitch_coord_semitones.norm());
         let raw_note = (*note_range.end() - pitch_distance_semitones)
             .clamp(*note_range.start(), *note_range.end());
         let note_number_height =
-            controls::convert_range(h.position.y, &(350.0..=500.0), &(1.0..=4.0));
+            controls::convert_range(position_from_body.y, &(350.0..=500.0), &(1.0..=4.0));
         let lead_volumes =
             [0.0, 1.0, 2.0, 3.0].map(|v| (note_number_height.clamp(1.0, 4.0) - v).clamp(0.0, 1.0));
         self.play_state.guitar_gates = lead_volumes.map(|v| v > 0.0);
@@ -286,14 +331,15 @@ impl Conductor {
         let chord = full_scale_window.autochord(note, &[0, 2, 4, 7]);
         let lead_offset = preset.lead_interval_f();
         let pluck_offset = preset.pluck_interval_f();
-        let pitch_bend = self
-            .controls
-            .pitch_bend
-            .get_scaled(h.velocity.x + h.velocity.z, &(-300.0..=300.0));
+        let velocity_from_body = h.velocity_from_body();
+        let pitch_bend = self.controls.pitch_bend.get_scaled(
+            velocity_from_body.x + velocity_from_body.z,
+            &(-300.0..=300.0),
+        );
         let trumpet = self
             .controls
             .drone_trumpet
-            .get_scaled(h.velocity.y.abs(), &(0.0..=250.0));
+            .get_scaled(velocity_from_body.y.abs(), &(0.0..=250.0));
         for (control, value) in self.controls.lead.iter().zip(lead_volumes) {
             control.volume.send(dsp_tx, value)?;
         }
@@ -319,7 +365,7 @@ impl Conductor {
         ui_tx.send(UiUpdate::Lead(
             lead_chord,
             Vector2::new(
-                pitch_coord_semitones.x * h.x_factor,
+                pitch_coord_semitones.x * h.x_factor(),
                 pitch_coord_semitones.y,
             ),
         ))?;
@@ -334,7 +380,7 @@ impl Conductor {
         let ui_tx = &mut self.ui_tx;
 
         let strum_ready = h.pinch > 0.9;
-        if let Some(rotation) = h.rotation {
+        if let Some(rotation) = h.rotation_from_body() {
             if strum_ready {
                 for (i, string) in &mut self.controls.strum.iter().enumerate() {
                     string.pluck.send(
@@ -354,14 +400,17 @@ impl Conductor {
                 .get_scaled(rotation, &(0.0..=(HALF_PI - 0.2)));
             self.controls.pluck_mute.send(dsp_tx, pluck_mute)?;
         }
+        let position_from_body = h.position_from_body();
         let cutoff_note_norm =
-            controls::convert_range(h.position.x, &(50.0..=200.0), &(-1.0..=1.0)).clamp(-1.0, 1.0);
+            controls::convert_range(position_from_body.x, &(50.0..=200.0), &(-1.0..=1.0))
+                .clamp(-1.0, 1.0);
         let cutoff_note = self
             .controls
             .cutoff_note
             .get_scaled(cutoff_note_norm, &(-1.0..=1.0));
         let resonance_norm =
-            controls::convert_range(h.position.z, &(100.0..=-100.0), &(0.0..=1.0)).clamp(0.0, 1.0);
+            controls::convert_range(position_from_body.z, &(100.0..=-100.0), &(0.0..=1.0))
+                .clamp(0.0, 1.0);
         let resonance = self
             .controls
             .resonance
@@ -369,9 +418,9 @@ impl Conductor {
         let lead_volume = self
             .controls
             .lead_volume
-            .get_scaled(h.position.y, &(300.0..=400.0));
+            .get_scaled(position_from_body.y, &(300.0..=400.0));
         if h.grab >= 1.0 {
-            if let Some(drone_volume_angle) = h.rotation {
+            if let Some(drone_volume_angle) = h.rotation_from_body() {
                 let (init_drone_volume, init_drone_volume_angle) = *self
                     .play_state
                     .drone_grab_state
@@ -405,7 +454,7 @@ impl Conductor {
         self.controls.lead_volume.send(dsp_tx, lead_volume)?;
         self.controls.resonance.send(dsp_tx, resonance)?;
         ui_tx.send(UiUpdate::Filter(
-            cutoff_note_norm * h.x_factor,
+            cutoff_note_norm * h.x_factor(),
             resonance_norm,
         ))?;
         ui_tx.send(UiUpdate::LeadVolume(lead_volume))?;

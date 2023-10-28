@@ -1,20 +1,14 @@
-use std::{f32::consts::PI, thread};
+use std::thread;
 
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
 use leaprs::*;
 use nalgebra::{UnitQuaternion, Vector3};
 
-use crate::{
-    conductor_thread::{self, ConductorMessage, HandMessage, LeapStatus},
-    settings::{Handedness, Settings},
-};
-
-const HALF_PI: f32 = PI / 2.0;
+use crate::conductor_thread::{self, ConductorMessage, HandMessage, LeapStatus};
 
 pub enum Message {
     Exit,
-    SettingsUpdate(Settings),
 }
 
 /// Start the leap motion thread
@@ -26,68 +20,41 @@ pub fn run(
         let mut connection =
             Connection::create(ConnectionConfig::default()).expect("Failed to connect");
         connection.open().expect("Failed to open the connection");
-        let mut settings = Settings::default();
         loop {
-            for update in rx.try_iter() {
+            if let Some(update) = rx.try_iter().next() {
                 match update {
                     Message::Exit => {
                         log::debug!("Leap thread exiting");
                         return;
                     }
-                    Message::SettingsUpdate(new_settings) => settings = new_settings,
                 }
             }
 
-            read_and_update(&mut tx, &settings, &mut connection).unwrap();
+            read_and_update(&mut tx, &mut connection).unwrap();
         }
     })
 }
 
 fn read_and_update(
     tx: &mut Sender<conductor_thread::ConductorMessage>,
-    settings: &Settings,
     connection: &mut Connection,
 ) -> Result<()> {
     match connection.poll(100) {
         Ok(message) => {
             match message.event() {
                 Event::Tracking(e) => {
-                    let handedness = &settings.system.handedness;
-
                     // List of visible hands
                     let hands = e.hands();
-                    let pitch_hand = hands
-                        .iter()
-                        .find(|h| h.hand_type() == pitch_hand_type(handedness));
-                    let volume_hand = hands
-                        .iter()
-                        .find(|h| h.hand_type() == volume_hand_type(handedness));
+
+                    for hand in hands.iter() {
+                        tx.send(ConductorMessage::HandUpdate(HandMessage::from(hand)))?;
+                    }
 
                     tx.send(ConductorMessage::VisibleHands {
                         left: hands.iter().any(|h| h.hand_type() == HandType::Left),
                         right: hands.iter().any(|h| h.hand_type() == HandType::Right),
                     })?;
 
-                    if let Some(hand) = pitch_hand {
-                        tx.send(ConductorMessage::PitchHand(HandMessage {
-                            x_factor: hand.x_factor(),
-                            position: hand.position_from_body(),
-                            velocity: hand.velocity_from_body(),
-                            rotation: hand.rotation_from_body(),
-                            pinch: hand.pinch_strength(),
-                            grab: hand.grab_strength(),
-                        }))?;
-                    }
-                    if let Some(hand) = volume_hand {
-                        tx.send(ConductorMessage::VolumeHand(HandMessage {
-                            x_factor: hand.x_factor(),
-                            position: hand.position_from_body(),
-                            velocity: hand.velocity_from_body(),
-                            rotation: hand.rotation_from_body(),
-                            pinch: hand.pinch_strength(),
-                            grab: hand.grab_strength(),
-                        }))?;
-                    }
                     tx.send(ConductorMessage::LeapStatus(LeapStatus::Ok))?;
                 }
                 Event::Connection(_) => tx.send(ConductorMessage::LeapStatus(
@@ -119,68 +86,32 @@ fn read_and_update(
     Ok(())
 }
 
-fn pitch_hand_type(handedness: &Handedness) -> leaprs::HandType {
-    match handedness {
-        Handedness::RightHanded => leaprs::HandType::Right,
-        Handedness::LeftHanded => leaprs::HandType::Left,
-    }
-}
-
-fn volume_hand_type(handedness: &Handedness) -> leaprs::HandType {
-    match handedness {
-        Handedness::RightHanded => leaprs::HandType::Left,
-        Handedness::LeftHanded => leaprs::HandType::Right,
-    }
-}
-
-/// Normalized body direction trait.
-/// x direction is from the center of the body to the outside
-trait DirectionFromBody {
-    /// Factor applied to the x axis to normalize its direction
-    fn x_factor(&self) -> f32;
-    /// Palm position where the left/right position is normalized:
-    /// positive x means arms more open.
-    fn position_from_body(&self) -> Vector3<f32>;
-    /// Palm velocity where the left/right position is normalized:
-    /// positive x means arms more open.
-    fn velocity_from_body(&self) -> Vector3<f32>;
-    /// Hand twist angle
-    fn rotation_from_body(&self) -> Option<f32>;
-}
-
-impl DirectionFromBody for Hand<'_> {
-    fn x_factor(&self) -> f32 {
-        match self.hand_type() {
-            // The left hand goes away from the body in the negative x
-            HandType::Left => -1.0,
-            // The right hand goes away from the body in the positive x
-            HandType::Right => 1.0,
+impl From<&leaprs::Hand<'_>> for HandMessage {
+    fn from(value: &leaprs::Hand<'_>) -> Self {
+        let position = value.palm().position();
+        let velocity = value.palm().velocity();
+        let rotation = value.arm().rotation();
+        HandMessage {
+            hand_type: value.hand_type().into(),
+            position: Vector3::new(position.x(), position.y(), position.z()),
+            velocity: Vector3::new(velocity.x(), velocity.y(), velocity.z()),
+            rotation: UnitQuaternion::from_quaternion(nalgebra::Quaternion::new(
+                rotation.w(),
+                rotation.x(),
+                rotation.y(),
+                rotation.z(),
+            )),
+            pinch: value.pinch_strength(),
+            grab: value.grab_strength(),
         }
     }
+}
 
-    fn position_from_body(&self) -> Vector3<f32> {
-        let position = self.palm().position();
-        Vector3::new(self.x_factor() * position.x(), position.y(), position.z())
-    }
-
-    fn velocity_from_body(&self) -> Vector3<f32> {
-        let velocity = self.palm().velocity();
-        Vector3::new(self.x_factor() * velocity.x(), velocity.y(), velocity.z())
-    }
-
-    fn rotation_from_body(&self) -> Option<f32> {
-        let rotation = self.arm().rotation();
-        let rotation = UnitQuaternion::from_quaternion(nalgebra::Quaternion::new(
-            rotation.w(),
-            rotation.x(),
-            rotation.y(),
-            rotation.z(),
-        ));
-        let angle = -rotation.euler_angles().2 * self.x_factor();
-        if angle < PI && angle > -HALF_PI {
-            Some(angle)
-        } else {
-            None
+impl From<leaprs::HandType> for conductor_thread::HandType {
+    fn from(value: leaprs::HandType) -> Self {
+        match value {
+            HandType::Left => conductor_thread::HandType::Left,
+            HandType::Right => conductor_thread::HandType::Right,
         }
     }
 }

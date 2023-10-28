@@ -17,6 +17,7 @@ use staff::{
 };
 
 use crate::{
+    conductor_thread::HandType,
     controls::Controls,
     dsp_thread::ParameterUpdate,
     solfege::{MoreScales, ScaleWindows},
@@ -127,6 +128,20 @@ impl Settings {
         let user_presets = self.presets.iter().map(|p| (p, true));
         let system_presets = Preset::system_presets().iter().map(|p| (p, false));
         user_presets.chain(system_presets)
+    }
+
+    pub fn pitch_hand_type(&self) -> HandType {
+        match self.system.handedness {
+            Handedness::RightHanded => HandType::Right,
+            Handedness::LeftHanded => HandType::Left,
+        }
+    }
+
+    pub fn volume_hand_type(&self) -> HandType {
+        match self.system.handedness {
+            Handedness::RightHanded => HandType::Left,
+            Handedness::LeftHanded => HandType::Right,
+        }
     }
 }
 

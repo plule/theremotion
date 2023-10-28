@@ -70,9 +70,6 @@ fn main() {
     let controls = controls::Controls::from(&state);
 
     // Queue the initialization messages
-    leap_tx
-        .send(leap_thread::Message::SettingsUpdate(settings.clone()))
-        .unwrap();
     settings
         .current_preset
         .send_to_dsp(&controls, &dsp_tx)
