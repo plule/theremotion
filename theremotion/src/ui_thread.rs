@@ -10,7 +10,7 @@ use theremotion_ui::MainWindow;
 use crate::{
     conductor_thread::{ConductorMessage as CM, LeapStatus},
     settings::{Handedness, Settings},
-    solfege::{MidiNoteF, Volume},
+    {MidiNoteF, Volume},
 };
 
 /// Message to update externally the UI

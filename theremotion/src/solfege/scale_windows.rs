@@ -5,7 +5,7 @@ use staff::{midi::MidiNote, scale::ScaleIntervals, Pitch};
 
 use crate::StepIter;
 
-use super::MidiNoteF;
+use crate::MidiNoteF;
 
 /// Floating 2 by 2 window in a scale.
 /// Useful for many blurry algorithms in theremotion

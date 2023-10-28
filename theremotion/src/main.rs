@@ -30,6 +30,11 @@ mod solfege;
 /// Poor man's Step implementation
 mod step_iter;
 
+/// Newtypes for strongly typed exchanges
+mod types;
+
+pub use types::*;
+
 use cpal::traits::StreamTrait;
 use default_boxed::DefaultBoxed;
 use faust_state::DspHandle;

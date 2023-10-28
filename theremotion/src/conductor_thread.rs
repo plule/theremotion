@@ -8,8 +8,8 @@ use staff::{midi::Octave, Interval, Pitch};
 use crate::{
     controls, dsp_thread, leap_thread,
     settings::{Handedness, NamedScale, Preset, Settings},
-    solfege::{IntervalF, Volume},
     ui_thread::{self, UiUpdate},
+    {IntervalF, Volume},
 };
 
 const HALF_PI: f32 = PI / 2.0;

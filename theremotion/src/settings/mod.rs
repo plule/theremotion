@@ -19,7 +19,8 @@ use staff::{
 use crate::{
     controls::Controls,
     dsp_thread::ParameterUpdate,
-    solfege::{IntervalF, MidiNoteF, MoreScales, OctaveInterval, ScaleWindows},
+    solfege::{MoreScales, ScaleWindows},
+    {IntervalF, MidiNoteF, OctaveInterval},
 };
 
 pub use self::v1::{EchoSettings, FxSettings, Handedness, MixSettings, NamedScale, ReverbSettings};
@@ -131,7 +132,7 @@ impl Settings {
 
 impl Preset {
     pub fn octave_range() -> OctaveInterval {
-        OctaveInterval::new(3)
+        OctaveInterval(3)
     }
     /// Root note from the first octave
     pub fn root_note(&self) -> MidiNote {
@@ -273,7 +274,7 @@ mod tests {
     use rstest::rstest;
     use staff::midi::{MidiNote, Octave};
 
-    use crate::solfege::Volume;
+    use crate::Volume;
 
     use super::*;
 

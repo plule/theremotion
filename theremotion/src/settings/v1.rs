@@ -10,7 +10,7 @@ use staff::{
     Pitch,
 };
 
-use crate::solfege::{OctaveInterval, Volume};
+use crate::{OctaveInterval, Volume};
 
 /// Application settings
 #[derive(Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -75,7 +75,7 @@ impl Default for Preset {
             octave: Octave::THREE,
             guitar_octave: Octave::THREE,
             pitch: Pitch::C,
-            octave_range: OctaveInterval::new(3),
+            octave_range: OctaveInterval(3),
             scale: ScaleIntervals::major(),
             drone: Default::default(),
             mix: Default::default(),
