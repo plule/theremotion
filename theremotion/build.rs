@@ -44,15 +44,23 @@ fn add_resources() {
     println!("cargo:rerun-if-changed=../assets/icon.svg");
     let input = Path::new("../assets/icon.svg");
     // hack: should be out_dir, but wix doesn't know about it
-    let output = PathBuf::from_iter([
-        env::var("CARGO_TARGET_DIR").unwrap_or("target".to_string()),
+    let mut output = match env::var("CARGO_TARGET_DIR") {
+        Ok(d) => PathBuf::from(d),
+        Err(_) => {
+            let mut target_dir = PathBuf::from_iter([env::var("CARGO_MANIFEST_DIR").unwrap()])
+                .parent()
+                .unwrap()
+                .to_path_buf();
+            target_dir.push("target");
+            target_dir
+        }
+    };
+    output.extend([
         env::var("PROFILE").expect("Missing PROFILE"),
         "theremotion.ico".to_string(),
     ]);
 
     svg_to_ico::svg_to_ico(input, 96.0, &output, &[128]).expect("failed to convert svg to ico");
-
-    //std::fs::copy(&output, )
     winres::WindowsResource::new()
         .set_icon(output.to_str().unwrap())
         .compile()
