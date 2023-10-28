@@ -17,11 +17,10 @@ use staff::{
 };
 
 use crate::{
-    conductor_thread::HandType,
     controls::Controls,
     dsp_thread::ParameterUpdate,
     solfege::{MoreScales, ScaleWindows},
-    {IntervalF, MidiNoteF, OctaveInterval},
+    HandType, IntervalF, MidiNoteF, OctaveInterval,
 };
 
 pub use self::v1::{EchoSettings, FxSettings, Handedness, MixSettings, NamedScale, ReverbSettings};

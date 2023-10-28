@@ -33,6 +33,10 @@ mod step_iter;
 /// Newtypes for strongly typed exchanges
 mod types;
 
+mod hand;
+
+pub use hand::*;
+
 pub use types::*;
 
 use cpal::traits::StreamTrait;

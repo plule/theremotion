@@ -2,71 +2,20 @@ use std::{cmp::Ordering, f32::consts::PI, thread};
 
 use crossbeam_channel::{Receiver, Sender};
 use itertools::Itertools;
-use nalgebra::{UnitQuaternion, Vector2, Vector3};
+use nalgebra::Vector2;
 use staff::{midi::Octave, Interval, Pitch};
 
 use crate::{
     controls, dsp_thread, leap_thread,
     settings::{Handedness, NamedScale, Preset, Settings},
     ui_thread::{self, UiUpdate},
-    {IntervalF, Volume},
+    HandMessage, {IntervalF, Volume},
 };
 
 const HALF_PI: f32 = PI / 2.0;
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum HandType {
-    Left,
-    Right,
-}
-
-pub struct HandMessage {
-    pub hand_type: HandType,
-    pub position: Vector3<f32>,
-    pub velocity: Vector3<f32>,
-    pub rotation: UnitQuaternion<f32>,
-    pub pinch: f32,
-    pub grab: f32,
-}
-
-impl HandMessage {
-    fn x_factor(&self) -> f32 {
-        match self.hand_type {
-            // The left hand goes away from the body in the negative x
-            HandType::Left => -1.0,
-            // The right hand goes away from the body in the positive x
-            HandType::Right => 1.0,
-        }
-    }
-
-    fn position_from_body(&self) -> Vector3<f32> {
-        Vector3::new(
-            self.x_factor() * self.position.x,
-            self.position.y,
-            self.position.z,
-        )
-    }
-
-    fn velocity_from_body(&self) -> Vector3<f32> {
-        Vector3::new(
-            self.x_factor() * self.velocity.x,
-            self.velocity.y,
-            self.velocity.z,
-        )
-    }
-
-    fn rotation_from_body(&self) -> Option<f32> {
-        let angle = -self.rotation.euler_angles().2 * self.x_factor();
-        if angle < PI && angle > -HALF_PI {
-            Some(angle)
-        } else {
-            None
-        }
-    }
-}
-
 #[derive(Debug)]
-pub enum LeapStatus {
+pub enum TrackingStatus {
     Error(String),
     Warning(String),
     Ok,
@@ -74,7 +23,7 @@ pub enum LeapStatus {
 
 pub enum ConductorMessage {
     Exit,
-    LeapStatus(LeapStatus),
+    TrackingStatus(TrackingStatus),
     HandUpdate(HandMessage),
     VisibleHands { left: bool, right: bool },
     DroneClicked(i32),
@@ -194,7 +143,7 @@ impl Conductor {
                 self.leap_tx.send(leap_thread::Message::Exit)?;
                 return Ok(true);
             }
-            ConductorMessage::LeapStatus(status) => {
+            ConductorMessage::TrackingStatus(status) => {
                 self.ui_tx.send(UiUpdate::Status(status))?;
             }
             ConductorMessage::HandUpdate(h) => {

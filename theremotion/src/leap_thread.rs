@@ -2,10 +2,10 @@ use std::thread;
 
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
-use leaprs::*;
+use leaprs::{Connection, ConnectionConfig, Error, Event};
 use nalgebra::{UnitQuaternion, Vector3};
 
-use crate::conductor_thread::{self, ConductorMessage, HandMessage, LeapStatus};
+use crate::conductor_thread::{self, ConductorMessage, TrackingStatus};
 
 pub enum Message {
     Exit,
@@ -47,38 +47,44 @@ fn read_and_update(
                     let hands = e.hands();
 
                     for hand in hands.iter() {
-                        tx.send(ConductorMessage::HandUpdate(HandMessage::from(hand)))?;
+                        tx.send(ConductorMessage::HandUpdate(crate::HandMessage::from(hand)))?;
                     }
 
                     tx.send(ConductorMessage::VisibleHands {
-                        left: hands.iter().any(|h| h.hand_type() == HandType::Left),
-                        right: hands.iter().any(|h| h.hand_type() == HandType::Right),
+                        left: hands
+                            .iter()
+                            .any(|h| h.hand_type() == leaprs::HandType::Left),
+                        right: hands
+                            .iter()
+                            .any(|h| h.hand_type() == leaprs::HandType::Right),
                     })?;
 
-                    tx.send(ConductorMessage::LeapStatus(LeapStatus::Ok))?;
+                    tx.send(ConductorMessage::TrackingStatus(TrackingStatus::Ok))?;
                 }
-                Event::Connection(_) => tx.send(ConductorMessage::LeapStatus(
-                    LeapStatus::Warning("No device".to_string()),
+                Event::Connection(_) => tx.send(ConductorMessage::TrackingStatus(
+                    TrackingStatus::Warning("No device".to_string()),
                 ))?,
-                Event::ConnectionLost(_) => tx.send(ConductorMessage::LeapStatus(
-                    LeapStatus::Error("Connection lost".to_string()),
+                Event::ConnectionLost(_) => tx.send(ConductorMessage::TrackingStatus(
+                    TrackingStatus::Error("Connection lost".to_string()),
                 ))?,
-                Event::Device(_) => tx.send(ConductorMessage::LeapStatus(LeapStatus::Ok))?,
-                Event::DeviceFailure(_) => tx.send(ConductorMessage::LeapStatus(
-                    LeapStatus::Error("Device failure".to_string()),
+                Event::Device(_) => {
+                    tx.send(ConductorMessage::TrackingStatus(TrackingStatus::Ok))?
+                }
+                Event::DeviceFailure(_) => tx.send(ConductorMessage::TrackingStatus(
+                    TrackingStatus::Error("Device failure".to_string()),
                 ))?,
-                Event::DeviceLost => tx.send(ConductorMessage::LeapStatus(LeapStatus::Error(
-                    "Device disconnected".to_string(),
-                )))?,
+                Event::DeviceLost => tx.send(ConductorMessage::TrackingStatus(
+                    TrackingStatus::Error("Device disconnected".to_string()),
+                ))?,
                 _ => {}
             }
         }
         Err(err) => match err {
             Error::Timeout => {} // spammey without any device
-            Error::NotConnected => tx.send(ConductorMessage::LeapStatus(LeapStatus::Warning(
-                err.to_string(),
-            )))?,
-            _ => tx.send(ConductorMessage::LeapStatus(LeapStatus::Error(
+            Error::NotConnected => tx.send(ConductorMessage::TrackingStatus(
+                TrackingStatus::Warning(err.to_string()),
+            ))?,
+            _ => tx.send(ConductorMessage::TrackingStatus(TrackingStatus::Error(
                 err.to_string(),
             )))?,
         },
@@ -86,12 +92,12 @@ fn read_and_update(
     Ok(())
 }
 
-impl From<&leaprs::Hand<'_>> for HandMessage {
+impl From<&leaprs::Hand<'_>> for crate::HandMessage {
     fn from(value: &leaprs::Hand<'_>) -> Self {
         let position = value.palm().position();
         let velocity = value.palm().velocity();
         let rotation = value.arm().rotation();
-        HandMessage {
+        crate::HandMessage {
             hand_type: value.hand_type().into(),
             position: Vector3::new(position.x(), position.y(), position.z()),
             velocity: Vector3::new(velocity.x(), velocity.y(), velocity.z()),
@@ -107,11 +113,11 @@ impl From<&leaprs::Hand<'_>> for HandMessage {
     }
 }
 
-impl From<leaprs::HandType> for conductor_thread::HandType {
+impl From<leaprs::HandType> for crate::HandType {
     fn from(value: leaprs::HandType) -> Self {
         match value {
-            HandType::Left => conductor_thread::HandType::Left,
-            HandType::Right => conductor_thread::HandType::Right,
+            leaprs::HandType::Left => crate::HandType::Left,
+            leaprs::HandType::Right => crate::HandType::Right,
         }
     }
 }
