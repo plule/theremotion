@@ -5,6 +5,11 @@ export struct Graduation {
     text: string
 }
 
+export struct GraduationValue {
+    value: float,
+    color: color,
+}
+
 export component Plot inherits BevelRectangle {
     in property <string> text;
     in property <string> icon;
@@ -37,7 +42,10 @@ export component Plot inherits BevelRectangle {
 export component Plot1D inherits Plot {
     in property <float> min: 0;
     in property <float> max: 2;
-    in property <float> value: 1.6;
+    in property <[GraduationValue]> values: [
+        {value: 1.5, color: Palette.drone},
+        {value: 1, color: Palette.raw},
+    ];
     in property <[Graduation]> graduations: [
         {value: 1, text: "1"},
         {value: 1.5, text: "1.5"},
@@ -62,6 +70,7 @@ export component Plot1D inherits Plot {
             width: 60%;
             background: Palette.plot-grad;
             height: Style.grad-light-thickness;
+            border-radius: self.height / 2;
             y: to-px-y(graduation.value);
             GradText {
                 text: graduation.text;
@@ -69,12 +78,12 @@ export component Plot1D inherits Plot {
             }
         }
 
-        Rectangle {
+        for value in values: Rectangle {
             border-radius: Style.area-corner-radius;
-            background: Palette.raw;
+            background: value.color;
             opacity: 0.5;
             height: root.height - self.y;
-            y: to-px-y(value);
+            y: to-px-y(value.value);
         }
     }
 }
@@ -142,7 +151,7 @@ export component Tuner inherits Plot {
                 width: Style.grad-strong-thickness;
                 x: note-to-px(octave * 12 + note.value) - self.width / 2;
                 GradText {
-                    text: "\{note.text}\{octave}";
+                    text: "\{note.text}";
                     x: 15px;
                 }
             }

@@ -1,4 +1,4 @@
-import { Plot1D, Plot2D, Tuner } from "plot.slint";
+import { Plot1D, Plot2D, Tuner, GraduationValue } from "plot.slint";
 import { Tab, Circle, Palette, Style, NotePoint, Handedness , VL, HL, IHL} from "common.slint";
 import { EditMode , KeyboardFooter} from "keyboard.slint";
 
@@ -72,13 +72,17 @@ component FilterPlot inherits Plot2D {
 }
 
 component VolumePlot inherits Plot1D {
+    in property <float> volume;
     text: "Volume";
     graduations: [];
+    values: [{color: Palette.raw, value: volume}];
     min: 0;
     max: 1;
 }
 
 component ChordNumberPlot inherits Plot1D {
+    in property <float> chords-number;
+    in property <float> drone-number;
     text: "Chord";
     graduations: [
         // Graduations are offset by one:
@@ -86,6 +90,10 @@ component ChordNumberPlot inherits Plot1D {
         {value: 1, text: "2"},
         {value: 2, text: "3"},
         {value: 3, text: "4"},
+    ];
+    values: [
+        {color: Palette.raw, value: chords-number},
+        {color: Palette.drone, value: drone-number},
     ];
     min: 0;
     max: 4;
@@ -106,6 +114,7 @@ export component PlayingTab inherits Tab {
     in property <[NotePoint]> notes: [];
     in property <float> volume: 0;
     in property <float> chords_number: 0;
+    in property <float> drone-number: 0;
     in property <float> tuner-note: 0;
     in property <float> tuner-note-tuned: 0;
     in-out property <float> tuner-note-focus: 0;
@@ -116,7 +125,7 @@ export component PlayingTab inherits Tab {
         if handedness == Handedness.RightHanded: IHL {
             VolumePlot {
                 width: gauge-width;
-                value: volume;
+                volume: volume;
             }
             FilterPlot {
                 cutoff: filter-cutoff;
@@ -137,14 +146,16 @@ export component PlayingTab inherits Tab {
             }
             ChordNumberPlot {
                 width: gauge-width;
-                value: chords-number;
+                chords-number: chords-number;
+                drone-number: drone-number;
             }
         }
         if handedness == Handedness.LeftHanded: IHL {
             spacing: 4px;
             ChordNumberPlot {
                 width: gauge-width;
-                value: chords-number;
+                chords-number: chords-number;
+                drone-number: drone-number;
             }
             PitchPlot {
                 min-x: -2.0;
@@ -168,7 +179,7 @@ export component PlayingTab inherits Tab {
             }
             VolumePlot {
                 width: gauge-width;
-                value: volume;
+                volume: volume;
             }
         }
         Tuner {

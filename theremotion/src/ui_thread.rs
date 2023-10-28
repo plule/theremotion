@@ -24,6 +24,8 @@ pub enum Msg {
     Lead([(MidiNoteF, Volume); 4], Vector2<f32>),
     /// Floating number of chord notes (2.5 is 2 chord notes and the next half volume)
     ChordsNumber(f32),
+    /// Floating number of drone notes
+    DroneNumber(f32),
     /// Lead instrument note, without autotune
     RawNote(MidiNoteF),
     /// Filter cutoff and resonance.
@@ -225,6 +227,7 @@ fn read_updates(
                 }
             }
             Msg::ChordsNumber(c) => window.set_chords_number(c),
+            Msg::DroneNumber(d) => window.set_drone_number(d),
             Msg::RawNote(n) => {
                 window.set_tuner_note_focus(restricted_scale_window.closest_in_scale(n).0);
                 window.set_raw_note(n.0);

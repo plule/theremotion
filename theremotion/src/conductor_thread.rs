@@ -306,6 +306,38 @@ impl Conductor {
             .zip(lead_volumes.into_iter().map(Volume))
             .collect_vec();
         let lead_chord = [lead_chord[0], lead_chord[1], lead_chord[2], lead_chord[3]];
+        if h.grab >= 1.0 {
+            if let Some(drone_volume_angle) = h.rotation_from_body() {
+                let (init_drone_volume, init_drone_volume_angle) = *self
+                    .play_state
+                    .drone_grab_state
+                    .get_or_insert((self.play_state.drone_state, drone_volume_angle));
+                let offset = drone_volume_angle - init_drone_volume_angle;
+                self.play_state.drone_state = (init_drone_volume + offset).clamp(0.0, 5.0);
+                let drone_volumes = [0.0, 1.0, 2.0, 3.0]
+                    .map(|v| (self.play_state.drone_state.clamp(0.0, 4.0) - v).clamp(0.0, 1.0));
+                let drone_interval = preset.drone_interval();
+                for ((control, drone), volume) in self
+                    .controls
+                    .drone_notes
+                    .iter()
+                    .zip(preset.drone_notes())
+                    .zip(drone_volumes)
+                {
+                    if let Some(drone) = drone {
+                        control
+                            .note
+                            .send(dsp_tx, ((drone + drone_interval).into_byte()) as f32)?;
+                        control.volume.send(dsp_tx, volume)?;
+                    } else {
+                        control.volume.send(dsp_tx, 0.0)?;
+                    }
+                }
+            }
+        } else {
+            self.play_state.drone_grab_state = None;
+        }
+        ui_tx.send(ui_thread::Msg::DroneNumber(self.play_state.drone_state))?;
         ui_tx.send(ui_thread::Msg::AutotuneAmount(autotune))?;
         ui_tx.send(ui_thread::Msg::Lead(
             lead_chord,
@@ -364,37 +396,6 @@ impl Conductor {
             .controls
             .lead_volume
             .get_scaled(position_from_body.y, &(300.0..=400.0));
-        if h.grab >= 1.0 {
-            if let Some(drone_volume_angle) = h.rotation_from_body() {
-                let (init_drone_volume, init_drone_volume_angle) = *self
-                    .play_state
-                    .drone_grab_state
-                    .get_or_insert((self.play_state.drone_state, drone_volume_angle));
-                let offset = drone_volume_angle - init_drone_volume_angle;
-                self.play_state.drone_state = (init_drone_volume + offset).clamp(0.0, 5.0);
-                let drone_volumes = [0.0, 1.0, 2.0, 3.0]
-                    .map(|v| (self.play_state.drone_state.clamp(0.0, 4.0) - v).clamp(0.0, 1.0));
-                let drone_interval = preset.drone_interval();
-                for ((control, drone), volume) in self
-                    .controls
-                    .drone_notes
-                    .iter()
-                    .zip(preset.drone_notes())
-                    .zip(drone_volumes)
-                {
-                    if let Some(drone) = drone {
-                        control
-                            .note
-                            .send(dsp_tx, ((drone + drone_interval).into_byte()) as f32)?;
-                        control.volume.send(dsp_tx, volume)?;
-                    } else {
-                        control.volume.send(dsp_tx, 0.0)?;
-                    }
-                }
-            }
-        } else {
-            self.play_state.drone_grab_state = None;
-        }
         self.controls.cutoff_note.send(dsp_tx, cutoff_note)?;
         self.controls.lead_volume.send(dsp_tx, lead_volume)?;
         self.controls.resonance.send(dsp_tx, resonance)?;
