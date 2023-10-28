@@ -76,53 +76,82 @@ pub fn run(
     leap_tx: Sender<Settings>,
 ) -> thread::JoinHandle<()> {
     thread::spawn(move || {
-        let _ = conductor(rx, settings, controls, dsp_tx, ui_tx, leap_tx);
+        let mut conductor = Conductor {
+            settings,
+            controls,
+            dsp_tx,
+            ui_tx,
+            leap_tx,
+            play_state: PlayState::default(),
+        };
+        conductor.run(rx).unwrap();
     })
 }
 
-fn conductor(
-    rx: Receiver<ConductorMessage>,
-    mut current_settings: Settings,
-    controls: controls::Controls,
-    mut dsp_tx: Sender<dsp_thread::ParameterUpdate>,
-    mut ui_tx: Sender<UiUpdate>,
-    leap_tx: Sender<Settings>,
-) -> anyhow::Result<()> {
-    // Guitar gates
-    let mut guitar_gates = [false, false, false, false];
-    let mut drone_grab_state: Option<(f32, f32)> = None;
-    let mut drone_state: f32 = 0.0;
+/// The conductor interprets and transmits the messages between
+/// the threads.
+struct Conductor {
+    /// Output: Sound parameter updates sent to the DSP
+    pub dsp_tx: Sender<dsp_thread::ParameterUpdate>,
 
-    let controls = &controls;
-    let dsp_tx: &mut Sender<dsp_thread::ParameterUpdate> = &mut dsp_tx;
-    let ui_tx: &mut Sender<ui_thread::UiUpdate> = &mut ui_tx;
+    /// Output: User interface updates
+    pub ui_tx: Sender<UiUpdate>,
 
-    for msg in rx.iter() {
-        let mut settings = current_settings.clone();
+    /// Output: Setting updates sent to the leap thread
+    pub leap_tx: Sender<Settings>,
+
+    /// Application settings current state
+    pub settings: Settings,
+
+    /// DSP control metadata
+    pub controls: controls::Controls,
+
+    /// Stateful playing state
+    pub play_state: PlayState,
+}
+
+/// Stateful part of the playing interactions that are not part of the DSP
+struct PlayState {
+    pub guitar_gates: [bool; 4],
+    pub drone_grab_state: Option<(f32, f32)>,
+    pub drone_state: f32,
+}
+
+impl Default for PlayState {
+    fn default() -> Self {
+        Self {
+            guitar_gates: [false, false, false, false],
+            drone_grab_state: None,
+            drone_state: 0.0,
+        }
+    }
+}
+
+impl Conductor {
+    pub fn run(&mut self, rx: Receiver<ConductorMessage>) -> anyhow::Result<()> {
+        for msg in rx.iter() {
+            self.on_conductor_message(msg)?;
+        }
+        Ok(())
+    }
+
+    fn on_conductor_message(&mut self, msg: ConductorMessage) -> anyhow::Result<()> {
+        let mut settings = self.settings.clone();
 
         let preset = &mut settings.current_preset;
 
         match msg {
             ConductorMessage::LeapStatus(status) => {
-                ui_tx.send(UiUpdate::Status(status))?;
+                self.ui_tx.send(UiUpdate::Status(status))?;
             }
             ConductorMessage::PitchHand(h) => {
-                on_pitch_hand(h, controls, preset, dsp_tx, ui_tx, &mut guitar_gates)?;
+                self.on_pitch_hand(h, preset)?;
             }
             ConductorMessage::VolumeHand(h) => {
-                on_volume_hand(
-                    h,
-                    controls,
-                    preset,
-                    dsp_tx,
-                    ui_tx,
-                    &guitar_gates,
-                    &mut drone_state,
-                    &mut drone_grab_state,
-                )?;
+                self.on_volume_hand(h, preset)?;
             }
             ConductorMessage::VisibleHands { left, right } => {
-                ui_tx.send(UiUpdate::HasHands(left, right))?;
+                self.ui_tx.send(UiUpdate::HasHands(left, right))?;
             }
             ConductorMessage::DroneClicked(note_index) => {
                 toggle_drone(preset, note_index);
@@ -209,16 +238,170 @@ fn conductor(
             }
         }
 
-        if settings != current_settings {
+        if settings != self.settings {
             tracing::debug!("Settings were updated");
-            ui_tx.send(UiUpdate::Settings(settings.clone()))?;
-            leap_tx.send(settings.clone())?;
-            settings.current_preset.send_to_dsp(controls, dsp_tx)?;
-            current_settings = settings;
-            current_settings.save()?;
+            self.ui_tx.send(UiUpdate::Settings(settings.clone()))?;
+            self.leap_tx.send(settings.clone())?;
+            settings
+                .current_preset
+                .send_to_dsp(&self.controls, &self.dsp_tx)?;
+            self.settings = settings;
+            self.settings.save()?;
         }
+
+        Ok(())
     }
-    Ok(())
+
+    fn on_pitch_hand(&mut self, h: HandMessage, preset: &Preset) -> anyhow::Result<()> {
+        let dsp_tx = &mut self.dsp_tx;
+        let ui_tx = &mut self.ui_tx;
+
+        let full_scale_window = preset.full_scale_floating_window();
+        let restricted_scale_window = preset.restricted_scale_floating_window();
+        let note_range = preset.note_range_f();
+        let antenna_coord = Vector2::new(400.0, -200.0);
+        let pitch_coord_mm = antenna_coord - Vector2::new(h.position.x, h.position.z);
+        let pitch_coord_semitones = pitch_coord_mm / 15.0;
+        let pitch_coord_semitones = Vector2::new(-pitch_coord_semitones.x, pitch_coord_semitones.y);
+        let pitch_distance_semitones = IntervalF(pitch_coord_semitones.norm());
+        let raw_note = (*note_range.end() - pitch_distance_semitones)
+            .clamp(*note_range.start(), *note_range.end());
+        let note_number_height =
+            controls::convert_range(h.position.y, &(350.0..=500.0), &(1.0..=4.0));
+        let lead_volumes =
+            [0.0, 1.0, 2.0, 3.0].map(|v| (note_number_height.clamp(1.0, 4.0) - v).clamp(0.0, 1.0));
+        self.play_state.guitar_gates = lead_volumes.map(|v| v > 0.0);
+        let autotune = controls::convert_range(h.pinch, &(0.0..=1.0), &(0.0..=5.0)) as usize;
+        let note = restricted_scale_window.autotune(raw_note, autotune);
+        let chord = full_scale_window.autochord(note, &[0, 2, 4, 7]);
+        let lead_offset = preset.lead_interval_f();
+        let pluck_offset = preset.pluck_interval_f();
+        let pitch_bend = self
+            .controls
+            .pitch_bend
+            .get_scaled(h.velocity.x + h.velocity.z, &(-300.0..=300.0));
+        let trumpet = self
+            .controls
+            .drone_trumpet
+            .get_scaled(h.velocity.y.abs(), &(0.0..=250.0));
+        for (control, value) in self.controls.lead.iter().zip(lead_volumes) {
+            control.volume.send(dsp_tx, value)?;
+        }
+        for (i, note) in chord.iter().enumerate() {
+            if let Some(note) = note {
+                self.controls.lead[i].send_note(dsp_tx, &(*note + lead_offset))?;
+                self.controls.strum[i].send_note(dsp_tx, &(*note + pluck_offset))?;
+            }
+        }
+        self.controls.strum_drone.send_note(
+            dsp_tx,
+            &(preset.root_note_f() + pluck_offset + IntervalF(12.0)),
+        )?;
+        self.controls.pitch_bend.send(dsp_tx, pitch_bend)?;
+        self.controls.drone_trumpet.send(dsp_tx, trumpet)?;
+        let lead_chord = chord
+            .into_iter()
+            .map(|c| c.unwrap_or_default())
+            .zip(lead_volumes.into_iter().map(Volume))
+            .collect_vec();
+        let lead_chord = [lead_chord[0], lead_chord[1], lead_chord[2], lead_chord[3]];
+        ui_tx.send(UiUpdate::AutotuneAmount(autotune))?;
+        ui_tx.send(UiUpdate::Lead(
+            lead_chord,
+            Vector2::new(
+                pitch_coord_semitones.x * h.x_factor,
+                pitch_coord_semitones.y,
+            ),
+        ))?;
+        ui_tx.send(UiUpdate::RawNote(raw_note))?;
+        ui_tx.send(UiUpdate::ChordsNumber(note_number_height))?;
+        ui_tx.send(UiUpdate::TrumpetStrength(trumpet))?;
+        Ok(())
+    }
+
+    fn on_volume_hand(&mut self, h: HandMessage, preset: &Preset) -> anyhow::Result<()> {
+        let dsp_tx = &mut self.dsp_tx;
+        let ui_tx = &mut self.ui_tx;
+
+        let strum_ready = h.pinch > 0.9;
+        if let Some(rotation) = h.rotation {
+            if strum_ready {
+                for (i, string) in &mut self.controls.strum.iter().enumerate() {
+                    string.pluck.send(
+                        dsp_tx,
+                        rotation > HALF_PI + (i as f32) * 0.2 && self.play_state.guitar_gates[i],
+                    );
+                }
+                self.controls
+                    .strum_drone
+                    .pluck
+                    .send(dsp_tx, preset.drone.pluck_drone && rotation > HALF_PI + 0.3);
+            }
+
+            let pluck_mute = self
+                .controls
+                .pluck_mute
+                .get_scaled(rotation, &(0.0..=(HALF_PI - 0.2)));
+            self.controls.pluck_mute.send(dsp_tx, pluck_mute)?;
+        }
+        let cutoff_note_norm =
+            controls::convert_range(h.position.x, &(50.0..=200.0), &(-1.0..=1.0)).clamp(-1.0, 1.0);
+        let cutoff_note = self
+            .controls
+            .cutoff_note
+            .get_scaled(cutoff_note_norm, &(-1.0..=1.0));
+        let resonance_norm =
+            controls::convert_range(h.position.z, &(100.0..=-100.0), &(0.0..=1.0)).clamp(0.0, 1.0);
+        let resonance = self
+            .controls
+            .resonance
+            .get_scaled(resonance_norm, &(0.0..=1.0));
+        let lead_volume = self
+            .controls
+            .lead_volume
+            .get_scaled(h.position.y, &(300.0..=400.0));
+        if h.grab >= 1.0 {
+            if let Some(drone_volume_angle) = h.rotation {
+                let (init_drone_volume, init_drone_volume_angle) = *self
+                    .play_state
+                    .drone_grab_state
+                    .get_or_insert((self.play_state.drone_state, drone_volume_angle));
+                let offset = drone_volume_angle - init_drone_volume_angle;
+                self.play_state.drone_state = (init_drone_volume + offset).clamp(0.0, 5.0);
+                let drone_volumes = [0.0, 1.0, 2.0, 3.0]
+                    .map(|v| (self.play_state.drone_state.clamp(0.0, 4.0) - v).clamp(0.0, 1.0));
+                let drone_interval = preset.drone_interval();
+                for ((control, drone), volume) in self
+                    .controls
+                    .drone_notes
+                    .iter()
+                    .zip(preset.drone_notes())
+                    .zip(drone_volumes)
+                {
+                    if let Some(drone) = drone {
+                        control
+                            .note
+                            .send(dsp_tx, ((drone + drone_interval).into_byte()) as f32)?;
+                        control.volume.send(dsp_tx, volume)?;
+                    } else {
+                        control.volume.send(dsp_tx, 0.0)?;
+                    }
+                }
+            }
+        } else {
+            self.play_state.drone_grab_state = None;
+        }
+        self.controls.cutoff_note.send(dsp_tx, cutoff_note)?;
+        self.controls.lead_volume.send(dsp_tx, lead_volume)?;
+        self.controls.resonance.send(dsp_tx, resonance)?;
+        ui_tx.send(UiUpdate::Filter(
+            cutoff_note_norm * h.x_factor,
+            resonance_norm,
+        ))?;
+        ui_tx.send(UiUpdate::LeadVolume(lead_volume))?;
+        ui_tx.send(UiUpdate::StrumReady(strum_ready))?;
+        Ok(())
+    }
 }
 
 fn toggle_scale_note(preset: &mut Preset, note_index: i32) {
@@ -270,154 +453,4 @@ fn toggle_drone(preset: &mut Preset, note_index: i32) {
             &drone_intervals
         );
     }
-}
-
-fn on_volume_hand(
-    h: HandMessage,
-    controls: &controls::Controls,
-    preset: &mut Preset,
-    dsp_tx: &mut Sender<dsp_thread::ParameterUpdate>,
-    ui_tx: &mut Sender<UiUpdate>,
-    guitar_gates: &[bool; 4],
-    drone_state: &mut f32,
-    drone_grab_state: &mut Option<(f32, f32)>,
-) -> Result<(), anyhow::Error> {
-    let strum_ready = h.pinch > 0.9;
-    if let Some(rotation) = h.rotation {
-        if strum_ready {
-            for (i, string) in &mut controls.strum.iter().enumerate() {
-                string.pluck.send(
-                    dsp_tx,
-                    rotation > HALF_PI + (i as f32) * 0.2 && guitar_gates[i],
-                );
-            }
-            controls
-                .strum_drone
-                .pluck
-                .send(dsp_tx, preset.drone.pluck_drone && rotation > HALF_PI + 0.3);
-        }
-
-        let pluck_mute = controls
-            .pluck_mute
-            .get_scaled(rotation, &(0.0..=(HALF_PI - 0.2)));
-        controls.pluck_mute.send(dsp_tx, pluck_mute)?;
-    }
-    let cutoff_note_norm =
-        controls::convert_range(h.position.x, &(50.0..=200.0), &(-1.0..=1.0)).clamp(-1.0, 1.0);
-    let cutoff_note = controls
-        .cutoff_note
-        .get_scaled(cutoff_note_norm, &(-1.0..=1.0));
-    let resonance_norm =
-        controls::convert_range(h.position.z, &(100.0..=-100.0), &(0.0..=1.0)).clamp(0.0, 1.0);
-    let resonance = controls.resonance.get_scaled(resonance_norm, &(0.0..=1.0));
-    let lead_volume = controls
-        .lead_volume
-        .get_scaled(h.position.y, &(300.0..=400.0));
-    if h.grab >= 1.0 {
-        if let Some(drone_volume_angle) = h.rotation {
-            let (init_drone_volume, init_drone_volume_angle) =
-                *drone_grab_state.get_or_insert((*drone_state, drone_volume_angle));
-            let offset = drone_volume_angle - init_drone_volume_angle;
-            *drone_state = (init_drone_volume + offset).clamp(0.0, 5.0);
-            let drone_state = *drone_state;
-            let drone_volumes =
-                [0.0, 1.0, 2.0, 3.0].map(|v| (drone_state.clamp(0.0, 4.0) - v).clamp(0.0, 1.0));
-            let drone_interval = preset.drone_interval();
-            for ((control, drone), volume) in controls
-                .drone_notes
-                .iter()
-                .zip(preset.drone_notes())
-                .zip(drone_volumes)
-            {
-                if let Some(drone) = drone {
-                    control
-                        .note
-                        .send(dsp_tx, ((drone + drone_interval).into_byte()) as f32)?;
-                    control.volume.send(dsp_tx, volume)?;
-                } else {
-                    control.volume.send(dsp_tx, 0.0)?;
-                }
-            }
-        }
-    } else {
-        *drone_grab_state = None;
-    }
-    controls.cutoff_note.send(dsp_tx, cutoff_note)?;
-    controls.lead_volume.send(dsp_tx, lead_volume)?;
-    controls.resonance.send(dsp_tx, resonance)?;
-    ui_tx.send(UiUpdate::Filter(
-        cutoff_note_norm * h.x_factor,
-        resonance_norm,
-    ))?;
-    ui_tx.send(UiUpdate::LeadVolume(lead_volume))?;
-    ui_tx.send(UiUpdate::StrumReady(strum_ready))?;
-    Ok(())
-}
-
-fn on_pitch_hand(
-    h: HandMessage,
-    controls: &controls::Controls,
-    preset: &mut Preset,
-    dsp_tx: &mut Sender<dsp_thread::ParameterUpdate>,
-    ui_tx: &mut Sender<UiUpdate>,
-    guitar_gates: &mut [bool; 4],
-) -> Result<(), anyhow::Error> {
-    let full_scale_window = preset.full_scale_floating_window();
-    let restricted_scale_window = preset.restricted_scale_floating_window();
-    let note_range = preset.note_range_f();
-    let antenna_coord = Vector2::new(400.0, -200.0);
-    let pitch_coord_mm = antenna_coord - Vector2::new(h.position.x, h.position.z);
-    let pitch_coord_semitones = pitch_coord_mm / 15.0;
-    let pitch_coord_semitones = Vector2::new(-pitch_coord_semitones.x, pitch_coord_semitones.y);
-    let pitch_distance_semitones = IntervalF(pitch_coord_semitones.norm());
-    let raw_note = (*note_range.end() - pitch_distance_semitones)
-        .clamp(*note_range.start(), *note_range.end());
-    let note_number_height = controls::convert_range(h.position.y, &(350.0..=500.0), &(1.0..=4.0));
-    let lead_volumes =
-        [0.0, 1.0, 2.0, 3.0].map(|v| (note_number_height.clamp(1.0, 4.0) - v).clamp(0.0, 1.0));
-    *guitar_gates = lead_volumes.map(|v| v > 0.0);
-    let autotune = controls::convert_range(h.pinch, &(0.0..=1.0), &(0.0..=5.0)) as usize;
-    let note = restricted_scale_window.autotune(raw_note, autotune);
-    let chord = full_scale_window.autochord(note, &[0, 2, 4, 7]);
-    let lead_offset = preset.lead_interval_f();
-    let pluck_offset = preset.pluck_interval_f();
-    let pitch_bend = controls
-        .pitch_bend
-        .get_scaled(h.velocity.x + h.velocity.z, &(-300.0..=300.0));
-    let trumpet = controls
-        .drone_trumpet
-        .get_scaled(h.velocity.y.abs(), &(0.0..=250.0));
-    for (control, value) in controls.lead.iter().zip(lead_volumes) {
-        control.volume.send(dsp_tx, value)?;
-    }
-    for (i, note) in chord.iter().enumerate() {
-        if let Some(note) = note {
-            controls.lead[i].send_note(dsp_tx, &(*note + lead_offset))?;
-            controls.strum[i].send_note(dsp_tx, &(*note + pluck_offset))?;
-        }
-    }
-    controls.strum_drone.send_note(
-        dsp_tx,
-        &(preset.root_note_f() + pluck_offset + IntervalF(12.0)),
-    )?;
-    controls.pitch_bend.send(dsp_tx, pitch_bend)?;
-    controls.drone_trumpet.send(dsp_tx, trumpet)?;
-    let lead_chord = chord
-        .into_iter()
-        .map(|c| c.unwrap_or_default())
-        .zip(lead_volumes.into_iter().map(Volume))
-        .collect_vec();
-    let lead_chord = [lead_chord[0], lead_chord[1], lead_chord[2], lead_chord[3]];
-    ui_tx.send(UiUpdate::AutotuneAmount(autotune))?;
-    ui_tx.send(UiUpdate::Lead(
-        lead_chord,
-        Vector2::new(
-            pitch_coord_semitones.x * h.x_factor,
-            pitch_coord_semitones.y,
-        ),
-    ))?;
-    ui_tx.send(UiUpdate::RawNote(raw_note))?;
-    ui_tx.send(UiUpdate::ChordsNumber(note_number_height))?;
-    ui_tx.send(UiUpdate::TrumpetStrength(trumpet))?;
-    Ok(())
 }
