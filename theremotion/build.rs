@@ -45,8 +45,8 @@ fn add_resources() {
     let input = Path::new("../assets/icon.svg");
     // hack: should be out_dir, but wix doesn't know about it
     let output = PathBuf::from_iter([
-        env::var("CARGO_TARGET_DIR").unwrap(),
-        env::var("PROFILE").unwrap(),
+        env::var("CARGO_TARGET_DIR").unwrap_or("target".to_string()),
+        env::var("PROFILE").expect("Missing PROFILE"),
         "theremotion.ico".to_string(),
     ]);
 
