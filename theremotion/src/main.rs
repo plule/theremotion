@@ -9,14 +9,14 @@
 mod controls;
 
 /// Thread transforming and dispatching the messages from the others
-mod conductor_thread;
+mod thread_conductor;
 
 /// Thread computing the DSP and sending parameter updates
-mod dsp_thread;
+mod thread_dsp;
 
 /// Thread reading the hand positions
 #[cfg(feature = "leap")]
-mod leap_thread;
+mod thread_leap;
 
 /// Mod creating the main window and event loop
 mod ui_thread;
@@ -26,9 +26,6 @@ mod settings;
 
 /// Music related types and algorithms
 mod solfege;
-
-/// Poor man's Step implementation
-mod step_iter;
 
 /// Newtypes for strongly typed exchanges
 mod types;
@@ -43,7 +40,6 @@ use cpal::traits::StreamTrait;
 use default_boxed::DefaultBoxed;
 use faust_state::DspHandle;
 use settings::Settings;
-pub use step_iter::StepIter;
 use theremotion_ui::*;
 
 /// Theremotion version
@@ -79,7 +75,7 @@ fn main() {
         .unwrap();
 
     // Start the conductor thread
-    let conductor = conductor_thread::run(
+    let conductor = thread_conductor::run(
         settings.clone(),
         controls.clone(),
         co_rx,
@@ -88,18 +84,18 @@ fn main() {
     );
 
     // Init sound output
-    let stream = dsp_thread::run(dsp, state, dsp_rx);
+    let stream = thread_dsp::run(dsp, state, dsp_rx);
     stream.play().expect("Failed to play stream");
 
     // Init leap thread
     #[cfg(feature = "leap")]
-    let leap_worker = leap_thread::run(co_tx.clone());
+    let leap_worker = thread_leap::run(co_tx.clone());
 
     // Start UI
     let (window, _window_timer) = ui_thread::run(co_tx.clone(), ui_rx, settings);
     window.run().expect("Failed to start the UI");
     co_tx
-        .send(conductor_thread::Msg::Exit)
+        .send(thread_conductor::Msg::Exit)
         .expect("Error when trying to exit");
 
     #[cfg(feature = "leap")]

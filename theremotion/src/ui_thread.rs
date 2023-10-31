@@ -8,8 +8,8 @@ use staff::midi::MidiNote;
 use theremotion_ui::MainWindow;
 
 use crate::{
-    conductor_thread::{Msg as CM, TrackingStatus},
     settings::{Handedness, Settings},
+    thread_conductor::{Msg as CM, TrackingStatus},
     {MidiNoteF, Volume},
 };
 

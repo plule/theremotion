@@ -3,8 +3,6 @@ use std::{cmp::Ordering, collections::HashSet, ops::RangeInclusive};
 use itertools::Itertools;
 use staff::{midi::MidiNote, scale::ScaleIntervals, Pitch};
 
-use crate::StepIter;
-
 use crate::MidiNoteF;
 
 /// Floating 2 by 2 window in a scale.
@@ -126,8 +124,8 @@ pub fn build_scale_notes(
     let pitches: HashSet<u8> = scale
         .map(|interval| (pitch + interval).into_byte())
         .collect();
-    restricted_to
-        .step_iter()
+    (restricted_to.start().into_byte()..=restricted_to.end().into_byte())
+        .map(MidiNote::from_byte)
         .filter(|note| pitches.contains(&note.pitch().into_byte()))
         .collect()
 }

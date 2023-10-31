@@ -4,10 +4,10 @@ use crossbeam_channel::{SendError, Sender};
 use leaprs::{Connection, ConnectionConfig, Error, Event};
 use nalgebra::{UnitQuaternion, Vector3};
 
-use crate::conductor_thread::{self, TrackingStatus};
+use crate::thread_conductor::{self, TrackingStatus};
 
 /// Start the leap motion thread
-pub fn run(mut tx: Sender<conductor_thread::Msg>) -> thread::JoinHandle<()> {
+pub fn run(mut tx: Sender<thread_conductor::Msg>) -> thread::JoinHandle<()> {
     thread::Builder::new()
         .name("leap".to_string())
         .spawn(move || {
@@ -25,9 +25,9 @@ pub fn run(mut tx: Sender<conductor_thread::Msg>) -> thread::JoinHandle<()> {
 }
 
 fn read_and_update(
-    tx: &mut Sender<conductor_thread::Msg>,
+    tx: &mut Sender<thread_conductor::Msg>,
     connection: &mut Connection,
-) -> Result<(), SendError<conductor_thread::Msg>> {
+) -> Result<(), SendError<thread_conductor::Msg>> {
     match connection.poll(100) {
         Ok(message) => {
             match message.event() {
@@ -36,12 +36,12 @@ fn read_and_update(
                     let hands = e.hands();
 
                     for hand in hands.iter() {
-                        tx.send(conductor_thread::Msg::HandUpdate(crate::HandMessage::from(
+                        tx.send(thread_conductor::Msg::HandUpdate(crate::HandMessage::from(
                             hand,
                         )))?;
                     }
 
-                    tx.send(conductor_thread::Msg::VisibleHands {
+                    tx.send(thread_conductor::Msg::VisibleHands {
                         left: hands
                             .iter()
                             .any(|h| h.hand_type() == leaprs::HandType::Left),
@@ -50,21 +50,21 @@ fn read_and_update(
                             .any(|h| h.hand_type() == leaprs::HandType::Right),
                     })?;
 
-                    tx.send(conductor_thread::Msg::TrackingStatus(TrackingStatus::Ok))?;
+                    tx.send(thread_conductor::Msg::TrackingStatus(TrackingStatus::Ok))?;
                 }
-                Event::Connection(_) => tx.send(conductor_thread::Msg::TrackingStatus(
+                Event::Connection(_) => tx.send(thread_conductor::Msg::TrackingStatus(
                     TrackingStatus::Warning("No device".to_string()),
                 ))?,
-                Event::ConnectionLost(_) => tx.send(conductor_thread::Msg::TrackingStatus(
+                Event::ConnectionLost(_) => tx.send(thread_conductor::Msg::TrackingStatus(
                     TrackingStatus::Error("Connection lost".to_string()),
                 ))?,
                 Event::Device(_) => {
-                    tx.send(conductor_thread::Msg::TrackingStatus(TrackingStatus::Ok))?
+                    tx.send(thread_conductor::Msg::TrackingStatus(TrackingStatus::Ok))?
                 }
-                Event::DeviceFailure(_) => tx.send(conductor_thread::Msg::TrackingStatus(
+                Event::DeviceFailure(_) => tx.send(thread_conductor::Msg::TrackingStatus(
                     TrackingStatus::Error("Device failure".to_string()),
                 ))?,
-                Event::DeviceLost => tx.send(conductor_thread::Msg::TrackingStatus(
+                Event::DeviceLost => tx.send(thread_conductor::Msg::TrackingStatus(
                     TrackingStatus::Error("Device disconnected".to_string()),
                 ))?,
                 _ => {}
@@ -72,10 +72,10 @@ fn read_and_update(
         }
         Err(err) => match err {
             Error::Timeout => {} // spammey without any device
-            Error::NotConnected => tx.send(conductor_thread::Msg::TrackingStatus(
+            Error::NotConnected => tx.send(thread_conductor::Msg::TrackingStatus(
                 TrackingStatus::Warning(err.to_string()),
             ))?,
-            _ => tx.send(conductor_thread::Msg::TrackingStatus(
+            _ => tx.send(thread_conductor::Msg::TrackingStatus(
                 TrackingStatus::Error(err.to_string()),
             ))?,
         },

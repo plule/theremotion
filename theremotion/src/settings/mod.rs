@@ -18,8 +18,8 @@ use staff::{
 
 use crate::{
     controls::Controls,
-    dsp_thread::ParameterUpdate,
     solfege::{MoreScales, ScaleWindows},
+    thread_dsp::ParameterUpdate,
     HandType, IntervalF, MidiNoteF, OctaveInterval,
 };
 

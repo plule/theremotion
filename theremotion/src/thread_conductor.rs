@@ -6,9 +6,9 @@ use nalgebra::Vector2;
 use staff::{midi::Octave, Interval, Pitch};
 
 use crate::{
-    controls, dsp_thread,
+    controls,
     settings::{Handedness, NamedScale, Preset, Settings},
-    ui_thread, HandMessage, {IntervalF, Volume},
+    thread_dsp, ui_thread, HandMessage, {IntervalF, Volume},
 };
 
 const HALF_PI: f32 = PI / 2.0;
@@ -62,7 +62,7 @@ pub fn run(
     settings: Settings,
     controls: controls::Controls,
     rx: Receiver<Msg>,
-    dsp_tx: Sender<dsp_thread::ParameterUpdate>,
+    dsp_tx: Sender<thread_dsp::ParameterUpdate>,
     ui_tx: Sender<ui_thread::Msg>,
 ) -> thread::JoinHandle<()> {
     thread::Builder::new()
@@ -84,7 +84,7 @@ pub fn run(
 /// the threads.
 struct Conductor {
     /// Output: Sound parameter updates sent to the DSP
-    pub dsp_tx: Sender<dsp_thread::ParameterUpdate>,
+    pub dsp_tx: Sender<thread_dsp::ParameterUpdate>,
 
     /// Output: User interface updates
     pub ui_tx: Sender<ui_thread::Msg>,
