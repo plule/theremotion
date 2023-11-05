@@ -8,7 +8,7 @@ use staff::{midi::Octave, Interval, Pitch};
 use crate::{
     controls,
     settings::{Handedness, NamedScale, Preset, Settings},
-    thread_dsp, ui_thread, HandMessage, {IntervalF, Volume},
+    thread_dsp, thread_ui, HandMessage, {IntervalF, Volume},
 };
 
 const HALF_PI: f32 = PI / 2.0;
@@ -63,7 +63,7 @@ pub fn run(
     controls: controls::Controls,
     rx: Receiver<Msg>,
     dsp_tx: Sender<thread_dsp::ParameterUpdate>,
-    ui_tx: Sender<ui_thread::Msg>,
+    ui_tx: Sender<thread_ui::Msg>,
 ) -> thread::JoinHandle<()> {
     thread::Builder::new()
         .name("conductor".to_string())
@@ -87,7 +87,7 @@ struct Conductor {
     pub dsp_tx: Sender<thread_dsp::ParameterUpdate>,
 
     /// Output: User interface updates
-    pub ui_tx: Sender<ui_thread::Msg>,
+    pub ui_tx: Sender<thread_ui::Msg>,
 
     /// Application settings current state
     pub settings: Settings,
@@ -141,7 +141,7 @@ impl Conductor {
                 return Ok(true);
             }
             Msg::TrackingStatus(status) => {
-                self.ui_tx.send(ui_thread::Msg::Status(status))?;
+                self.ui_tx.send(thread_ui::Msg::Status(status))?;
             }
             Msg::HandUpdate(h) => {
                 if h.hand_type == pitch_hand_type {
@@ -151,7 +151,7 @@ impl Conductor {
                 }
             }
             Msg::VisibleHands { left, right } => {
-                self.ui_tx.send(ui_thread::Msg::HasHands(left, right))?;
+                self.ui_tx.send(thread_ui::Msg::HasHands(left, right))?;
             }
             Msg::DroneClicked(note_index) => {
                 toggle_drone(preset, note_index);
@@ -239,7 +239,7 @@ impl Conductor {
         if settings != self.settings {
             tracing::debug!("Settings were updated");
             self.ui_tx
-                .send(ui_thread::Msg::Settings(settings.clone()))?;
+                .send(thread_ui::Msg::Settings(settings.clone()))?;
             settings
                 .current_preset
                 .send_to_dsp(&self.controls, &self.dsp_tx)?;
@@ -337,18 +337,18 @@ impl Conductor {
         } else {
             self.play_state.drone_grab_state = None;
         }
-        ui_tx.send(ui_thread::Msg::DroneNumber(self.play_state.drone_state))?;
-        ui_tx.send(ui_thread::Msg::AutotuneAmount(autotune))?;
-        ui_tx.send(ui_thread::Msg::Lead(
+        ui_tx.send(thread_ui::Msg::DroneNumber(self.play_state.drone_state))?;
+        ui_tx.send(thread_ui::Msg::AutotuneAmount(autotune))?;
+        ui_tx.send(thread_ui::Msg::Lead(
             lead_chord,
             Vector2::new(
                 pitch_coord_semitones.x * h.x_factor(),
                 pitch_coord_semitones.y,
             ),
         ))?;
-        ui_tx.send(ui_thread::Msg::RawNote(raw_note))?;
-        ui_tx.send(ui_thread::Msg::ChordsNumber(note_number_height))?;
-        ui_tx.send(ui_thread::Msg::TrumpetStrength(trumpet))?;
+        ui_tx.send(thread_ui::Msg::RawNote(raw_note))?;
+        ui_tx.send(thread_ui::Msg::ChordsNumber(note_number_height))?;
+        ui_tx.send(thread_ui::Msg::TrumpetStrength(trumpet))?;
         Ok(())
     }
 
@@ -399,12 +399,12 @@ impl Conductor {
         self.controls.cutoff_note.send(dsp_tx, cutoff_note)?;
         self.controls.lead_volume.send(dsp_tx, lead_volume)?;
         self.controls.resonance.send(dsp_tx, resonance)?;
-        ui_tx.send(ui_thread::Msg::Filter(
+        ui_tx.send(thread_ui::Msg::Filter(
             cutoff_note_norm * h.x_factor(),
             resonance_norm,
         ))?;
-        ui_tx.send(ui_thread::Msg::LeadVolume(lead_volume))?;
-        ui_tx.send(ui_thread::Msg::StrumReady(strum_ready))?;
+        ui_tx.send(thread_ui::Msg::LeadVolume(lead_volume))?;
+        ui_tx.send(thread_ui::Msg::StrumReady(strum_ready))?;
         Ok(())
     }
 }

@@ -1,12 +1,14 @@
-import { Selectable, SelectableButtonsWithSave, Tab , GL} from "common.slint";
+import { SelectableButtonsWithSave, Tab , GL} from "common.slint";
+import { Selectable } from "types.slint";
+import { UIState } from "state.slint";
 
 export component PresetsTab inherits Tab {
-    in property <[Selectable]> presets <=> btns.options;
-    callback select-preset <=> btns.select-clicked;
-    callback delete-preset <=> btns.delete-clicked;
-    callback save-preset <=> btns.save-clicked;
-
     GL {
-        btns := SelectableButtonsWithSave {}
+        SelectableButtonsWithSave {
+            options: UIState.presets;
+            select-clicked(p) => {UIState.select-preset(p)}
+            delete-clicked(p) => {UIState.delete-preset(p)}
+            save-clicked(p) => {UIState.save-preset(p)}
+        }
     }
 }

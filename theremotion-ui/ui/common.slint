@@ -1,4 +1,6 @@
 import { LineEdit } from "std-widgets.slint";
+import { UIState } from "state.slint";
+import { Status, Selectable } from "types.slint";
 import "./fonts/NotoEmoji-Bold.ttf";
 import "./fonts/NotoSans-Bold.ttf";
 
@@ -159,40 +161,34 @@ export component BevelCircle inherits BevelRectangle {
     y: center-y - effective-radius();
 }
 
-export component Tab inherits Rectangle {
-    background: Palette.tab-bg;
+export component Tab {
     in property <int> idx;
     in property <int> current-idx;
-    clip: true;
+    preferred-width: 100%;
+    preferred-height: 100%;
 
-    y: current-idx == idx ? 0 : current-idx < idx ? self.height + 1px : - self.height - 1px;
-    animate y { duration: 125ms; easing: ease; }
-
-    property <length> cx: 0px;
-    property <length> cy: self.height;
-    for color[idx] in [Palette.pcyan, Palette.pgreen, Palette.porange, Palette.ppink, Palette.pyellow]: Circle {
-        Circle {
-            center-x: cx;
-            center-y: cy;
-            radius: root.height + self.border-width*idx + 10px;
-            border-color: color;
-            border-width: 50px;
+    Rectangle {
+        background: Palette.tab-bg;
+        clip: true;
+        y: current-idx == idx ? 0 : current-idx < idx ? self.height + 1px : - self.height - 1px;
+        animate y { duration: 125ms; easing: ease; }
+        property <length> cx: 0px;
+        property <length> cy: self.height;
+        for color[idx] in [Palette.pcyan, Palette.pgreen, Palette.porange, Palette.ppink, Palette.pyellow]: Circle {
+            Circle {
+                center-x: cx;
+                center-y: cy;
+                radius: root.height + self.border-width*idx + 10px;
+                border-color: color;
+                border-width: 50px;
+            }
         }
+    
+        @children
     }
 
-    @children
 }
 
-export enum Handedness {
-    LeftHanded,
-    RightHanded,
-}
-
-export struct NotePoint {
-    x: float,
-    y: float,
-    volume: float,
-}
 
 export global Pitches {
     out property <[{value: int, text: string}]> pitches: [
@@ -237,12 +233,6 @@ export component TitleText inherits Text {
     horizontal-alignment: TextHorizontalAlignment.center;
 }
 
-export enum Status {
-    Ok,
-    Warning,
-    Error,
-}
-
 export component StatusText inherits Text {
     in property <Status> status;
     font-family: "Noto Sans";
@@ -258,29 +248,33 @@ export component GradText inherits Text {
     font-size: 20px;
 }
 
-export component Led inherits BevelRectangle {
+export component Led {
     in property <color> glass-color: Palette.inactive;
     in property <color> light-color: Palette.active;
     in property <float> light;
-    border-width: 2px;
-    width: 75%;
-    height: 6px;
+    width: 100%;
 
-    border-radius: self.height / 2;
-    background: light-color.mix(glass-color, light);// light ? light-color : glass-color;
-    drop-shadow-color: light-color.with-alpha(light);
-    drop-shadow-blur: 5px;
-    animate background {
-        duration: 250ms;
-        easing: ease-out;
-    }
-    animate drop-shadow-color {
-        duration: 250ms;
-        easing: ease-out;
+    BevelRectangle {
+        border-width: 2px;
+        width: 75%;
+        height: 6px;
+
+        border-radius: self.height / 2;
+        background: light-color.mix(glass-color, light);// light ? light-color : glass-color;
+        drop-shadow-color: light-color.with-alpha(light);
+        drop-shadow-blur: 5px;
+        animate background {
+            duration: 250ms;
+            easing: ease-out;
+        }
+        animate drop-shadow-color {
+            duration: 250ms;
+            easing: ease-out;
+        }
     }
 }
 
-export component TouchButton inherits BevelRectangle {
+export component TouchButton {
     callback clicked <=> ta.clicked;
     in-out property <bool> checked;
     in property <string> text;
@@ -292,42 +286,41 @@ export component TouchButton inherits BevelRectangle {
     in property <length> font-size: 25px;
     in property <bool> checkable: true;
 
-    background: ta.has-hover ? hover-color : inactive-color;
-    
-    contrast: checked ? 10% : 30%;
-    animate background { duration: 100ms; easing: ease; }
-    clip: true;
-    //height: 80px;
+    BevelRectangle {
+        background: ta.has-hover ? hover-color : inactive-color;
+        
+        contrast: checked ? 10% : 30%;
+        animate background { duration: 100ms; easing: ease; }
+        clip: true;
 
-    ScreenGlare {}
+        if text != "": Text {
+            y: root.height / 2 - self.font-size + 4px;
+            vertical-alignment: TextVerticalAlignment.center;
+            horizontal-alignment: TextHorizontalAlignment.center;
+            font-family: font-family;
+            font-size: font-size;
+            text: text;
+            color: Palette.button-text;
+        }
 
-    if text != "": Text {
-        y: root.height / 2 - self.font-size + 4px;
-        vertical-alignment: TextVerticalAlignment.center;
-        horizontal-alignment: TextHorizontalAlignment.center;
-        font-family: font-family;
-        font-size: font-size;
-        text: text;
-        color: Palette.button-text;
+        if text == "": Image {
+            source: root.icon;
+            colorize: Palette.button-text;
+        }
+
+        if checkable: Led {
+            light-color: Palette.active;
+            y: root.height * 0.75;
+            light: checked ? 1.0 : 0.0;
+        }
+
+        
+        ta:=TouchArea {}
     }
-
-    if text == "": Image {
-        source: root.icon;
-        colorize: Palette.button-text;
-    }
-
-    if checkable: Led {
-        light-color: Palette.active;
-        y: root.height * 0.75;
-        light: checked ? 1.0 : 0.0;
-    }
-
-    ta:=TouchArea {}
 }
 
 export component IconTouchButton inherits TouchButton {
     font-family: "Noto Emoji";
-    clip: true;
     width: 80px;
     height: 80px;
 }
@@ -344,7 +337,9 @@ component FaderInteraction inherits TouchArea {
     in property <length> handle-height;
     callback changed(float);
     property <float> pressed-value;
+    
     pointer-event(event) => {
+        debug(value);
         if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
             self.pressed-value = root.value;
         }
@@ -358,7 +353,7 @@ component FaderInteraction inherits TouchArea {
     }
 }
 
-component Fader inherits Rectangle {
+component Fader {
     in property<float> maximum <=> touch.maximum;
     in property<float> minimum <=> touch.minimum;
     in-out property<float> value <=> touch.value;
@@ -375,7 +370,7 @@ component Fader inherits Rectangle {
         border-radius: self.width/2;
         background: touch.pressed ? Palette.button-inactive.brighter(50%) : Palette.button-inactive;
         border-width: 1px;
-        border-color: root.background.darker(80%);
+        border-color: Palette.button-inactive.darker(80%);
 
         Rectangle {
             height: root.height - handle.y;
@@ -392,7 +387,7 @@ component Fader inherits Rectangle {
         y: (root.height - handle.height) * ( 1 - (root.value - root.minimum)/(root.maximum - root.minimum));
 
         Led {
-            background: Palette.raw;
+            glass-color: Palette.raw;
             light: touch.pressed ? 1.0 : 0.0;
         }
     }
@@ -409,7 +404,6 @@ export component RotaryKnob {
     in-out property<float> value <=> touch.value;
     in property <angle> min-angle: 20deg;
     in property <angle> max-angle: 360deg - min-angle;
-    property <angle> angle: getangle(touch.value);
     property <angle> deadzone: 30deg;
     callback changed <=> touch.changed;
     property <float> radius-in: 0.4;
@@ -451,7 +445,15 @@ export component RotaryKnob {
         viewbox-height: 2;
         MoveTo {x: 0; y: 0;}
         LineTo {x: getx(deadzone); y: gety(deadzone);}
-        ArcTo  {x: getx(angle); y: gety(angle); radius-x: 1; radius-y: 1; sweep: true; large-arc: angle > (180deg + deadzone);}
+        ArcTo  {
+            x: getx(getangle(touch.value));
+            y: gety(getangle(touch.value));
+            radius-x: 1;
+            radius-y: 1;
+            sweep: true;
+            large-arc:
+            getangle(touch.value) > (180deg + deadzone);
+        }
         LineTo {x: 0; y: 0;}
     }
 
@@ -495,8 +497,13 @@ export component RotaryKnob {
         viewbox-y: -1;
         viewbox-width: 2;
         viewbox-height: 2;
-        MoveTo {x: getx(angle) * radius-in; y: gety(angle) * radius-in;}
-        LineTo {x: getx(angle) * radius-out; y: gety(angle) * radius-out;}
+        MoveTo {
+            x: getx(getangle(touch.value)) * radius-in;
+            y: gety(getangle(touch.value)) * radius-in;
+        }
+        LineTo {x: getx(getangle(touch.value)) * radius-out;
+            y: gety(getangle(touch.value)) * radius-out;
+        }
     }
 }
 
@@ -539,11 +546,11 @@ export component CaptionedRotaryKnob {
     }
 }
 
-export component Group inherits Rectangle {
+export component Group {
     in property <string> name;
     in property <bool> has-name: true;
-    preferred-height: 100px;
-    preferred-width: 100px;
+    preferred-height: 100%;
+    preferred-width: 100%;
 
     BevelRectangle {
         background: Palette.group-bg;
@@ -562,7 +569,7 @@ export component Group inherits Rectangle {
                 Rectangle {}
             }
 
-    
+
             GL {
                 padding: 4px;
                 padding-top: 0px;
@@ -570,13 +577,6 @@ export component Group inherits Rectangle {
             }
         }
     }
-}
-
-export struct Selectable {
-    name: string,
-    removable: bool,
-    id: int,
-    selected: bool,
 }
 
 export component SelectableButtons {

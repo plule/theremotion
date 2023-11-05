@@ -1,6 +1,6 @@
 import { Pitches, TouchButton, Group, GL, Style, HL, Tab} from "common.slint";
 import { EditMode , KeyboardFooter} from "keyboard.slint";
-
+import { UIState } from "state.slint";
 
 component OctaveSelector inherits HL {
     in property <int> octave;
@@ -39,19 +39,6 @@ component PitchSelector inherits Rectangle {
 }
 
 export component RootTab inherits Tab {
-    in property <int> lead-octave;
-    in property <int> guitar-octave;
-    in property <int> drone-octave;
-    callback lead-octave-clicked(int);
-    callback guitar-octave-clicked(int);
-    callback drone-octave-clicked(int);
-
-    callback clicked <=> kb.clicked;
-    in property <[bool]> scale-notes <=> kb.scale-notes;
-    in property <[float]> leads <=> kb.leads;
-    in property <[float]> drones <=> kb.drones;
-    in property <int> root-pitch <=> kb.root-pitch;
-
     property <float> button-stretch: 0.5;
     property <float> text-stretch: 0.1;
     GL {
@@ -62,8 +49,8 @@ export component RootTab inherits Tab {
             name: "Root Note";
             PitchSelector {
                 vertical-stretch: 1;
-                pitch: root.root-pitch;
-                clicked(n) => {root.clicked(n)}
+                pitch: UIState.root-pitch;
+                clicked(n) => {UIState.root-pitch-clicked(n)}
             }
         }
 
@@ -73,8 +60,8 @@ export component RootTab inherits Tab {
             name: "Lead Octave";
             OctaveSelector {
                 vertical-stretch: button-stretch;
-                octave: lead-octave;
-                clicked(o) => {lead-octave-clicked(o)}
+                octave: UIState.lead-octave;
+                clicked(o) => {UIState.lead-octave-clicked(o)}
             }
         }
         Group {
@@ -83,8 +70,8 @@ export component RootTab inherits Tab {
             name: "Guitar Octave";
             OctaveSelector {
                 vertical-stretch: button-stretch;
-                octave: guitar-octave;
-                clicked(o) => {guitar-octave-clicked(o)}
+                octave: UIState.guitar-octave;
+                clicked(o) => {UIState.guitar-octave-clicked(o)}
             }
         }
         Group {
@@ -93,11 +80,12 @@ export component RootTab inherits Tab {
             name: "Drone Octave";
             OctaveSelector {
                 vertical-stretch: button-stretch;
-                octave: drone-octave;
-                clicked(o) => {drone-octave-clicked(o)}
+                octave: UIState.drone-octave;
+                clicked(o) => {UIState.drone-octave-clicked(o)}
             }
         }
-        kb := KeyboardFooter {
+        KeyboardFooter {
+            clicked(n) => {UIState.root-pitch-clicked(n)}
             row: 3;
             colspan: 2;
             edit-mode: EditMode.Root;

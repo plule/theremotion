@@ -8,6 +8,7 @@ use staff::midi::MidiNote;
 use theremotion_ui::MainWindow;
 
 use crate::{
+    controls::Controls,
     settings::{Handedness, Settings},
     thread_conductor::{Msg as CM, TrackingStatus},
     {MidiNoteF, Volume},
@@ -46,15 +47,35 @@ pub enum Msg {
 pub fn run(
     tx: Sender<CM>,
     mut ui_rx: crossbeam_channel::Receiver<Msg>,
+    controls: Controls,
     mut settings: Settings,
 ) -> (MainWindow, slint::Timer) {
     if settings.system.fullscreen {
         std::env::set_var("SLINT_FULLSCREEN", "1");
     }
-    let mut window = theremotion_ui::MainWindow::new().expect("Failed to create the UI");
+    let window = theremotion_ui::MainWindow::new().expect("Failed to create the UI");
     let window_weak = window.as_weak();
+    let ui = window.global::<theremotion_ui::UIState<'_>>();
 
-    update_ui_from_settings(&mut window, &settings);
+    // Send the min/max set in the DSP
+    ui.set_lead_volume_control(ui_control(&controls.lead_volume));
+    ui.set_cutoff_note_control(ui_control(&controls.cutoff_note));
+    ui.set_resonance_control(ui_control(&controls.resonance));
+    ui.set_pluck_mute_control(ui_control(&controls.pluck_mute));
+    ui.set_drone_detune_control(ui_control(&controls.drone_detune));
+    ui.set_echo_mix_control(ui_control(&controls.echo_mix));
+    ui.set_echo_duration_control(ui_control(&controls.echo_duration));
+    ui.set_echo_feedback_control(ui_control(&controls.echo_feedback));
+    ui.set_reverb_mix_control(ui_control(&controls.reverb_mix));
+    ui.set_reverb_time_control(ui_control(&controls.reverb_time));
+    ui.set_reverb_damp_control(ui_control(&controls.reverb_damp));
+    ui.set_reverb_size_control(ui_control(&controls.reverb_size));
+    ui.set_mix_master_control(ui_control(&controls.mix_master_volume));
+    ui.set_mix_drone_control(ui_control(&controls.mix_drone_volume));
+    ui.set_mix_lead_control(ui_control(&controls.mix_lead_volume));
+    ui.set_mix_pluck_control(ui_control(&controls.mix_pluck_volume));
+
+    update_ui_from_settings(&ui, &settings);
 
     /// Helper to connect slint callbacks to events sent on a channel
     struct Connector(Sender<CM>);
@@ -94,56 +115,56 @@ pub fn run(
         });
 
     // Common
-    window.on_close({
+    ui.on_close({
         let window_weak = window_weak.clone();
         move || {
             window_weak.unwrap().hide().unwrap();
         }
     });
     // Play tab
-    window.on_drone_clicked(c.send(CM::DroneClicked));
+    ui.on_drone_clicked(c.send(CM::DroneClicked));
 
     // Root tab
-    window.on_root_pitch_clicked(c.send(CM::RootClicked));
-    window.on_lead_octave_clicked(c.send(CM::LeadOctave));
-    window.on_guitar_octave_clicked(c.send(CM::GuitarOctave));
-    window.on_drone_octave_clicked(c.send(CM::DroneOctave));
+    ui.on_root_pitch_clicked(c.send(CM::RootClicked));
+    ui.on_lead_octave_clicked(c.send(CM::LeadOctave));
+    ui.on_guitar_octave_clicked(c.send(CM::GuitarOctave));
+    ui.on_drone_octave_clicked(c.send(CM::DroneOctave));
 
     // Scale tab
-    window.on_scale_clicked(c.send(CM::ScaleClicked));
-    window.on_select_scale(c.send(CM::SelectScale));
-    window.on_delete_scale(c.send(CM::DeleteScale));
-    window.on_save_scale(c.send(CM::SaveScale));
+    ui.on_scale_clicked(c.send(CM::ScaleClicked));
+    ui.on_select_scale(c.send(CM::SelectScale));
+    ui.on_delete_scale(c.send(CM::DeleteScale));
+    ui.on_save_scale(c.send(CM::SaveScale));
 
     // Mix tab
-    window.on_mix_lead_changed(c.send(CM::LeadVolume));
-    window.on_mix_guitar_changed(c.send(CM::GuitarVolume));
-    window.on_mix_drone_changed(c.send(CM::DroneVolume));
-    window.on_mix_master_changed(c.send(CM::MasterVolume));
-    window.on_guitar_drone_clicked(c.send2(|| CM::GuitarDroneClicked));
+    ui.on_mix_lead_changed(c.send(CM::LeadVolume));
+    ui.on_mix_pluck_changed(c.send(CM::GuitarVolume));
+    ui.on_mix_drone_changed(c.send(CM::DroneVolume));
+    ui.on_mix_master_changed(c.send(CM::MasterVolume));
+    ui.on_guitar_drone_clicked(c.send2(|| CM::GuitarDroneClicked));
 
     // Effects tab
-    window.on_echo_amount_changed(c.send(CM::EchoAmount));
-    window.on_echo_duration_changed(c.send(CM::EchoDuration));
-    window.on_echo_feedback_changed(c.send(CM::EchoFeedback));
-    window.on_reverb_amount_changed(c.send(CM::ReverbAmount));
-    window.on_reverb_time_changed(c.send(CM::ReverbTime));
-    window.on_reverb_damp_changed(c.send(CM::ReverbDamp));
-    window.on_reverb_size_changed(c.send(CM::ReverbSize));
-    window.on_drone_detune_changed(c.send(CM::DroneDetune));
+    ui.on_echo_mix_changed(c.send(CM::EchoAmount));
+    ui.on_echo_duration_changed(c.send(CM::EchoDuration));
+    ui.on_echo_feedback_changed(c.send(CM::EchoFeedback));
+    ui.on_reverb_mix_changed(c.send(CM::ReverbAmount));
+    ui.on_reverb_time_changed(c.send(CM::ReverbTime));
+    ui.on_reverb_damp_changed(c.send(CM::ReverbDamp));
+    ui.on_reverb_size_changed(c.send(CM::ReverbSize));
+    ui.on_drone_detune_changed(c.send(CM::DroneDetune));
 
     // Presets tab
-    window.on_select_preset(c.send(CM::SelectPreset));
-    window.on_delete_preset(c.send(CM::DeletePreset));
-    window.on_save_preset(c.send(CM::SavePreset));
+    ui.on_select_preset(c.send(CM::SelectPreset));
+    ui.on_delete_preset(c.send(CM::DeletePreset));
+    ui.on_save_preset(c.send(CM::SavePreset));
 
     // Settings tab
-    window.on_fullscreen_clicked(c.send2(|| CM::FullscreenClicked));
-    window.on_fullscreen_clicked(c.send2(|| CM::FullscreenClicked));
-    window.on_on_screen_kbd_clicked(c.send2(|| CM::OnScreenKeyboardClicked));
-    window.on_lh_clicked(c.send2(|| CM::LHClicked));
-    window.on_rh_clicked(c.send2(|| CM::RHClicked));
-    window.on_high_priority_clicked(c.send2(|| CM::HighPriorityClicked));
+    ui.on_fullscreen_clicked(c.send2(|| CM::FullscreenClicked));
+    ui.on_fullscreen_clicked(c.send2(|| CM::FullscreenClicked));
+    ui.on_on_screen_kbd_clicked(c.send2(|| CM::OnScreenKeyboardClicked));
+    ui.on_lh_clicked(c.send2(|| CM::LHClicked));
+    ui.on_rh_clicked(c.send2(|| CM::RHClicked));
+    ui.on_high_priority_clicked(c.send2(|| CM::HighPriorityClicked));
 
     let window_timer = slint::Timer::default();
 
@@ -152,7 +173,9 @@ pub fn run(
         std::time::Duration::from_millis(10),
         {
             move || {
-                read_updates(&mut ui_rx, &mut settings, &mut window_weak.unwrap());
+                let window = window_weak.unwrap();
+                let ui = window.global::<theremotion_ui::UIState<'_>>();
+                read_updates(&mut ui_rx, &mut settings, &ui);
             }
         },
     );
@@ -162,30 +185,31 @@ pub fn run(
 fn read_updates(
     ui_rx: &mut crossbeam_channel::Receiver<Msg>,
     settings: &mut Settings,
-    window: &mut MainWindow,
+    ui: &theremotion_ui::UIState<'_>,
 ) {
     for event in ui_rx.try_iter() {
         let restricted_scale_window = settings.current_preset.restricted_scale_floating_window();
+
         match event {
             Msg::Status(TrackingStatus::Ok) => {
-                window.set_status(theremotion_ui::Status::Ok);
-                window.set_status_message("Ok".into());
+                ui.set_status(theremotion_ui::Status::Ok);
+                ui.set_status_message("Ok".into());
             }
             Msg::Status(TrackingStatus::Warning(text)) => {
-                window.set_status(theremotion_ui::Status::Warning);
-                window.set_status_message(text.into());
+                ui.set_status(theremotion_ui::Status::Warning);
+                ui.set_status_message(text.into());
             }
             Msg::Status(TrackingStatus::Error(text)) => {
-                window.set_status(theremotion_ui::Status::Error);
-                window.set_status_message(text.into());
+                ui.set_status(theremotion_ui::Status::Error);
+                ui.set_status_message(text.into());
             }
-            Msg::LeadVolume(v) => window.set_lead_volume(v),
+            Msg::LeadVolume(v) => ui.set_lead_volume(v),
             Msg::Lead(notes, coords) => {
                 let coords_direction = coords.normalize();
                 let range_end = *settings.current_preset.note_range_f().end();
-                window.set_tuned_note(notes[0].0 .0);
+                ui.set_tuner_note_tuned(notes[0].0 .0);
                 // Lead for dots
-                window.set_lead_notes(
+                ui.set_notes(
                     notes
                         .map(|(note, volume)| {
                             let coords = coords_direction * (range_end - note).semitones();
@@ -197,7 +221,7 @@ fn read_updates(
                         })
                         .into(),
                 );
-                window.set_lead_raw_note(theremotion_ui::NotePoint {
+                ui.set_raw_note(theremotion_ui::NotePoint {
                     volume: 1.0,
                     x: coords.x,
                     y: coords.y,
@@ -221,66 +245,66 @@ fn read_updates(
                         leads[index_2] += volume.0 * index_2_factor;
                     }
                 }
-                let kb_leads = window.get_leads();
+                let kb_leads = ui.get_leads();
                 for (index, lead) in leads.into_iter().enumerate() {
                     kb_leads.set_row_data(index, lead);
                 }
             }
-            Msg::ChordsNumber(c) => window.set_chords_number(c),
-            Msg::DroneNumber(d) => window.set_drone_number(d),
+            Msg::ChordsNumber(c) => ui.set_chords_number(c),
+            Msg::DroneNumber(d) => ui.set_drone_number(d),
             Msg::RawNote(n) => {
-                window.set_tuner_note_focus(restricted_scale_window.closest_in_scale(n).0);
-                window.set_raw_note(n.0);
+                ui.set_tuner_note_focus(restricted_scale_window.closest_in_scale(n).0);
+                ui.set_tuner_note(n.0);
             }
             Msg::Filter(c, r) => {
-                window.set_filter_cutoff(c);
-                window.set_filter_resonance(r);
+                ui.set_filter_cutoff(c);
+                ui.set_filter_resonance(r);
             }
-            Msg::AutotuneAmount(a) => window.set_autotune_amount(a.try_into().unwrap_or_default()),
+            Msg::AutotuneAmount(a) => ui.set_autotune_amount(a.try_into().unwrap_or_default()),
             Msg::HasHands(l, r) => {
-                window.set_has_left_hand(l);
-                window.set_has_right_hand(r);
+                ui.set_has_left_hand(l);
+                ui.set_has_right_hand(r);
             }
-            Msg::StrumReady(s) => window.set_strum_ready(s),
-            Msg::TrumpetStrength(s) => window.set_trumpet_strength(s),
+            Msg::StrumReady(s) => ui.set_strum_ready(s),
+            Msg::TrumpetStrength(_) => {} // todo?
             Msg::Settings(s) => {
                 *settings = s;
-                update_ui_from_settings(window, settings);
+                update_ui_from_settings(ui, settings);
             }
         }
     }
 }
 
-fn update_ui_from_settings(window: &mut theremotion_ui::MainWindow, settings: &Settings) {
-    window.set_handedness(settings.system.handedness.into());
-    window.set_fullscreen(settings.system.fullscreen);
-    window.set_high_priority(settings.system.high_priority_process);
-    window.set_use_on_screen_keyboard(settings.system.force_touchscreen);
+fn update_ui_from_settings(ui: &theremotion_ui::UIState<'_>, settings: &Settings) {
+    ui.set_handedness(settings.system.handedness.into());
+    ui.set_fullscreen(settings.system.fullscreen);
+    ui.set_high_priority(settings.system.high_priority_process);
+    ui.set_use_on_screen_keyboard(settings.system.force_touchscreen);
 
     let preset = &settings.current_preset;
-    window.set_lead_octave(preset.lead_octave.into_i8() as i32);
-    window.set_guitar_octave(preset.guitar_octave.into_i8() as i32);
-    window.set_drone_octave(preset.drone_octave.into_i8() as i32);
-    window.set_highest_note(preset.note_range().end().into_byte() as i32);
+    ui.set_lead_octave(preset.lead_octave.into_i8() as i32);
+    ui.set_guitar_octave(preset.guitar_octave.into_i8() as i32);
+    ui.set_drone_octave(preset.drone_octave.into_i8() as i32);
+    ui.set_highest_note(preset.note_range().end().into_byte() as i32);
 
-    window.set_mix_lead(preset.mix.lead.0);
-    window.set_mix_guitar(preset.mix.guitar.0);
-    window.set_mix_drone(preset.mix.drone.0);
-    window.set_mix_master(preset.mix.master.0);
+    ui.set_mix_lead(preset.mix.lead.0);
+    ui.set_mix_pluck(preset.mix.guitar.0);
+    ui.set_mix_drone(preset.mix.drone.0);
+    ui.set_mix_master(preset.mix.master.0);
 
-    window.set_enable_guitar_drone(preset.drone.pluck_drone);
+    ui.set_enable_guitar_drone(preset.drone.pluck_drone);
 
-    window.set_echo_amount(preset.fx.echo.mix.0);
-    window.set_echo_duration(preset.fx.echo.duration);
-    window.set_echo_feedback(preset.fx.echo.feedback);
-    window.set_reverb_amount(preset.fx.reverb.mix.0);
-    window.set_reverb_time(preset.fx.reverb.time);
-    window.set_reverb_damp(preset.fx.reverb.damp);
-    window.set_reverb_size(preset.fx.reverb.size);
-    window.set_drone_detune(preset.drone.detune);
+    ui.set_echo_mix(preset.fx.echo.mix.0);
+    ui.set_echo_duration(preset.fx.echo.duration);
+    ui.set_echo_feedback(preset.fx.echo.feedback);
+    ui.set_reverb_mix(preset.fx.reverb.mix.0);
+    ui.set_reverb_time(preset.fx.reverb.time);
+    ui.set_reverb_damp(preset.fx.reverb.damp);
+    ui.set_reverb_size(preset.fx.reverb.size);
+    ui.set_drone_detune(preset.drone.detune);
 
     let root_pitch = settings.current_preset.pitch;
-    window.set_root_pitch(root_pitch.into_byte().into());
+    ui.set_root_pitch(root_pitch.into_byte().into());
     let scales = VecModel::from(
         settings
             .system_and_user_scales()
@@ -292,7 +316,7 @@ fn update_ui_from_settings(window: &mut theremotion_ui::MainWindow, settings: &S
             })
             .collect_vec(),
     );
-    window.set_scale_presets(ModelRc::from(Rc::new(scales)));
+    ui.set_scale_presets(ModelRc::from(Rc::new(scales)));
 
     let presets = VecModel::from(
         settings
@@ -305,10 +329,10 @@ fn update_ui_from_settings(window: &mut theremotion_ui::MainWindow, settings: &S
             })
             .collect_vec(),
     );
-    window.set_presets(ModelRc::from(Rc::new(presets)));
+    ui.set_presets(ModelRc::from(Rc::new(presets)));
 
     let scale: HashSet<MidiNote> = preset.restricted_scale().into_iter().collect();
-    let ui_scale = window.get_scale_notes();
+    let ui_scale = ui.get_scale_notes();
     for index in 0..(12 * 4) {
         ui_scale.set_row_data(index, scale.contains(&MidiNote::from_byte(index as u8)));
     }
@@ -320,7 +344,7 @@ fn update_ui_from_settings(window: &mut theremotion_ui::MainWindow, settings: &S
         .flatten()
         .collect();
 
-    let ui_drones = window.get_drones();
+    let ui_drones = ui.get_drones();
 
     for index in 0..=12 * 4 {
         let note = MidiNote::from(index);
@@ -351,5 +375,12 @@ impl From<Handedness> for theremotion_ui::Handedness {
             Handedness::RightHanded => theremotion_ui::Handedness::RightHanded,
             Handedness::LeftHanded => theremotion_ui::Handedness::LeftHanded,
         }
+    }
+}
+
+fn ui_control(control: &crate::controls::Control) -> theremotion_ui::DspControl {
+    theremotion_ui::DspControl {
+        min: *control.input.range.start(),
+        max: *control.input.range.end(),
     }
 }

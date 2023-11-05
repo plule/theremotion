@@ -1,6 +1,9 @@
 import { Plot1D, Plot2D, Tuner, GraduationValue } from "plot.slint";
-import { Tab, Circle, Palette, Style, NotePoint, Handedness , VL, HL, IHL} from "common.slint";
+import { Tab, Circle, Palette, Style, VL, HL, IHL} from "common.slint";
 import { EditMode , KeyboardFooter} from "keyboard.slint";
+import { UIState } from "state.slint";
+import { NotePoint, Handedness } from "types.slint";
+
 
 component PitchPlot inherits Plot2D {
     text: "Pitch";
@@ -100,26 +103,20 @@ component ChordNumberPlot inherits Plot1D {
 }
 
 export component PlayingTab inherits Tab {
-    // keyboard
-    callback clicked <=> kb.clicked;
-    in property <[bool]> scale-notes <=> kb.scale-notes;
-    in property <[float]> leads <=> kb.leads;
-    in property <[float]> drones <=> kb.drones;
-    in property <int> root-pitch <=> kb.root-pitch;
+    property <float> filter-cutoff: UIState.filter-cutoff;
+    property <float> filter-resonance: UIState.filter-resonance;
+    property <NotePoint> raw-note: UIState.raw-note;
+    property <[NotePoint]> notes: UIState.notes;
+    property <float> volume: UIState.volume;
+    property <float> chords-number: UIState.chords-number;
+    property <float> drone-number: UIState.drone-number;
+    property <float> tuner-note: UIState.tuner-note;
+    property <float> tuner-note-tuned: UIState.tuner-note-tuned;
+    property <float> tuner-note-focus: UIState.tuner-note-focus;
+    property <int> highest-note: UIState.highest-note;
+    property <Handedness> handedness: UIState.handedness;
 
-    in property <length> gauge-width: 100px;
-    in property <float> filter-cutoff: 0;
-    in property <float> filter-resonance: 0;
-    in property <NotePoint> raw-note: {x: 0, y: 0, volume: 0};
-    in property <[NotePoint]> notes: [];
-    in property <float> volume: 0;
-    in property <float> chords_number: 0;
-    in property <float> drone-number: 0;
-    in property <float> tuner-note: 0;
-    in property <float> tuner-note-tuned: 0;
-    in-out property <float> tuner-note-focus: 0;
-    in property <int> highest-note: 45;
-    in property <Handedness> handedness;
+    property <length> gauge-width: 100px;
 
     VL {
         if handedness == Handedness.RightHanded: IHL {
@@ -140,8 +137,8 @@ export component PlayingTab inherits Tab {
                 notes: notes;
                 raw-note: raw-note;
                 height: self.width;
-                scale-notes: root.scale-notes;
-                root-pitch: root.root-pitch;
+                scale-notes: UIState.scale-notes;
+                root-pitch: UIState.root-pitch;
                 highest-note: highest-note;
             }
             ChordNumberPlot {
@@ -165,8 +162,8 @@ export component PlayingTab inherits Tab {
                 notes: notes;
                 raw-note: raw-note;
                 height: self.width;
-                scale-notes: root.scale-notes;
-                root-pitch: root.root-pitch;
+                scale-notes: UIState.scale-notes;
+                root-pitch: UIState.root-pitch;
                 highest-note: highest-note;
             }
             Rectangle {
@@ -188,7 +185,8 @@ export component PlayingTab inherits Tab {
             note-focus: root.tuner-note-focus;
             height: 40px;
         }
-        kb := KeyboardFooter {
+        KeyboardFooter {
+            clicked(n) => {UIState.drone-clicked(n)}
             edit-mode: EditMode.Drone;
         }
     }

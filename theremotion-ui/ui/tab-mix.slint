@@ -1,30 +1,35 @@
-import { CaptionedFader, Tab , Group, HL} from "common.slint";
+import { CaptionedFader, Tab , Group, HL } from "common.slint";
+import { UIState } from "state.slint";
 
 export component MixTab inherits Tab {
-    in-out property mix-lead <=> lead.value;
-    in-out property mix-guitar <=> guitar.value;
-    in-out property mix-drone <=> drone.value;
-    in-out property mix-master <=> master.value;
-    
-
-    callback mix-lead-changed <=> lead.changed;
-    callback mix-guitar-changed <=> guitar.changed;
-    callback mix-drone-changed <=> drone.changed;
-    callback mix-master-changed <=> master.changed;
-
-    
     HL {
         alignment: LayoutAlignment.space-around;
         Group {
             HL {
                 lead := CaptionedFader {
                     text: "Lead";
+
+                    value: UIState.mix-lead;
+                    changed(v) => {UIState.mix-lead-changed(v)}
+                    minimum: UIState.mix-lead-control.min;
+                    maximum: UIState.mix-lead-control.max;
+
                 }
                 guitar := CaptionedFader {
                     text: "Guitar";
+
+                    value: UIState.mix-pluck;
+                    changed(v) => {UIState.mix-pluck-changed(v)}
+                    minimum: UIState.mix-pluck-control.min;
+                    maximum: UIState.mix-pluck-control.max;
                 }
                 drone := CaptionedFader {
                     text: "Drone";
+
+                    value: UIState.mix-drone;
+                    changed(v) => {UIState.mix-drone-changed(v)}
+                    minimum: UIState.mix-drone-control.min;
+                    maximum: UIState.mix-drone-control.max;
                 }
             }
         }
@@ -32,6 +37,11 @@ export component MixTab inherits Tab {
             HL {
                 master := CaptionedFader {
                     text: "Master";
+
+                    value: UIState.mix-master;
+                    changed(v) => {UIState.mix-master-changed(v)}
+                    minimum: UIState.mix-master-control.min;
+                    maximum: UIState.mix-master-control.max;
                 }
             }
         }

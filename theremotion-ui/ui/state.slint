@@ -1,0 +1,151 @@
+import { DspControl, Status, NotePoint, Handedness, Selectable } from "types.slint";
+
+export global UIState {
+    // Common properties
+    callback close();
+    in property<bool> has-left-hand: false;
+    in property<bool> has-right-hand: false;
+    in property <string> status-message: "No status";
+    in property <Status> status: Status.Warning;
+    in property<int> autotune-amount: 0;
+    in property<bool> strum-ready: false;
+    in property <Handedness> handedness;
+
+    // Keyboard tabs
+    in property <[float]> leads: [
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    ];
+    in property<[float]> drones: [
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    ];
+    in property<int> root-pitch: 0;
+    in property <[bool]> scale-notes: [
+        false, false, false, false, false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, false, false, false, false, false, false,
+    ];
+
+    // Play tab
+    callback drone-clicked(int);
+    in property <float> filter-cutoff: 0;
+    in property <float> filter-resonance: 0;
+    in property <NotePoint> raw-note;
+    in property <[NotePoint]> notes: [];
+    in property <float> volume: 0;
+    in property <float> chords_number: 0;
+    in property <float> drone-number: 0;
+    in property <float> tuner-note: 0;
+    in property <float> tuner-note-tuned: 0;
+    in-out property <float> tuner-note-focus: 0;
+    in property <int> highest-note: 45;
+
+    // Root tab
+    callback root-pitch-clicked(int);
+    in property <int> lead-octave;
+    in property <int> guitar-octave;
+    in property <int> drone-octave;
+    callback lead-octave-clicked(int);
+    callback guitar-octave-clicked(int);
+    callback drone-octave-clicked(int);
+
+    // Scale tab
+    callback scale-clicked(int);
+    in property <[Selectable]> scale-presets: [];
+    callback select-scale(int);
+    callback delete-scale(int);
+    callback save-scale(string);
+
+    // Presets tab
+    in property <[Selectable]> presets;
+    callback select-preset(int);
+    callback delete-preset(int);
+    callback save-preset(string);
+
+    // Settings tab
+    in property<bool> fullscreen;
+    in property<bool> high_priority;
+    in property<bool> use_on_screen_keyboard;
+
+    callback fullscreen-clicked;
+    callback high-priority-clicked;
+    callback on-screen-kbd-clicked;
+    callback lh-clicked;
+    callback rh-clicked;
+
+
+    // DSP Controls
+    in property <DspControl> lead-volume-control: {min: 0, max: 1};
+    in-out property <float> lead-volume;
+    callback lead-volume-changed(float);
+
+    in property <DspControl> cutoff-note-control: {min: 0, max: 1};
+    in-out property <float> cutoff-note;
+    callback cutoff-note-changed(float);
+
+    in property <DspControl> resonance-control: {min: 0, max: 1};
+    in-out property <float> resonance;
+    callback resonance-changed(float);
+
+    in property <DspControl> pluck-mute-control: {min: 0, max: 1};
+    in-out property <float> pluck-mute;
+    callback pluck-mute-changed(float);
+    
+    in property <DspControl> drone-detune-control: {min: 0, max: 1};
+    in-out property <float> drone-detune;
+    callback drone-detune-changed(float);
+
+    in property <DspControl> echo-mix-control: {min: 0, max: 1};
+    in-out property <float> echo-mix;
+    callback echo-mix-changed(float);
+
+    in property <DspControl> echo-duration-control: {min: 0, max: 1};
+    in-out property <float> echo-duration;
+    callback echo-duration-changed(float);
+
+    in property <DspControl> echo-feedback-control: {min: 0, max: 1};
+    in-out property <float> echo-feedback;
+    callback echo-feedback-changed(float);
+
+    in property <DspControl> reverb-mix-control: {min: 0, max: 1};
+    in-out property <float> reverb-mix;
+    callback reverb-mix-changed(float);
+
+    in property <DspControl> reverb-time-control: {min: 0, max: 1};
+    in-out property <float> reverb-time;
+    callback reverb-time-changed(float);
+
+    in property <DspControl> reverb-damp-control: {min: 0, max: 1};
+    in-out property <float> reverb-damp;
+    callback reverb-damp-changed(float);
+
+    in property <DspControl> reverb-size-control: {min: 0, max: 1};
+    in-out property <float> reverb-size;
+    callback reverb-size-changed(float);
+
+    in property <DspControl> mix-master-control: {min: 0, max: 1};
+    in-out property <float> mix-master;
+    callback mix-master-changed(float);
+
+    in property <DspControl> mix-drone-control: {min: 0, max: 1};
+    in-out property <float> mix-drone;
+    callback mix-drone-changed(float);
+
+    in property <DspControl> mix-lead-control: {min: 0, max: 1};
+    in-out property <float> mix-lead;
+    callback mix-lead-changed(float);
+
+    in property <DspControl> mix-pluck-control: {min: 0, max: 1};
+    in-out property <float> mix-pluck;
+    callback mix-pluck-changed(float);
+
+    // Play stuff
+    in-out property <bool> enable-guitar-drone;
+    callback guitar-drone-clicked();
+}

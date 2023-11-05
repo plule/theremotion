@@ -19,7 +19,7 @@ mod thread_dsp;
 mod thread_leap;
 
 /// Mod creating the main window and event loop
-mod ui_thread;
+mod thread_ui;
 
 /// Application settings
 mod settings;
@@ -92,20 +92,20 @@ fn main() {
     let leap_worker = thread_leap::run(co_tx.clone());
 
     // Start UI
-    let (window, _window_timer) = ui_thread::run(co_tx.clone(), ui_rx, settings);
+    let (window, _window_timer) = thread_ui::run(co_tx.clone(), ui_rx, controls.clone(), settings);
     window.run().expect("Failed to start the UI");
     co_tx
         .send(thread_conductor::Msg::Exit)
         .expect("Error when trying to exit");
 
+    conductor
+        .join()
+        .expect("Error when stopping the conductor thread");
+
     #[cfg(feature = "leap")]
     leap_worker
         .join()
         .expect("Error when stopping the leap worker");
-
-    conductor
-        .join()
-        .expect("Error when stopping the conductor thread");
 }
 
 #[cfg(target_os = "windows")]

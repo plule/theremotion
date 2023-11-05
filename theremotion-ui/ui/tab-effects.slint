@@ -1,28 +1,7 @@
-import { Tab , CaptionedRotaryKnob, Group, TouchButton, TextTouchButton, GL, HL, VL} from "common.slint";
+import { Tab , CaptionedRotaryKnob, Group, TouchButton, TextTouchButton, GL, HL, VL } from "common.slint";
+import { UIState } from "state.slint";
 
 export component EffectsTab inherits Tab {
-    in-out property <float> echo-amount: 0;
-    in-out property <float> echo-duration: 0;
-    in-out property <float> echo-feedback: 0;
-    callback echo-amount-changed(float);
-    callback echo-duration-changed(float);
-    callback echo-feedback-changed(float);
-
-    in-out property <float> reverb-amount: 0;
-    in-out property <float> reverb-time: 0;
-    in-out property <float> reverb-damp: 0;
-    in-out property <float> reverb-size: 0;
-    callback reverb-amount-changed(float);
-    callback reverb-time-changed(float);
-    callback reverb-damp-changed(float);
-    callback reverb-size-changed(float);
-
-    in-out property <float> drone-detune: 0;
-    callback drone-detune-changed(float);
-
-    in-out property enable-guitar-drone <=> gdrone.checked;
-    callback guitar-drone-clicked <=> gdrone.clicked;
-
     property <length> inner-padding: 10px;
     property <length> inner-spacing: 40px;
 
@@ -36,25 +15,34 @@ export component EffectsTab inherits Tab {
                 padding: inner-padding;
                 CaptionedRotaryKnob { 
                     text: "Amount";
-                    value: echo-amount;
-                    changed(v) => {echo-amount-changed(v)}
                     row: 0;
                     col: 0;
+
+                    value: UIState.echo-mix;
+                    changed(v) => {UIState.echo-mix-changed(v)}
+                    minimum: UIState.echo-mix-control.min;
+                    maximum: UIState.echo-mix-control.max;
+
                 }
                 CaptionedRotaryKnob {
                     text: "Duration";
-                    value: echo-duration;
-                    changed(v) => {echo-duration-changed(v)}
                     row: 0;
                     col: 1;
+                    value: UIState.echo-duration;
+                    changed(v) => {UIState.echo-duration-changed(v)}
+                    minimum: UIState.echo-duration-control.min;
+                    maximum: UIState.echo-duration-control.max;
                 }
                 CaptionedRotaryKnob {
                     text: "Feedback";
-                    value: echo-feedback;
-                    changed(v) => {echo-feedback-changed(v)}
                     row: 1;
                     col: 0;
                     rowspan: 2;
+                    
+                    value: UIState.echo-feedback;
+                    changed(v) => {UIState.echo-feedback-changed(v)}
+                    minimum: UIState.echo-feedback-control.min;
+                    maximum: UIState.echo-feedback-control.max;
                 }
             }
 
@@ -70,35 +58,46 @@ export component EffectsTab inherits Tab {
                 padding: inner-padding;
                 CaptionedRotaryKnob {
                     text: "Amount";
-                    value: reverb-amount;
-                    changed(v) => {reverb-amount-changed(v)}
                     row: 0;
                     col: 0;
+
+                    value: UIState.reverb-mix;
+                    changed(v) => {UIState.reverb-mix-changed(v)}
+                    minimum: UIState.reverb-mix-control.min;
+                    maximum: UIState.reverb-mix-control.max;
                 }
                 CaptionedRotaryKnob {
                     text: "Time";
-                    value: reverb-time;
-                    minimum: 0.1;
-                    maximum: 60;
-                    changed(v) => {reverb-time-changed(v)}
                     row: 0;
                     col: 1;
+
+                    value: UIState.reverb-time;
+                    changed(v) => {UIState.reverb-time-changed(v)}
+                    minimum: UIState.reverb-time-control.min;
+                    maximum: UIState.reverb-time-control.max;
+
                 }
                 CaptionedRotaryKnob {
                     text: "Damp";
-                    value: reverb-damp;
-                    changed(v) => {reverb-damp-changed(v)}
                     row: 1;
                     col: 0;
+
+                    value: UIState.reverb-damp;
+                    changed(v) => {UIState.reverb-damp-changed(v)}
+                    minimum: UIState.reverb-damp-control.min;
+                    maximum: UIState.reverb-damp-control.max;
+
                 }
                 CaptionedRotaryKnob {
                     text: "Size";
-                    value: reverb-size;
-                    minimum: 0.5;
-                    maximum: 5;
-                    changed(v) => {reverb-size-changed(v)}
                     row: 1;
                     col: 1;
+
+                    value: UIState.reverb-size;
+                    changed(v) => {UIState.reverb-size-changed(v)}
+                    minimum: UIState.reverb-size-control.min;
+                    maximum: UIState.reverb-size-control.max;
+
                 }
             }
         }
@@ -112,8 +111,11 @@ export component EffectsTab inherits Tab {
                 padding: inner-padding;
                 CaptionedRotaryKnob {
                     text: "Detune";
-                    value: drone-detune;
-                    changed(v) => {drone-detune-changed(v)}
+
+                    value: UIState.drone-detune;
+                    changed(v) => {UIState.drone-detune-changed(v)}
+                    minimum: UIState.drone-detune-control.min;
+                    maximum: UIState.drone-detune-control.max;
                 }
             }
         }
@@ -125,6 +127,9 @@ export component EffectsTab inherits Tab {
             VL {
                 gdrone := TextTouchButton { 
                     text: "Enable";
+
+                    checked: UIState.enable-guitar-drone;
+                    clicked => {UIState.guitar-drone-clicked()}
                 }
                 Rectangle {}
             }

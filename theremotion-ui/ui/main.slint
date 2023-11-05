@@ -1,4 +1,4 @@
-import { Palette, Style, Handedness, TitleText, BevelRectangle, GL, Group, StatusText, CaptionText, HL, Status} from "common.slint";
+import { Palette, Style, TitleText, BevelRectangle, GL, Group, StatusText, CaptionText, HL} from "common.slint";
 import { PlayingTab } from "tab-play.slint";
 import { SettingsTab } from "tab-settings.slint";
 import { RootTab } from "tab-root.slint";
@@ -7,8 +7,10 @@ import { ScaleTab } from "tab-scale.slint";
 import { EffectsTab } from "tab-effects.slint";
 import { PresetsTab } from "tab-presets.slint";
 import { VirtualKeyboard, VirtualKeyboardHandler, KeyModel } from "virtual_keyboard.slint";
+import { UIState } from "state.slint";
+import { Status, Handedness } from "types.slint";
 
-export { VirtualKeyboardHandler, KeyModel }
+export { VirtualKeyboardHandler, KeyModel, UIState }
 
 struct TabData {
     title: string,
@@ -77,129 +79,12 @@ export component MainWindow inherits Window {
         },
     ];
 
-    // Common properties
-    in property<bool> has-left-hand: false;
-    in property<bool> has-right-hand: false;
-    in property <string> status-message: "No status";
-    in property <Status> status: Status.Warning;
-
-    // Keyboard tabs
-    in property <[float]> leads: [
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    ];
-    in property<[float]> drones: [
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    ];
-    in property<int> root-pitch: 0;
-    in property <[bool]> scale-notes: [
-        false, false, false, false, false, false, false, false, false, false, false, false,
-        false, false, false, false, false, false, false, false, false, false, false, false,
-        false, false, false, false, false, false, false, false, false, false, false, false,
-        false, false, false, false, false, false, false, false, false, false, false, false,
-    ];
-
-    // Play tab
-    callback drone-clicked <=> tplay.clicked;
-
-    in property lead-volume <=> tplay.volume;
-    in property chords-number <=> tplay.chords-number;
-    in property drone-number <=> tplay.drone-number;
-    in property raw-note <=> tplay.tuner-note;
-    in property tuned-note <=> tplay.tuner-note-tuned;
-    in property tuner-note-focus <=> tplay.tuner-note-focus;
-    in property filter-cutoff <=> tplay.filter-cutoff;
-    in property filter-resonance <=> tplay.filter-resonance;
-    in property lead-raw-note <=> tplay.raw-note;
-    in property lead-notes <=> tplay.notes;
-    in property highest-note <=> tplay.highest-note;
-    in property<int> autotune-amount: 0;
-    in property<bool> strum-ready: false;
-    in property<float> trumpet-strength: 0.5; // todo
-
-    // Root tab
-    callback root-pitch-clicked <=> troot.clicked;
-    in property lead-octave <=> troot.lead-octave;
-    in property guitar-octave <=> troot.guitar-octave;
-    in property drone-octave <=> troot.drone-octave;
-
-    callback lead-octave-clicked <=> troot.lead-octave-clicked;
-    callback guitar-octave-clicked <=> troot.guitar-octave-clicked;
-    callback drone-octave-clicked <=> troot.drone-octave-clicked;
-    
-
-    // Scale tab
-    callback scale-clicked <=> tscale.clicked;
-
-    in property scale-presets <=> tscale.scale-presets;
-    callback select-scale <=> tscale.select-scale;
-    callback delete-scale <=> tscale.delete-scale;
-    callback save-scale <=> tscale.save-scale;
-
-    // Mix tab
-    in-out property mix-lead <=> tmix.mix-lead;
-    in-out property mix-guitar <=> tmix.mix-guitar;
-    in-out property mix-drone <=> tmix.mix-drone;
-    in-out property mix-master <=> tmix.mix-master;
-
-    callback mix-lead-changed <=> tmix.mix-lead-changed;
-    callback mix-guitar-changed <=> tmix.mix-guitar-changed;
-    callback mix-drone-changed <=> tmix.mix-drone-changed;
-    callback mix-master-changed <=> tmix.mix-master-changed;
-
-    // Effects tab
-    in property echo-amount <=> teffects.echo-amount;
-    in property echo-duration <=> teffects.echo-duration;
-    in property echo-feedback <=> teffects.echo-feedback;
-    callback echo-amount-changed <=> teffects.echo-amount-changed;
-    callback echo-duration-changed <=> teffects.echo-duration-changed;
-    callback echo-feedback-changed <=> teffects.echo-feedback-changed;
-
-    in property reverb-amount <=> teffects.reverb-amount;
-    in property reverb-time <=> teffects.reverb-time;
-    in property reverb-damp <=> teffects.reverb-damp;
-    in property reverb-size <=> teffects.reverb-size;
-    callback reverb-amount-changed <=> teffects.reverb-amount-changed;
-    callback reverb-time-changed <=> teffects.reverb-time-changed;
-    callback reverb-damp-changed <=> teffects.reverb-damp-changed;
-    callback reverb-size-changed <=> teffects.reverb-size-changed;
-
-    in property drone-detune <=> teffects.drone-detune;
-    callback drone-detune-changed <=> teffects.drone-detune-changed;
-
-    in-out property enable-guitar-drone <=> teffects.enable-guitar-drone;
-    callback guitar-drone-clicked <=> teffects.guitar-drone-clicked;
-
-    // Presets tab
-    in property presets <=> tpresets.presets;
-    callback select-preset <=> tpresets.select-preset;
-    callback delete-preset <=> tpresets.delete-preset;
-    callback save-preset <=> tpresets.save-preset;
-
-    // Settings tab
-    in property handedness <=> tsettings.handedness;
-    in property fullscreen <=> tsettings.fullscreen;
-    in property high-priority <=> tsettings.high-priority;
-    in property use-on-screen-keyboard <=> tsettings.use-on-screen-keyboard;
-
-    callback fullscreen-clicked <=> tsettings.fullscreen-clicked;
-    callback high-priority-clicked <=> tsettings.high-priority-clicked;
-    callback on-screen-kbd-clicked <=> tsettings.on-screen-kbd-clicked;
-    callback lh-clicked <=> tsettings.lh-clicked;
-    callback rh-clicked <=> tsettings.rh-clicked;
-
-    callback close();
 
     // Internal
     fs := FocusScope {
         key-pressed(k) => {
             if(k.text == Key.Escape) {
-                close();
+                UIState.close();
                 return accept;
             }
             return reject;
@@ -231,9 +116,9 @@ export component MainWindow inherits Window {
                         HorizontalLayout {
                             height: head.height;
                             padding-bottom: Style.area-corner-radius;
-                            CaptionText { text: has-left-hand ? "👈" : "⬜"; font-family: "Noto Emoji"; }
-                            if handedness == Handedness.RightHanded: GuitarIndicator {ready: strum-ready;}
-                            if handedness == Handedness.LeftHanded: AutotuneIndicator {autotune: autotune-amount;}
+                            CaptionText { text: UIState.has-left-hand ? "👈" : "⬜"; font-family: "Noto Emoji"; }
+                            if UIState.handedness == Handedness.RightHanded: GuitarIndicator {ready: UIState.strum-ready;}
+                            if UIState.handedness == Handedness.LeftHanded: AutotuneIndicator {autotune: UIState.autotune-amount;}
                         }
                     }
                 }
@@ -269,9 +154,9 @@ export component MainWindow inherits Window {
                         HorizontalLayout {
                             height: head.height;
                             padding-bottom: Style.area-corner-radius;
-                            if handedness == Handedness.LeftHanded: GuitarIndicator {ready: strum-ready;}
-                            if handedness == Handedness.RightHanded: AutotuneIndicator {autotune: autotune-amount;}
-                            CaptionText { text: has-right-hand? "👉" : "⬜"; font-family: "Noto Emoji"; }
+                            if UIState.handedness == Handedness.LeftHanded: GuitarIndicator {ready: UIState.strum-ready;}
+                            if UIState.handedness == Handedness.RightHanded: AutotuneIndicator {autotune: UIState.autotune-amount;}
+                            CaptionText { text: UIState.has-right-hand? "👉" : "⬜"; font-family: "Noto Emoji"; }
                         }
                     }
                 }
@@ -279,61 +164,44 @@ export component MainWindow inherits Window {
         }
 
         // Tab content
-        tab-content := BevelRectangle {
+        BevelRectangle {
             row: 1;
             col: 0;
             clip: true;
             background: Palette.tab-bg;
             border-radius: Style.area-corner-radius;
 
-            tplay := PlayingTab {
+            PlayingTab {
                 idx: 0;
                 current-idx: active-tab;
-
-                leads: leads;
-                drones: drones;
-                root-pitch: root-pitch;
-                scale-notes: scale-notes;
-
-                handedness: handedness;
             }
 
-            troot := RootTab {
+            RootTab {
                 idx: 1;
                 current-idx: active-tab;
-
-                leads: leads;
-                drones: drones;
-                root-pitch: root-pitch;
-                scale-notes: scale-notes;
             }
 
-            tscale := ScaleTab {
+            ScaleTab {
                 idx: 2;
                 current-idx: active-tab;
-
-                leads: leads;
-                drones: drones;
-                root-pitch: root-pitch;
-                scale-notes: scale-notes;
             }
 
-            tmix := MixTab {
+            MixTab {
                 idx: 3;
                 current-idx: active-tab;
             }
 
-            teffects := EffectsTab { 
+            EffectsTab { 
                 idx: 4;
                 current-idx: active-tab;
             }
 
-            tpresets := PresetsTab { 
+            PresetsTab { 
                 idx: 5;
                 current-idx: active-tab;
             }
 
-            tsettings := SettingsTab {
+            SettingsTab {
                 idx: 6;
                 current-idx: active-tab;
             }
@@ -396,7 +264,7 @@ export component MainWindow inherits Window {
     }
 
     BevelRectangle {
-        property <length> y-off: (status == Status.Ok ? 0px : 30px);
+        property <length> y-off: (UIState.status == Status.Ok ? 0px : 30px);
         x: root.width - self.width - 30px;
         y: root.height - y-off;
         width: 40%;
@@ -418,8 +286,8 @@ export component MainWindow inherits Window {
                     font-size: 11px;
                 }
                 StatusText {
-                    text: status-message;
-                    status: status;
+                    text: UIState.status-message;
+                    status: UIState.status;
                     horizontal-alignment: TextHorizontalAlignment.left;
                     vertical-alignment: TextVerticalAlignment.top;
                     font-size: 11px;
@@ -430,7 +298,7 @@ export component MainWindow inherits Window {
     }
 
     VirtualKeyboard {
-        property <length> y-off: TextInputInterface.text-input-focused && use-on-screen-keyboard ? self.height : 0;
+        property <length> y-off: TextInputInterface.text-input-focused && UIState.use-on-screen-keyboard ? self.height : 0;
         height: 250px;
         y: root.height - y-off;
         animate y-off {

@@ -1,6 +1,7 @@
 import { Palette, Tab , BevelRectangle, Led, SmallText, Group, VL} from "common.slint";
+import { UIState } from "state.slint";
 
-component Key inherits BevelRectangle {
+component Key {
     callback clicked;
     in property <bool> is-root: false;
     in property <float> drone;
@@ -9,34 +10,37 @@ component Key inherits BevelRectangle {
     in property <brush> background-enabled;
     in property <brush> background-disabled;
     property <brush> background-color: enabled ? background-enabled : background-disabled;
-    clip: true;
 
-    background: ta.has-hover ? background-color.brighter(30%) : background-color;
-    border-radius: 5px;
-    border-width: 3px;
-    ta := TouchArea {
-        clicked => {
-            root.clicked()
+    BevelRectangle {
+        clip: true;
+
+        background: ta.has-hover ? background-color.brighter(30%) : background-color;
+        border-radius: 5px;
+        border-width: 3px;
+        ta := TouchArea {
+            clicked => {
+                root.clicked()
+            }
         }
-    }
 
-    Rectangle {
-        opacity: lead;
-        background: Palette.key-lead-overlay;
-    }
+        Rectangle {
+            opacity: lead;
+            background: Palette.key-lead-overlay;
+        }
 
-    Led {
-        y: root.height - 20px;
-        light: is-root ? 1 : 0;
-        //glass-color: Palette.root-note.darker(90%);
-        light-color: Palette.root-note;
-    }
+        Led {
+            y: root.height - 20px;
+            light: is-root ? 1 : 0;
+            //glass-color: Palette.root-note.darker(90%);
+            light-color: Palette.root-note;
+        }
 
-    Led {
-        y: root.height - 10px;
-        light: drone;
-        //glass-color: Palette.drone.darker(90%);
-        light-color: Palette.drone;
+        Led {
+            y: root.height - 10px;
+            light: drone;
+            //glass-color: Palette.drone.darker(90%);
+            light-color: Palette.drone;
+        }
     }
 }
 
@@ -137,24 +141,22 @@ export component Keyboard inherits Rectangle {
     }
 }
 
-component Indicator inherits VerticalLayout {
+component Indicator {
     in property <string> text;
     in property <bool> active;
     in property <color> color;
     width: 60px;
-    Rectangle {
 
-        Led {
-            light: active ? 1.0 : 0.0;
-            glass-color: color.darker(90%);
-            light-color: color;
-            y: root.height - 10px;
-        }
-        SmallText {
-            vertical-alignment: TextVerticalAlignment.top;
-            text: text;
-            y: 0px;
-        }
+    Led {
+        light: active ? 1.0 : 0.0;
+        glass-color: color.darker(90%);
+        light-color: color;
+        y: root.height - 10px;
+    }
+    SmallText {
+        vertical-alignment: TextVerticalAlignment.top;
+        text: text;
+        y: 0px;
     }
 }
 
@@ -166,47 +168,47 @@ export enum EditMode {
 
 export component KeyboardFooter {
     callback clicked <=> kb.clicked;
-    in property <[bool]> scale-notes <=> kb.scale-notes;
-    in property <[float]> leads <=> kb.leads;
-    in property <[float]> drones <=> kb.drones;
-    in property <int> root-pitch <=> kb.root-pitch;
     in property <EditMode> edit-mode: EditMode.Drone;
 
-    VerticalLayout {
-        Group {
-            has-name: false;
-            height: 110px;
-            VerticalLayout {
-                HorizontalLayout {
-                    alignment: LayoutAlignment.center;
-                    kb := Keyboard {
-                        y: -5px;
-                        height: 80px;
-                        width: 700px;
-                    }
-                }
+    Group {
+        has-name: false;
+        height: 110px;
+        VerticalLayout {
+            HorizontalLayout {
+                alignment: LayoutAlignment.center;
+                kb := Keyboard {
+                    y: -5px;
+                    height: 80px;
+                    width: 700px;
 
-                HorizontalLayout {
-                    height: 30px;
-                    alignment: LayoutAlignment.center;
-                    Indicator {
-                        text: "Drone";
-                        active: edit-mode == EditMode.Drone;
-                        color: Palette.drone;
-                    }
-                    Indicator {
-                        text: "Root";
-                        active: edit-mode == EditMode.Root;
-                        color: Palette.root-note;
-                    }
-                    Indicator {
-                        text: "Scale";
-                        active: edit-mode == EditMode.Scale;
-                        color: Palette.active;
-                    }
+                    leads: UIState.leads;
+                    drones: UIState.drones;
+                    root-pitch: UIState.root-pitch;
+                    scale-notes: UIState.scale-notes;
                 }
             }
-            
+
+            HorizontalLayout {
+                height: 30px;
+                alignment: LayoutAlignment.center;
+                Indicator {
+                    text: "Drone";
+                    active: edit-mode == EditMode.Drone;
+                    color: Palette.drone;
+                }
+                Indicator {
+                    text: "Root";
+                    active: edit-mode == EditMode.Root;
+                    color: Palette.root-note;
+                }
+                Indicator {
+                    text: "Scale";
+                    active: edit-mode == EditMode.Scale;
+                    color: Palette.active;
+                }
+            }
         }
+        
     }
+
 }

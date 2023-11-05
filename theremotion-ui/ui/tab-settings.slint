@@ -1,36 +1,26 @@
-import { Tab, Handedness , Group, TextTouchButton, VL, HL} from "common.slint";
-
+import { Tab, Group, TextTouchButton, VL, HL} from "common.slint";
+import { Handedness } from "types.slint";
+import { UIState } from "state.slint";
 
 export component SettingsTab inherits Tab {
-    in property<Handedness> handedness;
-    in property<bool> fullscreen;
-    in property<bool> high_priority;
-    in property<bool> use_on_screen_keyboard;
-
-    callback fullscreen-clicked;
-    callback high-priority-clicked;
-    callback on-screen-kbd-clicked;
-    callback lh-clicked;
-    callback rh-clicked;
-
     VL {
         Group {
             name: "System";
             VL {
                 TextTouchButton {
                     text: "Fullscreen";
-                    checked: fullscreen;
-                    clicked => {fullscreen-clicked()}
+                    checked: UIState.fullscreen;
+                    clicked => {UIState.fullscreen-clicked()}
                 }
                 TextTouchButton {
                     text: "High Priority Process";
-                    checked: high-priority;
-                    clicked => {high-priority-clicked()}
+                    checked: UIState.high-priority;
+                    clicked => {UIState.high-priority-clicked()}
                 }
                 TextTouchButton {
                     text: "On-screen keyboard";
-                    checked: use-on-screen-keyboard;
-                    clicked => {on-screen-kbd-clicked()}
+                    checked: UIState.use-on-screen-keyboard;
+                    clicked => {UIState.on-screen-kbd-clicked()}
                 }
             }
         }
@@ -40,13 +30,13 @@ export component SettingsTab inherits Tab {
             HL { 
                 TextTouchButton { 
                     text: "Left Handed";
-                    checked: handedness == Handedness.LeftHanded;
-                    clicked => {lh-clicked()}
+                    checked: UIState.handedness == Handedness.LeftHanded;
+                    clicked => {UIState.lh-clicked()}
                 }
                 TextTouchButton {
                     text: "Right Handed";
-                    checked: handedness == Handedness.RightHanded;
-                    clicked => {rh-clicked()}
+                    checked: UIState.handedness == Handedness.RightHanded;
+                    clicked => {UIState.rh-clicked()}
                 }
             }
         }

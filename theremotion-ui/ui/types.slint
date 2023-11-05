@@ -1,0 +1,28 @@
+export struct DspControl {
+    min: float,
+    max: float,
+}
+
+export enum Status {
+    Ok,
+    Warning,
+    Error,
+}
+
+export struct NotePoint {
+    x: float,
+    y: float,
+    volume: float,
+}
+
+export enum Handedness {
+    LeftHanded,
+    RightHanded,
+}
+
+export struct Selectable {
+    name: string,
+    removable: bool,
+    id: int,
+    selected: bool,
+}
