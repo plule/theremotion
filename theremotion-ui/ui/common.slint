@@ -333,22 +333,20 @@ component FaderInteraction inherits TouchArea {
     in property<float> maximum: 1;
     in property<float> minimum: 0;
     in property <float> move-speed: 1;
-    in-out property<float> value: 0;
+    in property<float> value: 0;
     in property <length> handle-height;
     callback changed(float);
     property <float> pressed-value;
     
     pointer-event(event) => {
-        debug(value);
         if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
             self.pressed-value = root.value;
         }
     }
     moved => {
         if (self.enabled && self.pressed) {
-            root.value = max(root.minimum, min(root.maximum,
-                root.pressed-value - move-speed * (root.mouse-y - root.pressed-y) * (root.maximum - root.minimum) / (root.height - handle-height)));
-            changed(root.value)
+            changed(max(root.minimum, min(root.maximum,
+                root.pressed-value - move-speed * (root.mouse-y - root.pressed-y) * (root.maximum - root.minimum) / (root.height - handle-height))));
         }
     }
 }
@@ -414,7 +412,7 @@ export component RotaryKnob {
     }
 
     function getangle(value: float) -> angle {
-        deadzone + (360deg - deadzone * 2) * (value - touch.minimum) / (touch.maximum - touch.minimum)
+        deadzone + (360deg - deadzone * 2) * (value - minimum) / (maximum - minimum)
     }
 
     function getx(angle: angle) -> float {
@@ -446,13 +444,13 @@ export component RotaryKnob {
         MoveTo {x: 0; y: 0;}
         LineTo {x: getx(deadzone); y: gety(deadzone);}
         ArcTo  {
-            x: getx(getangle(touch.value));
-            y: gety(getangle(touch.value));
+            x: getx(getangle(value));
+            y: gety(getangle(value));
             radius-x: 1;
             radius-y: 1;
             sweep: true;
             large-arc:
-            getangle(touch.value) > (180deg + deadzone);
+            getangle(value) > (180deg + deadzone);
         }
         LineTo {x: 0; y: 0;}
     }
@@ -498,11 +496,11 @@ export component RotaryKnob {
         viewbox-width: 2;
         viewbox-height: 2;
         MoveTo {
-            x: getx(getangle(touch.value)) * radius-in;
-            y: gety(getangle(touch.value)) * radius-in;
+            x: getx(getangle(value)) * radius-in;
+            y: gety(getangle(value)) * radius-in;
         }
-        LineTo {x: getx(getangle(touch.value)) * radius-out;
-            y: gety(getangle(touch.value)) * radius-out;
+        LineTo {x: getx(getangle(value)) * radius-out;
+            y: gety(getangle(value)) * radius-out;
         }
     }
 }
