@@ -1,10 +1,10 @@
 use std::{collections::HashSet, rc::Rc};
 
-use crossbeam_channel::Sender;
 use itertools::Itertools;
 use nalgebra::Vector2;
 use slint::*;
 use staff::midi::MidiNote;
+use std::sync::mpsc::{Receiver, Sender};
 use theremotion_ui::MainWindow;
 
 use crate::{
@@ -46,7 +46,7 @@ pub enum Msg {
 
 pub fn run(
     tx: Sender<CM>,
-    mut ui_rx: crossbeam_channel::Receiver<Msg>,
+    mut ui_rx: Receiver<Msg>,
     controls: Controls,
     mut settings: Settings,
 ) -> (MainWindow, slint::Timer) {
@@ -183,7 +183,7 @@ pub fn run(
 }
 
 fn read_updates(
-    ui_rx: &mut crossbeam_channel::Receiver<Msg>,
+    ui_rx: &mut Receiver<Msg>,
     settings: &mut Settings,
     ui: &theremotion_ui::UIState<'_>,
 ) {

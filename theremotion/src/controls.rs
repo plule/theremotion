@@ -1,8 +1,8 @@
 use std::ops::RangeInclusive;
 
 use anyhow::Result;
-use crossbeam_channel::{SendError, Sender};
 use faust_state::{Node, RangedInput, StateHandle, WidgetType};
+use std::sync::mpsc::{SendError, Sender};
 
 use crate::{thread_dsp::ParameterUpdate, MidiNoteF};
 

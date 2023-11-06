@@ -1,13 +1,17 @@
-use std::thread;
+use std::{sync::mpsc::Receiver, thread};
 
-use crossbeam_channel::{SendError, Sender};
 use leaprs::{Connection, ConnectionConfig, Error, Event};
 use nalgebra::{UnitQuaternion, Vector3};
+use std::sync::mpsc::{SendError, Sender};
 
 use crate::thread_conductor::{self, TrackingStatus};
 
+pub enum Msg {
+    Exit,
+}
+
 /// Start the leap motion thread
-pub fn run(mut tx: Sender<thread_conductor::Msg>) -> thread::JoinHandle<()> {
+pub fn run(mut tx: Sender<thread_conductor::Msg>, rx: Receiver<Msg>) -> thread::JoinHandle<()> {
     thread::Builder::new()
         .name("leap".to_string())
         .spawn(move || {
@@ -15,6 +19,10 @@ pub fn run(mut tx: Sender<thread_conductor::Msg>) -> thread::JoinHandle<()> {
                 Connection::create(ConnectionConfig::default()).expect("Failed to connect");
             connection.open().expect("Failed to open the connection");
             loop {
+                if let Ok(Msg::Exit) = rx.try_recv() {
+                    return;
+                }
+
                 if read_and_update(&mut tx, &mut connection).is_err() {
                     // Conductor thread is not running anymore, exit
                     return;

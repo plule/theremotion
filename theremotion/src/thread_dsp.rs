@@ -1,9 +1,9 @@
 use std::slice;
 
 use cpal::traits::{DeviceTrait, HostTrait};
-use crossbeam_channel::Receiver;
 use faust_state::{DspHandle, StateHandle};
 use faust_types::FaustDsp;
+use std::sync::mpsc::Receiver;
 
 /// Parameter update message
 pub struct ParameterUpdate {

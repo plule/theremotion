@@ -1,14 +1,14 @@
 use std::{cmp::Ordering, f32::consts::PI, thread};
 
-use crossbeam_channel::{Receiver, Sender};
 use itertools::Itertools;
 use nalgebra::Vector2;
 use staff::{midi::Octave, Interval, Pitch};
+use std::sync::mpsc::{Receiver, Sender};
 
 use crate::{
     controls,
     settings::{Handedness, NamedScale, Preset, Settings},
-    thread_dsp, thread_ui, HandMessage, {IntervalF, Volume},
+    thread_dsp, thread_leap, thread_ui, HandMessage, {IntervalF, Volume},
 };
 
 const HALF_PI: f32 = PI / 2.0;
@@ -64,6 +64,7 @@ pub fn run(
     rx: Receiver<Msg>,
     dsp_tx: Sender<thread_dsp::ParameterUpdate>,
     ui_tx: Sender<thread_ui::Msg>,
+    leap_tx: Sender<thread_leap::Msg>,
 ) -> thread::JoinHandle<()> {
     thread::Builder::new()
         .name("conductor".to_string())
@@ -73,6 +74,7 @@ pub fn run(
                 controls,
                 dsp_tx,
                 ui_tx,
+                leap_tx,
                 play_state: PlayState::default(),
             };
             conductor.run(rx).unwrap();
@@ -88,6 +90,9 @@ struct Conductor {
 
     /// Output: User interface updates
     pub ui_tx: Sender<thread_ui::Msg>,
+
+    /// Output: Update to leap thread
+    pub leap_tx: Sender<thread_leap::Msg>,
 
     /// Application settings current state
     pub settings: Settings,
@@ -138,6 +143,7 @@ impl Conductor {
         match msg {
             Msg::Exit => {
                 log::debug!("Conductor thread exiting");
+                self.leap_tx.send(thread_leap::Msg::Exit)?;
                 return Ok(true);
             }
             Msg::TrackingStatus(status) => {

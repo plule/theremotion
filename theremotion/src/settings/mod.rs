@@ -8,13 +8,13 @@ use std::{
 };
 
 use anyhow::{Context, Ok, Result};
-use crossbeam_channel::Sender;
 use serde::{Deserialize, Serialize};
 use staff::{
     midi::{MidiNote, Octave},
     scale::ScaleIntervals,
     Interval,
 };
+use std::sync::mpsc::Sender;
 
 use crate::{
     controls::Controls,

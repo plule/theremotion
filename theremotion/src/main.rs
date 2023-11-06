@@ -57,9 +57,10 @@ fn main() {
     }
 
     // Init communication channels
-    let (ui_tx, ui_rx) = crossbeam_channel::unbounded(); // UI update messages
-    let (dsp_tx, dsp_rx) = crossbeam_channel::unbounded(); // DSP parameter update messages
-    let (co_tx, co_rx) = crossbeam_channel::unbounded(); // Conductor messages
+    let (ui_tx, ui_rx) = std::sync::mpsc::channel(); // Messages to update the UI
+    let (dsp_tx, dsp_rx) = std::sync::mpsc::channel(); // Messages to update the DSP parameters
+    let (leap_tx, leap_rx) = std::sync::mpsc::channel(); // Messages to leap thread
+    let (co_tx, co_rx) = std::sync::mpsc::channel(); // Messages to the conductor thread
 
     // Init DSP
     let dsp = theremotion_dsp::Instrument::default_boxed();
@@ -81,6 +82,7 @@ fn main() {
         co_rx,
         dsp_tx.clone(),
         ui_tx.clone(),
+        leap_tx.clone(),
     );
 
     // Init sound output
@@ -89,7 +91,7 @@ fn main() {
 
     // Init leap thread
     #[cfg(feature = "leap")]
-    let leap_worker = thread_leap::run(co_tx.clone());
+    let leap_worker = thread_leap::run(co_tx.clone(), leap_rx);
 
     // Start UI
     let (window, _window_timer) = thread_ui::run(co_tx.clone(), ui_rx, controls.clone(), settings);
