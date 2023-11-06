@@ -80,23 +80,7 @@ export global UIState {
     callback rh-clicked;
 
 
-    // DSP Controls
-    in property <DspControl> lead-volume-control: {min: 0, max: 1};
-    in-out property <float> lead-volume;
-    callback lead-volume-changed(float);
-
-    in property <DspControl> cutoff-note-control: {min: 0, max: 1};
-    in-out property <float> cutoff-note;
-    callback cutoff-note-changed(float);
-
-    in property <DspControl> resonance-control: {min: 0, max: 1};
-    in-out property <float> resonance;
-    callback resonance-changed(float);
-
-    in property <DspControl> pluck-mute-control: {min: 0, max: 1};
-    in-out property <float> pluck-mute;
-    callback pluck-mute-changed(float);
-    
+    // DSP Controls    
     in property <DspControl> drone-detune-control: {min: 0, max: 1};
     in-out property <float> drone-detune;
     callback drone-detune-changed(float);

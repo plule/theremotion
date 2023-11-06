@@ -199,7 +199,7 @@ fn read_updates(
                 ui.set_status(theremotion_ui::Status::Error);
                 ui.set_status_message(text.into());
             }
-            Msg::LeadVolume(v) => ui.set_lead_volume(v),
+            Msg::LeadVolume(v) => ui.set_volume(v),
             Msg::Lead(notes, coords) => {
                 let coords_direction = coords.normalize();
                 let range_end = *settings.current_preset.note_range_f().end();
@@ -272,10 +272,6 @@ fn read_updates(
 }
 
 fn set_ui_controls(ui: &theremotion_ui::UIState<'_>, controls: Controls) {
-    ui.set_lead_volume_control(ui_control(&controls.lead_volume));
-    ui.set_cutoff_note_control(ui_control(&controls.cutoff_note));
-    ui.set_resonance_control(ui_control(&controls.resonance));
-    ui.set_pluck_mute_control(ui_control(&controls.pluck_mute));
     ui.set_drone_detune_control(ui_control(&controls.drone_detune));
     ui.set_echo_mix_control(ui_control(&controls.echo_mix));
     ui.set_echo_duration_control(ui_control(&controls.echo_duration));
