@@ -71,7 +71,8 @@ Theremotion is run by 4 main threads:
 - `conductor` receives the updates from all the other threads and transmits
   them. It contains all the movement definitions and holds the settings
 - `leap` provides the hand tracking messages
-- `dsp` produces the sounds based on the input parameter messages
+- `dsp_controller` manages reads the parameter messages and manages the DSP state
+- `dsp` produces the sounds based on the DSP state
 - `ui` is the main thread and provides the user interface
 
 ```mermaid
@@ -79,7 +80,8 @@ flowchart TD
 leap -->|hand tracking| conductor
 ui -->|user input| conductor
 conductor -->|ui update| ui
-conductor -->|parameter update| dsp
+conductor -->|parameter update| dsp_controller
+dsp_controller --> |dsp state| dsp
 ```
 
 ## License

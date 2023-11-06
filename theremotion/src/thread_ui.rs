@@ -104,7 +104,7 @@ pub fn run(
         let tx = tx.clone();
         move || {
             tx.send(CM::Exit).unwrap();
-            return slint::CloseRequestResponse::HideWindow;
+            slint::CloseRequestResponse::HideWindow
         }
     });
 
