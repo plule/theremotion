@@ -4,7 +4,10 @@ use anyhow::Result;
 use faust_state::{Node, RangedInput, StateHandle, WidgetType};
 use std::sync::mpsc::{SendError, Sender};
 
-use crate::{thread_dsp::ParameterUpdate, MidiNoteF};
+use crate::{
+    thread_dsp::{self, ParameterUpdate},
+    MidiNoteF,
+};
 
 /// DSP controls
 #[derive(Debug, Clone)]
@@ -142,12 +145,14 @@ impl Control {
     /// Send a new value for this parameter to the DSP
     pub fn send(
         &self,
-        dsp_tx: &Sender<ParameterUpdate>,
+        dsp_tx: &Sender<thread_dsp::Msg>,
         value: impl Into<f32>,
-    ) -> Result<(), SendError<ParameterUpdate>> {
+    ) -> Result<(), SendError<thread_dsp::Msg>> {
         let range = &self.input.range;
         let value = value.into().clamp(*range.start(), *range.end());
-        dsp_tx.send(ParameterUpdate::new(self.idx, value))
+        dsp_tx.send(thread_dsp::Msg::ParameterUpdate(ParameterUpdate::new(
+            self.idx, value,
+        )))
     }
 
     /// Get a rescaled value for this parameter
@@ -188,11 +193,11 @@ pub struct BoolControl {
 
 impl BoolControl {
     /// Send a new boolean value for this parameter
-    pub fn send(&self, tx: &Sender<ParameterUpdate>, value: bool) {
-        tx.send(ParameterUpdate::new(
+    pub fn send(&self, tx: &Sender<thread_dsp::Msg>, value: bool) {
+        tx.send(thread_dsp::Msg::ParameterUpdate(ParameterUpdate::new(
             self.idx,
             if value { 1.0 } else { 0.0 },
-        ))
+        )))
         .unwrap();
     }
 }
@@ -220,9 +225,9 @@ impl NoteControl {
     /// Send a new note value for this parameter
     pub fn send_note(
         &self,
-        dsp_tx: &Sender<ParameterUpdate>,
+        dsp_tx: &Sender<thread_dsp::Msg>,
         note: &MidiNoteF,
-    ) -> Result<(), SendError<ParameterUpdate>> {
+    ) -> Result<(), SendError<thread_dsp::Msg>> {
         self.note.send(dsp_tx, note.note())
     }
 }
@@ -250,9 +255,9 @@ impl PluckControl {
     /// Send an update for the current pluck note
     pub fn send_note(
         &self,
-        dsp_tx: &Sender<ParameterUpdate>,
+        dsp_tx: &Sender<thread_dsp::Msg>,
         note: &MidiNoteF,
-    ) -> Result<(), SendError<ParameterUpdate>> {
+    ) -> Result<(), SendError<thread_dsp::Msg>> {
         self.note.send(dsp_tx, note.note())
     }
 }

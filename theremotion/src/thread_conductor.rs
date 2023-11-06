@@ -22,10 +22,14 @@ pub enum TrackingStatus {
 
 /// Message received by the conductor thread
 pub enum Msg {
+    /// Master exit message for the whole application
     Exit,
     TrackingStatus(TrackingStatus),
     HandUpdate(HandMessage),
-    VisibleHands { left: bool, right: bool },
+    VisibleHands {
+        left: bool,
+        right: bool,
+    },
     DroneClicked(i32),
     RootClicked(i32),
     ScaleClicked(i32),
@@ -62,7 +66,7 @@ pub fn run(
     settings: Settings,
     controls: controls::Controls,
     rx: Receiver<Msg>,
-    dsp_tx: Sender<thread_dsp::ParameterUpdate>,
+    dsp_tx: Sender<thread_dsp::Msg>,
     ui_tx: Sender<thread_ui::Msg>,
     leap_tx: Sender<thread_leap::Msg>,
 ) -> thread::JoinHandle<()> {
@@ -86,7 +90,7 @@ pub fn run(
 /// the threads.
 struct Conductor {
     /// Output: Sound parameter updates sent to the DSP
-    pub dsp_tx: Sender<thread_dsp::ParameterUpdate>,
+    pub dsp_tx: Sender<thread_dsp::Msg>,
 
     /// Output: User interface updates
     pub ui_tx: Sender<thread_ui::Msg>,
@@ -143,6 +147,8 @@ impl Conductor {
         match msg {
             Msg::Exit => {
                 log::debug!("Conductor thread exiting");
+                self.dsp_tx.send(thread_dsp::Msg::Exit)?;
+                self.ui_tx.send(thread_ui::Msg::Exit)?;
                 self.leap_tx.send(thread_leap::Msg::Exit)?;
                 return Ok(true);
             }

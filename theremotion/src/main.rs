@@ -15,7 +15,6 @@ mod thread_conductor;
 mod thread_dsp;
 
 /// Thread reading the hand positions
-#[cfg(feature = "leap")]
 mod thread_leap;
 
 /// Mod creating the main window and event loop
@@ -36,7 +35,6 @@ pub use hand::*;
 
 pub use types::*;
 
-use cpal::traits::StreamTrait;
 use default_boxed::DefaultBoxed;
 use faust_state::DspHandle;
 use settings::Settings;
@@ -62,14 +60,12 @@ fn main() {
     let (leap_tx, leap_rx) = std::sync::mpsc::channel(); // Messages to leap thread
     let (co_tx, co_rx) = std::sync::mpsc::channel(); // Messages to the conductor thread
 
-    // Init DSP
+    // Init DSP and its controls metadata
     let dsp = theremotion_dsp::Instrument::default_boxed();
     let (dsp, state) = DspHandle::<theremotion_dsp::Instrument>::from_dsp(dsp);
-
-    // Init the controls struct
     let controls = controls::Controls::from(&state);
 
-    // Queue the initialization messages
+    // Set the DSP in its initial state
     settings
         .current_preset
         .send_to_dsp(&controls, &dsp_tx)
@@ -86,28 +82,22 @@ fn main() {
     );
 
     // Init sound output
-    let stream = thread_dsp::run(dsp, state, dsp_rx);
-    stream.play().expect("Failed to play stream");
+    let dsp = thread_dsp::run(dsp, state, dsp_rx);
 
     // Init leap thread
-    #[cfg(feature = "leap")]
-    let leap_worker = thread_leap::run(co_tx.clone(), leap_rx);
+    let leap = thread_leap::run(co_tx.clone(), leap_rx);
 
     // Start UI
     let (window, _window_timer) = thread_ui::run(co_tx.clone(), ui_rx, controls.clone(), settings);
     window.run().expect("Failed to start the UI");
-    co_tx
-        .send(thread_conductor::Msg::Exit)
-        .expect("Error when trying to exit");
 
     conductor
         .join()
         .expect("Error when stopping the conductor thread");
 
-    #[cfg(feature = "leap")]
-    leap_worker
-        .join()
-        .expect("Error when stopping the leap worker");
+    dsp.join().expect("Error when stopping the DSP thread");
+
+    leap.join().expect("Error when stopping the leap worker");
 }
 
 #[cfg(target_os = "windows")]

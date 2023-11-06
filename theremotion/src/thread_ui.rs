@@ -17,7 +17,9 @@ use crate::{
 /// Message to update externally the UI
 #[derive(Debug)]
 pub enum Msg {
-    ///Current application error status
+    /// Close the UI
+    Exit,
+    /// Current application error status
     Status(TrackingStatus),
     /// Lead instrument volume (0-1)
     LeadVolume(f32),
@@ -55,27 +57,11 @@ pub fn run(
     }
     let window = theremotion_ui::MainWindow::new().expect("Failed to create the UI");
     let window_weak = window.as_weak();
-    let ui = window.global::<theremotion_ui::UIState<'_>>();
 
     // Send the min/max set in the DSP
-    ui.set_lead_volume_control(ui_control(&controls.lead_volume));
-    ui.set_cutoff_note_control(ui_control(&controls.cutoff_note));
-    ui.set_resonance_control(ui_control(&controls.resonance));
-    ui.set_pluck_mute_control(ui_control(&controls.pluck_mute));
-    ui.set_drone_detune_control(ui_control(&controls.drone_detune));
-    ui.set_echo_mix_control(ui_control(&controls.echo_mix));
-    ui.set_echo_duration_control(ui_control(&controls.echo_duration));
-    ui.set_echo_feedback_control(ui_control(&controls.echo_feedback));
-    ui.set_reverb_mix_control(ui_control(&controls.reverb_mix));
-    ui.set_reverb_time_control(ui_control(&controls.reverb_time));
-    ui.set_reverb_damp_control(ui_control(&controls.reverb_damp));
-    ui.set_reverb_size_control(ui_control(&controls.reverb_size));
-    ui.set_mix_master_control(ui_control(&controls.mix_master_volume));
-    ui.set_mix_drone_control(ui_control(&controls.mix_drone_volume));
-    ui.set_mix_lead_control(ui_control(&controls.mix_lead_volume));
-    ui.set_mix_pluck_control(ui_control(&controls.mix_pluck_volume));
+    set_ui_controls(&window.global::<theremotion_ui::UIState<'_>>(), controls);
 
-    update_ui_from_settings(&ui, &settings);
+    update_ui_from_settings(&window.global::<theremotion_ui::UIState<'_>>(), &settings);
 
     /// Helper to connect slint callbacks to events sent on a channel
     struct Connector(Sender<CM>);
@@ -114,13 +100,19 @@ pub fn run(
             }
         });
 
-    // Common
-    ui.on_close({
-        let window_weak = window_weak.clone();
+    window.window().on_close_requested({
+        let tx = tx.clone();
         move || {
-            window_weak.unwrap().hide().unwrap();
+            tx.send(CM::Exit).unwrap();
+            return slint::CloseRequestResponse::HideWindow;
         }
     });
+
+    let ui = window.global::<theremotion_ui::UIState<'_>>();
+
+    // Common
+    ui.on_close(c.send2(|| CM::Exit));
+
     // Play tab
     ui.on_drone_clicked(c.send(CM::DroneClicked));
 
@@ -174,8 +166,7 @@ pub fn run(
         {
             move || {
                 let window = window_weak.unwrap();
-                let ui = window.global::<theremotion_ui::UIState<'_>>();
-                read_updates(&mut ui_rx, &mut settings, &ui);
+                read_updates(&mut ui_rx, &mut settings, &window);
             }
         },
     );
@@ -185,12 +176,17 @@ pub fn run(
 fn read_updates(
     ui_rx: &mut Receiver<Msg>,
     settings: &mut Settings,
-    ui: &theremotion_ui::UIState<'_>,
+    window: &theremotion_ui::MainWindow,
 ) {
     for event in ui_rx.try_iter() {
         let restricted_scale_window = settings.current_preset.restricted_scale_floating_window();
+        let ui = window.global::<theremotion_ui::UIState<'_>>();
 
         match event {
+            Msg::Exit => {
+                // When the last (only) window is hidden, it exits
+                window.hide().expect("Failed to hide the window");
+            }
             Msg::Status(TrackingStatus::Ok) => {
                 ui.set_status(theremotion_ui::Status::Ok);
                 ui.set_status_message("Ok".into());
@@ -269,10 +265,29 @@ fn read_updates(
             Msg::TrumpetStrength(_) => {} // todo?
             Msg::Settings(s) => {
                 *settings = s;
-                update_ui_from_settings(ui, settings);
+                update_ui_from_settings(&ui, settings);
             }
         }
     }
+}
+
+fn set_ui_controls(ui: &theremotion_ui::UIState<'_>, controls: Controls) {
+    ui.set_lead_volume_control(ui_control(&controls.lead_volume));
+    ui.set_cutoff_note_control(ui_control(&controls.cutoff_note));
+    ui.set_resonance_control(ui_control(&controls.resonance));
+    ui.set_pluck_mute_control(ui_control(&controls.pluck_mute));
+    ui.set_drone_detune_control(ui_control(&controls.drone_detune));
+    ui.set_echo_mix_control(ui_control(&controls.echo_mix));
+    ui.set_echo_duration_control(ui_control(&controls.echo_duration));
+    ui.set_echo_feedback_control(ui_control(&controls.echo_feedback));
+    ui.set_reverb_mix_control(ui_control(&controls.reverb_mix));
+    ui.set_reverb_time_control(ui_control(&controls.reverb_time));
+    ui.set_reverb_damp_control(ui_control(&controls.reverb_damp));
+    ui.set_reverb_size_control(ui_control(&controls.reverb_size));
+    ui.set_mix_master_control(ui_control(&controls.mix_master_volume));
+    ui.set_mix_drone_control(ui_control(&controls.mix_drone_volume));
+    ui.set_mix_lead_control(ui_control(&controls.mix_lead_volume));
+    ui.set_mix_pluck_control(ui_control(&controls.mix_pluck_volume));
 }
 
 fn update_ui_from_settings(ui: &theremotion_ui::UIState<'_>, settings: &Settings) {

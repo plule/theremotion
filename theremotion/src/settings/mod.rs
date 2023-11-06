@@ -19,8 +19,7 @@ use std::sync::mpsc::Sender;
 use crate::{
     controls::Controls,
     solfege::{MoreScales, ScaleWindows},
-    thread_dsp::ParameterUpdate,
-    HandType, IntervalF, MidiNoteF, OctaveInterval,
+    thread_dsp, HandType, IntervalF, MidiNoteF, OctaveInterval,
 };
 
 pub use self::v1::{EchoSettings, FxSettings, Handedness, MixSettings, NamedScale, ReverbSettings};
@@ -212,7 +211,7 @@ impl Preset {
     }
 
     /// Send the relevant preset data to the DSP
-    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<ParameterUpdate>) -> Result<()> {
+    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<thread_dsp::Msg>) -> Result<()> {
         controls.drone_detune.send(tx, self.drone.detune)?;
         let drone_interval = self.drone_interval();
         for (control, drone) in controls.drone_notes.iter().zip(self.drone_notes()) {
@@ -247,7 +246,7 @@ impl Preset {
 }
 
 impl MixSettings {
-    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<ParameterUpdate>) -> Result<()> {
+    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<thread_dsp::Msg>) -> Result<()> {
         controls.mix_drone_volume.send(tx, self.drone)?;
         controls.mix_lead_volume.send(tx, self.lead)?;
         controls.mix_master_volume.send(tx, self.master)?;
@@ -257,7 +256,7 @@ impl MixSettings {
 }
 
 impl EchoSettings {
-    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<ParameterUpdate>) -> Result<()> {
+    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<thread_dsp::Msg>) -> Result<()> {
         controls.echo_duration.send(tx, self.duration)?;
         controls.echo_feedback.send(tx, self.feedback)?;
         controls.echo_mix.send(tx, self.mix)?;
@@ -266,7 +265,7 @@ impl EchoSettings {
 }
 
 impl ReverbSettings {
-    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<ParameterUpdate>) -> Result<()> {
+    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<thread_dsp::Msg>) -> Result<()> {
         controls.reverb_damp.send(tx, self.damp)?;
         controls.reverb_mix.send(tx, self.mix)?;
         controls.reverb_size.send(tx, self.size)?;
@@ -276,7 +275,7 @@ impl ReverbSettings {
 }
 
 impl FxSettings {
-    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<ParameterUpdate>) -> Result<()> {
+    pub fn send_to_dsp(&self, controls: &Controls, tx: &Sender<thread_dsp::Msg>) -> Result<()> {
         self.echo.send_to_dsp(controls, tx)?;
         self.reverb.send_to_dsp(controls, tx)?;
         Ok(())
