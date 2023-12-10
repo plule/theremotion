@@ -1,0 +1,5 @@
+ARG CROSS_BASE_IMAGE
+FROM $CROSS_BASE_IMAGE
+
+COPY leap-sdk-redist /leap-sdk-redist
+ENV LEAPSDK_LIB_PATH=/leap-sdk-redist

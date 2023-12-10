@@ -1,2 +1,14 @@
 [target.x86_64-unknown-linux-gnu]
 dockerfile = "./cross/Dockerfile.x86_64-unknown-linux-gnu"
+
+[target.x86_64-pc-windows-msvc]
+# cd /tmp
+# git clone https://github.com/cross-rs/cross
+# cd cross
+# git submodule update --init --remote
+# cargo build-docker-image x86_64-pc-windows-msvc-cross
+image = "ghcr.io/cross-rs/x86_64-pc-windows-msvc-cross:local"
+dockerfile = "./cross/Dockerfile.x86_64-pc-windows-msvc"
+
+[target.x86_64-pc-windows-gnu]
+dockerfile = "./cross/Dockerfile.x86_64-pc-windows-gnu"
