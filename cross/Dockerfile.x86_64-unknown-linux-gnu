@@ -1,0 +1,10 @@
+ARG CROSS_BASE_IMAGE
+FROM $CROSS_BASE_IMAGE
+
+RUN apt-get update && apt-get install --assume-yes \
+    libasound2-dev \
+    libfreetype6-dev \
+    libfontconfig1-dev
+
+COPY leap-sdk-redist /leap-sdk-redist
+ENV LEAPSDK_LIB_PATH=/leap-sdk-redist
