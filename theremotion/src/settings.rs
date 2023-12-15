@@ -27,7 +27,7 @@ pub use self::v1::{EchoSettings, FxSettings, Handedness, MixSettings, NamedScale
 pub use self::v2::{DroneSettings, Preset, Settings};
 
 /// Default presets
-const PRESETS_BYTES: &[u8] = include_bytes!("presets.yaml");
+const PRESETS_BYTES: &[u8] = include_bytes!("settings/presets.yaml");
 
 lazy_static::lazy_static! {
     /// Default presets
