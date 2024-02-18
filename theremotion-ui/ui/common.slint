@@ -114,9 +114,7 @@ export component BevelRectangle inherits Rectangle {
     clip: true;
 
     function get-bevel-angle() -> angle {
-        // https://github.com/slint-ui/slint/issues/3730
-        -45deg
-        //-Math.atan(root.height / root.width)
+        -Math.atan(root.height / root.width)
     }
 
     property <color> bevel-color-dark: bevel-color.darker(contrast);
