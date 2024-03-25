@@ -24,7 +24,7 @@ use crate::{
 
 pub use self::v1::{EchoSettings, FxSettings, Handedness, MixSettings, NamedScale, ReverbSettings};
 
-pub use self::v2::{DroneSettings, Preset, Settings};
+pub use self::v2::{Preset, Settings};
 
 /// Default presets
 const PRESETS_BYTES: &[u8] = include_bytes!("settings/presets.yaml");

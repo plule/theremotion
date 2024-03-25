@@ -42,8 +42,7 @@ pub fn run(mut tx: Sender<thread_conductor::Msg>, rx: Receiver<Msg>) -> thread::
 
 #[cfg(feature = "leap")]
 mod leap {
-    use leaprs::{Connection, Error, Event};
-    use nalgebra::{UnitQuaternion, Vector3};
+    use leaprs::{Connection, Error, EventRef};
     use std::sync::mpsc::{SendError, Sender};
 
     use crate::thread_conductor::{self, TrackingStatus};
@@ -55,13 +54,13 @@ mod leap {
         match connection.poll(100) {
             Ok(message) => {
                 match message.event() {
-                    Event::Tracking(e) => {
+                    EventRef::Tracking(e) => {
                         // List of visible hands
                         let hands = e.hands();
 
                         for hand in hands.iter() {
                             tx.send(thread_conductor::Msg::HandUpdate(crate::HandMessage::from(
-                                hand,
+                                *hand,
                             )))?;
                         }
 
@@ -76,19 +75,23 @@ mod leap {
 
                         tx.send(thread_conductor::Msg::TrackingStatus(TrackingStatus::Ok))?;
                     }
-                    Event::Connection(_) => tx.send(thread_conductor::Msg::TrackingStatus(
+                    EventRef::Connection(_) => tx.send(thread_conductor::Msg::TrackingStatus(
                         TrackingStatus::Warning("No device".to_string()),
                     ))?,
-                    Event::ConnectionLost(_) => tx.send(thread_conductor::Msg::TrackingStatus(
-                        TrackingStatus::Error("Connection lost".to_string()),
-                    ))?,
-                    Event::Device(_) => {
+                    EventRef::ConnectionLost(_) => {
+                        tx.send(thread_conductor::Msg::TrackingStatus(
+                            TrackingStatus::Error("Connection lost".to_string()),
+                        ))?
+                    }
+                    EventRef::Device(_) => {
                         tx.send(thread_conductor::Msg::TrackingStatus(TrackingStatus::Ok))?
                     }
-                    Event::DeviceFailure(_) => tx.send(thread_conductor::Msg::TrackingStatus(
-                        TrackingStatus::Error("Device failure".to_string()),
-                    ))?,
-                    Event::DeviceLost => tx.send(thread_conductor::Msg::TrackingStatus(
+                    EventRef::DeviceFailure(_) => {
+                        tx.send(thread_conductor::Msg::TrackingStatus(
+                            TrackingStatus::Error("Device failure".to_string()),
+                        ))?
+                    }
+                    EventRef::DeviceLost => tx.send(thread_conductor::Msg::TrackingStatus(
                         TrackingStatus::Error("Device disconnected".to_string()),
                     ))?,
                     _ => {}
@@ -107,23 +110,15 @@ mod leap {
         Ok(())
     }
 
-    impl From<&leaprs::Hand<'_>> for crate::HandMessage {
-        fn from(value: &leaprs::Hand<'_>) -> Self {
-            let position = value.palm().position();
-            let velocity = value.palm().velocity();
-            let rotation = value.arm().rotation();
+    impl From<leaprs::HandRef<'_>> for crate::HandMessage {
+        fn from(value: leaprs::HandRef<'_>) -> Self {
             crate::HandMessage {
                 hand_type: value.hand_type().into(),
-                position: Vector3::new(position.x(), position.y(), position.z()),
-                velocity: Vector3::new(velocity.x(), velocity.y(), velocity.z()),
-                rotation: UnitQuaternion::from_quaternion(nalgebra::Quaternion::new(
-                    rotation.w(),
-                    rotation.x(),
-                    rotation.y(),
-                    rotation.z(),
-                )),
-                pinch: value.pinch_strength(),
-                grab: value.grab_strength(),
+                position: value.palm().position().into(),
+                velocity: value.palm().velocity().into(),
+                rotation: value.arm().rotation().into(),
+                pinch: value.pinch_strength,
+                grab: value.grab_strength,
             }
         }
     }
